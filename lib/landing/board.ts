@@ -176,3 +176,18 @@ export async function buildBoard(venue: VenueAdapter): Promise<BoardCard[]> {
   const parts = await Promise.allSettled([cryptoCards(venue), commodityCards(venue), sportsCards(venue)]);
   return parts.flatMap((p) => (p.status === "fulfilled" ? p.value : []));
 }
+
+/**
+ * The game-day promo example, built from the next upcoming NFL game on Gemini so it
+ * never points at a game that's already been played. Null if no game is listed.
+ */
+export async function gameDayExample(venue: VenueAdapter): Promise<{ label: string; text: string } | null> {
+  const [game] = await sportsCards(venue).catch(() => []);
+  if (!game) return null;
+  const [dog, fav] = game.title.split(" beats ");
+  const day = game.subtitle.split(" · ")[0];
+  return {
+    label: "Game-day promo",
+    text: `I run a sports bar. If ${dog} beats ${fav} on ${day}, wings are half price all night. We usually sell about 500 orders and the discount is $6 each.`,
+  };
+}

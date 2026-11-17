@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { BUSINESS_EXAMPLES as EXAMPLES } from "@/lib/business/examples";
+import { BUSINESS_EXAMPLES } from "@/lib/business/examples";
 import { useEffect, useRef, useState } from "react";
 import { ApprovePanel } from "@/components/ApprovePanel";
 import { PayoffChart, type CurvePoint } from "@/components/charts";
@@ -24,7 +24,7 @@ function QualityBadge({ quality }: { quality: EventMatch["quality"] }) {
   );
 }
 
-export function BusinessFlow() {
+export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { label: string; text: string }[] }) {
   const params = useSearchParams();
   const [text, setText] = useState(() => params.get("q") ?? "");
   const [analyzing, setAnalyzing] = useState(false);
@@ -129,7 +129,7 @@ export function BusinessFlow() {
           className="mt-3 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
         />
         <div className="mt-2 flex flex-wrap gap-2">
-          {EXAMPLES.map((ex) => (
+          {examples.map((ex) => (
             <button key={ex.label} onClick={() => setText(ex.text)} className="rounded-full border border-border px-3 py-1 text-xs text-text-2 hover:border-accent hover:text-accent">
               {ex.label}
             </button>
