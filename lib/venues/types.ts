@@ -15,6 +15,8 @@ export interface VenueAdapter {
   readonly name: string;
   listMarkets(query?: ListMarketsQuery): Promise<Market[]>;
   getMarket(id: string): Promise<Market | null>;
+  /** Market as listed in the environment orders go to, if it differs from market data. */
+  getTradingMarket?(id: string): Promise<Market | null>;
   placeOrder(order: OrderRequest): Promise<Order>;
   cancelOrder(orderId: string): Promise<void>;
   getActiveOrders(): Promise<Order[]>;

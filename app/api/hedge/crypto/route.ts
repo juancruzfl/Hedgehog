@@ -5,7 +5,7 @@ import type { Market, RiskProfile } from "@/lib/types";
 import { getVenue } from "@/lib/venues";
 
 // Preview a downside hedge for a crypto holding (no orders placed).
-// GET /api/hedge/crypto?asset=BTC&quantity=1.5&startDrop=0.05&floorDrop=0.3
+// GET /api/hedge/crypto?asset=BTC&quantity=1.5&startDrop=0.05&floorDrop=0.3[&market=<marketId>]
 export async function GET(req: NextRequest) {
   const p = req.nextUrl.searchParams;
   const asset = (p.get("asset") ?? "BTC").toUpperCase();
@@ -21,9 +21,10 @@ export async function GET(req: NextRequest) {
 
     // Use the furthest-dated price-strike market for this asset (most room to fall).
     const priceMarkets = markets
-      .filter((m: Market) => m.title.toUpperCase().startsWith(asset) && m.contracts.some((c) => c.strike?.type === "above"))
+      .filter((m: Market) => m.title.toUpperCase().startsWith(`${asset} PRICE ON`) && m.contracts.some((c) => c.strike?.type === "above"))
       .sort((a, b) => b.expiry.localeCompare(a.expiry));
-    const market = priceMarkets[0];
+    const wanted = p.get("market");
+    const market = wanted ? priceMarkets.find((m) => m.id === wanted) : priceMarkets[0];
     if (!market) return NextResponse.json({ error: `No ${asset} price markets listed` }, { status: 404 });
 
     const profile: RiskProfile = {
@@ -43,7 +44,14 @@ export async function GET(req: NextRequest) {
     };
 
     const proposal = buildDownsideLadder(profile, market.contracts, { startDrop, floorDrop });
-    return NextResponse.json({ spot, market: { title: market.title, expiry: market.expiry }, profile, proposal, curve: payoffCurve(profile, proposal) });
+    return NextResponse.json({
+      spot,
+      market: { id: market.id, title: market.title, expiry: market.expiry },
+      expiries: priceMarkets.map((m) => ({ id: m.id, title: m.title, expiry: m.expiry })),
+      profile,
+      proposal,
+      curve: payoffCurve(profile, proposal, 240),
+    });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 502 });
   }

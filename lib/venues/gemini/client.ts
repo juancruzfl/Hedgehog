@@ -33,24 +33,37 @@ export class GeminiApiError extends Error {
 
 export class GeminiClient {
   private lastNonce = 0;
+  /** Private calls are serialized: Gemini rejects a nonce that doesn't increase. */
+  private queue: Promise<unknown> = Promise.resolve();
   constructor(private cfg: GeminiClientConfig) {}
 
+  /** Shared instance: one nonce sequence per API key across all server routes. */
   static fromEnv(): GeminiClient {
-    return new GeminiClient({
+    const g = globalThis as { __geminiClient?: GeminiClient };
+    g.__geminiClient ??= new GeminiClient({
       apiKey: process.env.GEMINI_API_KEY,
       apiSecret: process.env.GEMINI_API_SECRET,
       tradingEnv: (process.env.GEMINI_TRADING_ENV as Env) ?? "sandbox",
       marketDataEnv: (process.env.GEMINI_MARKET_DATA_ENV as Env) ?? "production",
       nonceMode: (process.env.GEMINI_NONCE_MODE as "time" | "incremental") ?? "time",
     });
+    return g.__geminiClient;
   }
 
   get hasCredentials(): boolean {
     return Boolean(this.cfg.apiKey && this.cfg.apiSecret);
   }
 
-  async publicGet<T>(path: string, params: Record<string, string | string[] | number | undefined> = {}): Promise<T> {
-    const url = new URL(path, BASES[this.cfg.marketDataEnv ?? "production"]);
+  get tradingEnv(): Env {
+    return this.cfg.tradingEnv ?? "sandbox";
+  }
+
+  async publicGet<T>(
+    path: string,
+    params: Record<string, string | string[] | number | undefined> = {},
+    env: Env = this.cfg.marketDataEnv ?? "production",
+  ): Promise<T> {
+    const url = new URL(path, BASES[env]);
     for (const [k, v] of Object.entries(params)) {
       if (v === undefined) continue;
       for (const item of Array.isArray(v) ? v : [v]) url.searchParams.append(k, String(item));
@@ -61,10 +74,20 @@ export class GeminiClient {
     return body as T;
   }
 
-  async privatePost<T>(
+  privatePost<T>(
     path: string,
     fields: Record<string, unknown> = {},
     query: Record<string, string | number | undefined> = {},
+  ): Promise<T> {
+    const run = this.queue.then(() => this.signedPost<T>(path, fields, query));
+    this.queue = run.catch(() => undefined);
+    return run;
+  }
+
+  private async signedPost<T>(
+    path: string,
+    fields: Record<string, unknown>,
+    query: Record<string, string | number | undefined>,
   ): Promise<T> {
     if (!this.hasCredentials) {
       throw new Error("Gemini API key/secret not configured (GEMINI_API_KEY, GEMINI_API_SECRET)");
@@ -93,11 +116,12 @@ export class GeminiClient {
     return body as T;
   }
 
-  private nextNonce(): string {
+  private nextNonce(): number {
     const candidate = this.cfg.nonceMode === "incremental" ? Date.now() : Math.floor(Date.now() / 1000);
-    // Incremental mode must strictly increase; time mode just needs to be within ±30s.
-    const nonce = this.cfg.nonceMode === "incremental" ? Math.max(candidate, this.lastNonce + 1) : candidate;
+    // Must strictly increase in both modes. In time mode, bumping by 1s keeps us well
+    // inside Gemini's +/-30s window for normal bursts of calls.
+    const nonce = Math.max(candidate, this.lastNonce + 1);
     this.lastNonce = nonce;
-    return String(nonce);
+    return nonce; // prediction-markets routes require a JSON number
   }
 }

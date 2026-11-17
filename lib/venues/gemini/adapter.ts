@@ -42,6 +42,20 @@ export class GeminiAdapter implements VenueAdapter {
     }
   }
 
+  /** The market as listed where orders actually go (sandbox listings differ from production). */
+  async getTradingMarket(ticker: string): Promise<Market | null> {
+    try {
+      const ev = await this.client.publicGet<GeminiEvent>(
+        `/v1/prediction-markets/events/${encodeURIComponent(ticker)}`,
+        {},
+        this.client.tradingEnv,
+      );
+      return toMarkets(ev)[0] ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   async placeOrder(o: OrderRequest): Promise<Order> {
     await this.ensureTermsAccepted();
     const res = await this.client.privatePost<GeminiOrder>("/v1/prediction-markets/order", {
