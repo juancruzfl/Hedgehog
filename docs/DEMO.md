@@ -11,7 +11,7 @@
 ---
 
 **0:00 · Landing (30s)**
-> "Prediction markets price real-world events every minute. Hedgehog turns them into hedges for normal people. One market, many real-world risks."
+> "Prediction markets price real-world events every minute. Hedgehog turns them into hedges for normal people. Are the odds in your favor?"
 
 Let the stage rotate once. Hover a risk widget (it pauses and comes forward):
 > "This live Gemini market pays $1 if oil rises above $93. To a delivery fleet, that's a way to turn a fuel spike into a known cost. Same market: food truck, landscaper, charter airline."

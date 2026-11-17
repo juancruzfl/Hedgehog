@@ -3,11 +3,11 @@
 
 export const LEGAL = {
   /** Legal name of whoever operates the site (a person or a company). */
-  operator: "",
+  operator: "Juan Cruz",
   /** Address for privacy requests and legal notices. */
-  contactEmail: "",
+  contactEmail: "cruzjuan298@gmail.com",
   /** US state whose laws govern the Terms of Use, e.g. "New York". */
-  governingState: "",
+  governingState: "New York",
   /** When these documents took effect. */
   effective: "November 17, 2026",
 };

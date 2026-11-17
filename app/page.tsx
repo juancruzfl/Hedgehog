@@ -84,13 +84,12 @@ export default async function Home() {
           <span className="h-1.5 w-1.5 rounded-full bg-accent" /> Live odds from Gemini prediction markets
         </p>
         <h1 className="mx-auto mt-5 max-w-4xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
-          One market.
+          Are the odds
           <br />
-          <span className="text-accent">Many real-world risks.</span>
+          <span className="text-accent">in your favor?</span>
         </h1>
         <p className="mx-auto mt-3 max-w-2xl text-lg text-text-2">
-          A prediction market pays out if something happens. If that same thing would cost you money, the payout softens the hit. Hover any
-          risk to see the numbers.
+          See how likely the things that could cost you are, and cushion the hit before it happens. Pick any risk to see the numbers.
         </p>
       </section>
 

@@ -1,6 +1,6 @@
 # Hedgehog
 
-**One market. Many real-world risks.**
+**Are the odds in your favor?**
 
 A prediction market pays $1 if something happens. If that same thing would cost you money, the payout softens the hit. Hedgehog turns live
 [Gemini prediction markets](https://developer.gemini.com/products/prediction-markets) into plain-English hedges for two kinds of people:

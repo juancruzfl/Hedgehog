@@ -1,6 +1,6 @@
 # Hedgehog: Devpost submission draft
 
-**Tagline:** One market. Many real-world risks. Hedgehog turns live Gemini prediction markets into plain-English hedges for crypto holders and small businesses.
+**Tagline:** Are the odds in your favor? Hedgehog turns live Gemini prediction markets into plain-English hedges for crypto holders and small businesses.
 
 **Submit to:** Main track: Consumer Applications · Chain award: Best use of Solana · Bounty: Gemini Prediction Markets
 
