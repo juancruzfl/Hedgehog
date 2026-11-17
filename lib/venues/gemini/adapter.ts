@@ -72,7 +72,8 @@ export class GeminiAdapter implements VenueAdapter {
   }
 
   async cancelOrder(orderId: string): Promise<void> {
-    await this.client.privatePost("/v1/prediction-markets/order/cancel", { orderId: Number(orderId) });
+    // Sent as a string; the client writes it back as an exact JSON number.
+    await this.client.privatePost("/v1/prediction-markets/order/cancel", { orderId: String(orderId) });
   }
 
   async getActiveOrders(): Promise<Order[]> {
@@ -93,7 +94,7 @@ export class GeminiAdapter implements VenueAdapter {
   /** Orders are rejected until the account accepts the latest Prediction Markets terms. */
   private async ensureTermsAccepted(): Promise<void> {
     if (this.termsChecked) return;
-    const status = await this.client.privatePost<{ hasAcceptedLatest?: boolean }>(
+    const status = await this.client.privateGet<{ hasAcceptedLatest?: boolean }>(
       "/v1/prediction-markets/terms/status",
     );
     if (status.hasAcceptedLatest === false) {

@@ -129,18 +129,22 @@ function kickoff(ticker: string): Date | null {
   return m ? new Date(Date.UTC(2000 + +m[1], +m[2] - 1, +m[3], +m[4], +m[5])) : null;
 }
 
-async function sportsCards(venue: VenueAdapter): Promise<BoardCard[]> {
+/** Upcoming NFL game-winner markets on Gemini, soonest kickoff first. */
+export async function upcomingGames(venue: VenueAdapter): Promise<{ m: Market; start: Date }[]> {
   // College games dominate this category, so scan a few pages in parallel to reach the NFL games.
   const pages = await Promise.all(
     [0, 100, 200, 300].map((offset) => venue.listMarkets({ category: ["Sports"], sport: ["american_football"], limit: 100, offset }).catch(() => [])),
   );
-  const markets: Market[] = pages.flat();
-  const games = markets
+  return pages
+    .flat()
     .filter((m) => m.id.startsWith("NFL-") && m.id.endsWith("-M") && m.contracts.length === 2)
     .map((m) => ({ m, start: kickoff(m.id) }))
     .filter((g): g is { m: Market; start: Date } => !!g.start && g.start.getTime() > Date.now())
-    .sort((a, b) => a.start.getTime() - b.start.getTime())
-    .slice(0, 3);
+    .sort((a, b) => a.start.getTime() - b.start.getTime());
+}
+
+async function sportsCards(venue: VenueAdapter): Promise<BoardCard[]> {
+  const games = (await upcomingGames(venue)).slice(0, 3);
 
   return games.flatMap(({ m, start }) => {
     const priced = m.contracts.filter((c): c is Contract => yesMid(c.quote) !== null);
@@ -175,4 +179,19 @@ async function sportsCards(venue: VenueAdapter): Promise<BoardCard[]> {
 export async function buildBoard(venue: VenueAdapter): Promise<BoardCard[]> {
   const parts = await Promise.allSettled([cryptoCards(venue), commodityCards(venue), sportsCards(venue)]);
   return parts.flatMap((p) => (p.status === "fulfilled" ? p.value : []));
+}
+
+/**
+ * The game-day promo example, built from the next upcoming NFL game on Gemini so it
+ * never points at a game that's already been played. Null if no game is listed.
+ */
+export async function gameDayExample(venue: VenueAdapter): Promise<{ label: string; text: string } | null> {
+  const [game] = await sportsCards(venue).catch(() => []);
+  if (!game) return null;
+  const [dog, fav] = game.title.split(" beats ");
+  const day = game.subtitle.split(" · ")[0];
+  return {
+    label: "Game-day promo",
+    text: `I run a sports bar. If ${dog} beats ${fav} on ${day}, wings are half price all night. We usually sell about 500 orders and the discount is $6 each.`,
+  };
 }

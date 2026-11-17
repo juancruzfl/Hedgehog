@@ -1,10 +1,11 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { BUSINESS_EXAMPLES as EXAMPLES } from "@/lib/business/examples";
+import { BUSINESS_EXAMPLES } from "@/lib/business/examples";
 import { useEffect, useRef, useState } from "react";
 import { ApprovePanel } from "@/components/ApprovePanel";
 import { PayoffChart, type CurvePoint } from "@/components/charts";
+import { Segmented, Stat, StepHeading } from "@/components/ui";
 import type { Analysis, EventMatch } from "@/lib/business/analyze";
 import type { EventHedgeResult } from "@/lib/engine/sizer";
 import { pct, qty, shortDate, usd } from "@/lib/format";
@@ -24,7 +25,7 @@ function QualityBadge({ quality }: { quality: EventMatch["quality"] }) {
   );
 }
 
-export function BusinessFlow() {
+export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { label: string; text: string }[] }) {
   const params = useSearchParams();
   const [text, setText] = useState(() => params.get("q") ?? "");
   const [analyzing, setAnalyzing] = useState(false);
@@ -32,6 +33,7 @@ export function BusinessFlow() {
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<RiskProfile | null>(null);
   const [followUps, setFollowUps] = useState<string[]>([]);
+  const [usedFallback, setUsedFallback] = useState(false);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [choice, setChoice] = useState(0);
 
@@ -54,6 +56,7 @@ export function BusinessFlow() {
     setStep(0);
     setError(null);
     setAnalysis(null);
+    setUsedFallback(false);
     setSized(null);
     setChoice(0);
     try {
@@ -62,6 +65,7 @@ export function BusinessFlow() {
       if (!res.ok) throw new Error(body.error);
       setProfile(body.profile);
       setFollowUps(body.followUps);
+      setUsedFallback(Boolean(body.fallback));
       setAnalysis(body.analysis);
     } catch (e) {
       setError((e as Error).message);
@@ -117,39 +121,54 @@ export function BusinessFlow() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-border bg-surface p-5">
-        <label htmlFor="risk" className="text-lg font-semibold">What&apos;s the risk?</label>
-        <p className="mt-1 text-sm text-text-2">Describe it like you would to a friend: what happens, when, and roughly what it would cost you.</p>
+      <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
+        <StepHeading n={1} title="What's the risk?" sub="Describe it like you'd tell a friend: what happens, when, and roughly what it would cost you." />
         <textarea
           id="risk"
+          aria-label="Describe the risk"
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={4}
-          placeholder="e.g. If the Colts win Thursday, wings are half price. That's about 500 orders at $6 off."
-          className="mt-3 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+          placeholder="e.g. If the home team wins Sunday, wings are half price. That's about 500 orders at $6 off."
+          className="mt-4 w-full resize-none rounded-xl border border-border bg-background px-3.5 py-3 text-[15px] leading-relaxed outline-none focus:border-accent"
         />
-        <div className="mt-2 flex flex-wrap gap-2">
-          {EXAMPLES.map((ex) => (
-            <button key={ex.label} onClick={() => setText(ex.text)} className="rounded-full border border-border px-3 py-1 text-xs text-text-2 hover:border-accent hover:text-accent">
+        <p className="mt-1 text-xs text-text-3">Rough numbers are fine. Leave out anything confidential.</p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-xs text-text-3">Try:</span>
+          {examples.map((ex) => (
+            <button
+              key={ex.label}
+              onClick={() => setText(ex.text)}
+              className="rounded-full border border-border bg-background px-3 py-1 text-xs text-text-2 hover:border-accent hover:text-accent"
+            >
               {ex.label}
             </button>
           ))}
         </div>
-        <button onClick={analyze} disabled={analyzing || text.trim().length < 10} className="mt-4 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink disabled:opacity-50">
-          {analyzing ? STEPS[step] : "Find ways to reduce it"}
+        <button
+          onClick={analyze}
+          disabled={analyzing || text.trim().length < 10}
+          className="mt-5 rounded-xl bg-accent px-5 py-3 font-semibold text-accent-ink hover:brightness-110 disabled:opacity-40"
+        >
+          {analyzing ? STEPS[step] : "Find a market →"}
         </button>
-        {error && <p className="mt-3 text-sm text-bad">{error}</p>}
+        {error && <p className="mt-3 rounded-xl bg-bad-soft px-4 py-3 text-sm text-bad">{error}</p>}
       </section>
 
       {profile && analysis && (
-        <section className="rounded-2xl border border-border bg-surface p-5">
-          <h2 className="text-lg font-semibold">What we understood</h2>
-          <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-3">
-            <div>
+        <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
+          <StepHeading n={2} title="Here's what we understood" sub="Fix anything that's off. The numbers below update as you type." />
+          {usedFallback && (
+            <p className="mt-3 rounded-xl bg-warn-bg px-4 py-3 text-sm">
+              Our AI assistant is unavailable right now, so Hedgehog used its basic matcher. Double-check the details below.
+            </p>
+          )}
+          <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-3">
+            <div className="rounded-xl bg-surface-2 px-4 py-3">
               <dt className="text-text-3">The risk</dt>
               <dd className="mt-0.5 font-medium">{profile.condition}</dd>
             </div>
-            <div>
+            <div className="rounded-xl bg-surface-2 px-4 py-3">
               <dt className="text-text-3">When</dt>
               <dd className="mt-0.5 font-medium">
                 {shortDate(profile.window.start)}
@@ -157,8 +176,8 @@ export function BusinessFlow() {
               </dd>
             </div>
             {profile.position ? (
-              <div>
-                <dt className="text-text-3">How much you&apos;re exposed to</dt>
+              <div className="rounded-xl bg-surface-2 px-4 py-3">
+                <dt className="text-text-3">How much you buy</dt>
                 <dd className="mt-0.5 flex items-center gap-2">
                   <input
                     type="number"
@@ -168,15 +187,15 @@ export function BusinessFlow() {
                       const q = Number(e.target.value);
                       if (q >= 0) setProfile({ ...profile, position: { ...profile.position!, quantity: q } });
                     }}
-                    className="w-28 rounded-md border border-border bg-background px-2 py-1 font-medium tabular-nums"
+                    className="w-28 rounded-lg border border-border bg-surface px-2 py-1 font-medium tabular-nums outline-none focus:border-accent"
                     aria-label={`Units of ${profile.position.asset} you're exposed to`}
                   />
                   <span className="text-xs text-text-3">{unitLabel(profile.position.asset)}</span>
                 </dd>
               </div>
             ) : (
-              <div>
-                <dt className="text-text-3">Cost to you if it happens</dt>
+              <div className="rounded-xl bg-surface-2 px-4 py-3">
+                <dt className="text-text-3">What it would cost you</dt>
                 <dd className="mt-0.5 flex items-center gap-2">
                   <span className="text-text-3">$</span>
                   <input
@@ -184,7 +203,7 @@ export function BusinessFlow() {
                     min={0}
                     value={Math.round(profile.exposureUsd.expected)}
                     onChange={(e) => setExpected(Number(e.target.value))}
-                    className="w-28 rounded-md border border-border bg-background px-2 py-1 font-medium tabular-nums"
+                    className="w-28 rounded-lg border border-border bg-surface px-2 py-1 font-medium tabular-nums outline-none focus:border-accent"
                     aria-label="Expected cost if it happens"
                   />
                   <span className="text-xs text-text-3 tabular-nums">
@@ -194,9 +213,9 @@ export function BusinessFlow() {
               </div>
             )}
           </dl>
-          {profile.notes && <p className="mt-3 text-xs text-text-3">Assumptions: {profile.notes}</p>}
+          {profile.notes && <p className="mt-3 text-xs text-text-3">What we assumed: {profile.notes}</p>}
           {followUps.length > 0 && (
-            <div className="mt-3 rounded-lg bg-warn-bg p-3 text-sm">
+            <div className="mt-3 rounded-xl bg-warn-bg p-4 text-sm">
               <p className="font-medium">To make this more accurate, add to your description:</p>
               <ul className="mt-1 list-disc pl-5">{followUps.map((q) => <li key={q}>{q}</li>)}</ul>
             </div>
@@ -205,8 +224,8 @@ export function BusinessFlow() {
       )}
 
       {analysis?.type === "none" && (
-        <section className="rounded-2xl border border-border bg-surface p-5">
-          <h2 className="text-lg font-semibold">No good match on Gemini right now</h2>
+        <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
+          <StepHeading n={3} title="No good match on Gemini right now" />
           <p className="mt-1 text-sm text-text-2">{analysis.reason}</p>
           <p className="mt-2 text-sm text-text-2">
             Gemini currently lists sports, daily high temperatures in about 50 US cities, oil, natural gas, metals, and major crypto prices.
@@ -215,15 +234,15 @@ export function BusinessFlow() {
       )}
 
       {analysis?.type === "event" && profile && (
-        <section className="rounded-2xl border border-border bg-surface p-5">
-          <h2 className="text-lg font-semibold">The market that offsets it</h2>
-          <div className="mt-3 space-y-2">
+        <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
+          <StepHeading n={3} title="The market that pays out" sub="Picked from live Gemini markets. Choose the one that best matches your risk." />
+          <div className="mt-4 space-y-2">
             {analysis.matches.map((m, i) => (
-              <label key={m.symbol + m.outcome} className={`block cursor-pointer rounded-xl border p-3 text-sm ${i === choice ? "border-accent" : "border-border"}`}>
+              <label key={m.symbol + m.outcome} className={`block cursor-pointer rounded-xl border p-4 text-sm transition ${i === choice ? "border-accent bg-accent-soft/40" : "border-border hover:border-text-3"}`}>
                 <div className="flex flex-wrap items-center gap-2">
                   <input type="radio" name="match" checked={i === choice} onChange={() => setChoice(i)} />
                   <span className="font-medium">{m.contract.marketTitle}: {m.contract.label}</span>
-                  <span className="text-text-3">buy {m.outcome.toUpperCase()}</span>
+                  <span className="text-text-3">pays if {m.outcome === "yes" ? "it happens" : "it doesn't"}</span>
                   <QualityBadge quality={m.quality} />
                 </div>
                 <p className="mt-1 pl-6 text-text-2">{m.rationale}</p>
@@ -237,19 +256,22 @@ export function BusinessFlow() {
             ))}
           </div>
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <div className="mt-5 grid gap-5 sm:grid-cols-2">
             <div className="text-sm">
-              <span className="text-text-2">Size it for</span>
-              <div className="mt-1 flex gap-1 rounded-lg bg-background p-1">
-                {(["low", "expected", "high"] as const).map((k) => (
-                  <button key={k} onClick={() => setSizeTo(k)} className={`flex-1 rounded-md px-2 py-1 ${sizeTo === k ? "bg-surface font-medium ring-1 ring-border" : "text-text-2"}`}>
-                    {k === "expected" ? "Expected" : k === "low" ? "Low estimate" : "High estimate"} ({usd(profile.exposureUsd[k], 0)})
-                  </button>
-                ))}
-              </div>
+              <p className="mb-2 font-semibold">Size it for</p>
+              <Segmented
+                label="Size it for"
+                value={sizeTo}
+                onChange={setSizeTo}
+                options={(["low", "expected", "high"] as const).map((k) => ({
+                  value: k,
+                  label: k === "expected" ? "Expected" : k === "low" ? "Low" : "High",
+                  sub: usd(profile.exposureUsd[k], 0),
+                }))}
+              />
             </div>
             <label className="text-sm">
-              <span className="text-text-2">Offset <b className="text-text">{Math.round(hedgeRatio * 100)}%</b> of it</span>
+              <span className="font-semibold">How much to offset: {Math.round(hedgeRatio * 100)}%</span>
               <input type="range" min={0.25} max={1} step={0.05} value={hedgeRatio} onChange={(e) => setHedgeRatio(Number(e.target.value))} className="mt-3 w-full accent-[var(--accent)]" />
             </label>
           </div>
@@ -259,20 +281,21 @@ export function BusinessFlow() {
       )}
 
       {analysis?.type === "price" && profile && (
-        <section className="rounded-2xl border border-border bg-surface p-5">
-          <h2 className="text-lg font-semibold">The market that offsets it</h2>
-          <p className="mt-1 text-sm text-text-2">
-            {analysis.marketTitle.replace("?", "")} · market-implied price about {usd(analysis.spot)}
-          </p>
-          <ul className="mt-2 list-disc pl-5 text-xs text-text-3">{analysis.notes.map((n) => <li key={n}>{n}</li>)}</ul>
+        <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
+          <StepHeading n={3} title="The market that pays out" sub="A live Gemini price market that moves with your cost." />
+          <div className="mt-4 rounded-xl border border-border p-4 text-sm">
+            <p className="font-semibold">{analysis.marketTitle.replace("?", "")}</p>
+            <p className="text-text-2">Market expects about {usd(analysis.spot)}</p>
+            <ul className="mt-2 list-disc pl-5 text-xs text-text-3">{analysis.notes.map((n) => <li key={n}>{n}</li>)}</ul>
+          </div>
 
           <div className="mt-5 grid gap-5 sm:grid-cols-2">
             <label className="text-sm">
-              <span className="text-text-2">Start after a {profile.kind === "price_rise" ? "rise" : "drop"} of <b className="text-text">{Math.round(startMove * 100)}%</b></span>
+              <span className="font-semibold">Start paying after a {Math.round(startMove * 100)}% {profile.kind === "price_rise" ? "rise" : "drop"}</span>
               <input type="range" min={0} max={0.15} step={0.01} value={startMove} onChange={(e) => setStartMove(Math.min(Number(e.target.value), capMove - 0.05))} className="mt-3 w-full accent-[var(--accent)]" />
             </label>
             <label className="text-sm">
-              <span className="text-text-2">Offset up to a <b className="text-text">{Math.round(capMove * 100)}%</b> move</span>
+              <span className="font-semibold">Keep paying up to a {Math.round(capMove * 100)}% move</span>
               <input type="range" min={0.1} max={0.5} step={0.01} value={capMove} onChange={(e) => setCapMove(Math.max(Number(e.target.value), startMove + 0.05))} className="mt-3 w-full accent-[var(--accent)]" />
             </label>
           </div>
@@ -299,15 +322,19 @@ function EventResult({ sized, profile, loading }: { sized: Extract<SizeResponse,
   const s = p.scenarios.find((x) => x.exposure === "expected")!;
   const exposure = profile.exposureUsd.expected;
   return (
-    <div className={loading ? "opacity-60 transition-opacity" : ""}>
-      <p className="mt-6 text-xl font-semibold leading-snug tabular-nums">
-        Pay {usd(p.totalCost)} now. If {lowerFirst(profile.condition)}, you get {usd(p.maxPayout)}.
-      </p>
-      <p className="mt-1 text-sm text-text-2">
-        The market prices this at {pct(leg.limitPrice)}. Hedging turns an uncertain {usd(exposure, 0)} hit into a known {usd(p.totalCost, 0)} cost.
-      </p>
+    <div className={`mt-6 border-t border-border pt-6 ${loading ? "opacity-60 transition-opacity" : ""}`}>
+      <StepHeading n={4} title="Your numbers" sub={`If ${lowerFirst(profile.condition)}, the market pays you. If not, you're out what you paid.`} />
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        <Stat label="You pay now" value={usd(p.totalCost)} note={`market prices it at ${pct(leg.limitPrice)}`} />
+        <Stat label="If it happens, you get" value={usd(p.maxPayout)} note="paid by Gemini" />
+        {Math.abs(s.ifTriggered - s.ifNotTriggered) < 1 ? (
+          <Stat label="Your cost either way" value={usd(Math.abs(s.ifNotTriggered))} note={`instead of $0 or ${usd(exposure, 0)}`} />
+        ) : (
+          <Stat label="If it happens, you're out" value={usd(Math.abs(s.ifTriggered))} note={`instead of ${usd(exposure, 0)}`} />
+        )}
+      </div>
 
-      <table className="mt-5 w-full text-sm tabular-nums">
+      <table className="mt-5 w-full overflow-hidden rounded-xl text-sm tabular-nums">
         <caption className="sr-only">Your net cost in each outcome</caption>
         <thead className="text-left text-xs text-text-3">
           <tr>
@@ -334,8 +361,8 @@ function EventResult({ sized, profile, loading }: { sized: Extract<SizeResponse,
         {p.scenarios.filter((x) => x.exposure !== "expected").map((x) => usd(x.ifTriggered, 0)).join(" or ")} when it happens. Costs exclude Gemini fees.
       </p>
 
-      <details className="mt-3 text-sm">
-        <summary className="cursor-pointer text-text-2">Exact order on Gemini</summary>
+      <details className="mt-4 rounded-xl border border-border px-4 py-3 text-sm">
+        <summary className="cursor-pointer font-medium">Exact order on Gemini</summary>
         <p className="mt-2 tabular-nums">
           Buy {qty(leg.quantity)} {leg.outcome.toUpperCase()} contracts on “{leg.contract.marketTitle}: {leg.contract.label}” at up to {usd(leg.limitPrice)} each. Each pays $1 if it resolves {leg.outcome.toUpperCase()}.
         </p>
@@ -363,11 +390,14 @@ function PriceResult({ sized, loading }: { sized: Extract<SizeResponse, { kind: 
   }
   const first = p.legs[0].contract.strike!.value!;
   return (
-    <div className={loading ? "opacity-60 transition-opacity" : ""}>
-      <p className="mt-6 text-xl font-semibold leading-snug tabular-nums">
-        Pay {usd(p.totalCost)} now. If the price {rising ? "rises above" : "falls below"} {usd(first)} by {shortDate(sized.market.expiry)}, you get back up to {usd(p.maxPayout)}.
-      </p>
-      <p className="mt-1 text-sm text-text-2 tabular-nums">
+    <div className={`mt-6 border-t border-border pt-6 ${loading ? "opacity-60 transition-opacity" : ""}`}>
+      <StepHeading n={4} title="Your numbers" sub={`Settles ${shortDate(sized.market.expiry)}. The payout grows the further the price ${rising ? "rises" : "falls"}.`} />
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        <Stat label="You pay now" value={usd(p.totalCost)} />
+        <Stat label={`Starts paying ${rising ? "above" : "below"}`} value={usd(first, first >= 20 ? 0 : 2)} note={`${pos.asset} price`} />
+        <Stat label="Most you get back" value={usd(p.maxPayout)} />
+      </div>
+      <p className="mt-3 text-sm text-text-2 tabular-nums">
         Sized for about {qty(pos.quantity)} {unitLabel(pos.asset)} of {pos.asset}. Every $1 {rising ? "rise" : "drop"} costs you about {usd(pos.quantity, 0)}.
       </p>
       <div className="mt-5">
@@ -378,8 +408,8 @@ function PriceResult({ sized, loading }: { sized: Extract<SizeResponse, { kind: 
           caption={`Your ${rising ? "extra cost" : "gain or loss"} at settlement compared with today's price, including what the hedge costs.`}
         />
       </div>
-      <details className="mt-3 text-sm">
-        <summary className="cursor-pointer text-text-2">Exact orders on Gemini ({p.legs.length})</summary>
+      <details className="mt-4 rounded-xl border border-border px-4 py-3 text-sm">
+        <summary className="cursor-pointer font-medium">Exact orders on Gemini ({p.legs.length})</summary>
         <ul className="mt-2 space-y-1 tabular-nums">
           {p.legs.map((l) => (
             <li key={l.contract.symbol}>

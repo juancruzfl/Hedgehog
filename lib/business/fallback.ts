@@ -1,0 +1,146 @@
+// Basic matcher used when the AI provider is unavailable (no credits, outage).
+// Handles the common, well-structured cases deterministically and returns null
+// otherwise, so the user sees an honest error instead of a bad match.
+//   - Game-day promos: a team named in the text that plays in an upcoming NFL game
+//   - Rising costs: diesel/fuel/oil, natural gas, gold, silver, copper, with units
+
+import type { AIProvider } from "@/lib/ai/types";
+import { upcomingGames } from "@/lib/landing/board";
+import type { Market, RiskProfile } from "@/lib/types";
+import type { VenueAdapter } from "@/lib/venues/types";
+import { analyzeRisk, type Analysis } from "./analyze";
+
+const num = (s: string) => Number(s.replace(/,/g, ""));
+
+/** "500 orders ... $6 each" -> 3000; otherwise the largest dollar amount mentioned. */
+export function parseExposure(text: string): number | null {
+  const count = text.match(/(\d[\d,]*)\s*(?:orders|customers|deliveries|cars|people|tickets|covers|sales)/i);
+  const each = text.match(/\$\s*(\d[\d,]*(?:\.\d+)?)\s*(?:off|each|discount|per|back)/i) ?? text.match(/(?:discount|off)[^$]{0,20}\$\s*(\d[\d,]*(?:\.\d+)?)/i);
+  if (count && each) return num(count[1]) * num(each[1]);
+  const dollars = [...text.matchAll(/\$\s*(\d[\d,]*(?:\.\d+)?)/g)].map((m) => num(m[1]));
+  return dollars.length ? Math.max(...dollars) : null;
+}
+
+const COMMODITIES: { re: RegExp; ref: string; unit: "barrels" | "MMBtu" | "oz" | "lb" }[] = [
+  { re: /natural gas/i, ref: "Natural Gas", unit: "MMBtu" },
+  { re: /\bgold\b/i, ref: "Gold", unit: "oz" },
+  { re: /\bsilver\b/i, ref: "Silver", unit: "oz" },
+  { re: /\bcopper\b/i, ref: "Copper", unit: "lb" },
+  { re: /diesel|gasoline|jet fuel|\bfuel\b|\boil\b|\bgas\b/i, ref: "Brent", unit: "barrels" },
+];
+
+/** Which commodity and how many of its price units the business is exposed to. */
+export function parseCommodity(text: string): { ref: string; units: number | null } | null {
+  const c = COMMODITIES.find((x) => x.re.test(text));
+  if (!c) return null;
+  let units: number | null = null;
+  if (c.unit === "barrels") {
+    const gal = text.match(/(\d[\d,]*)\s*gallons?/i);
+    const bbl = text.match(/(\d[\d,]*)\s*barrels?/i);
+    units = gal ? num(gal[1]) / 42 : bbl ? num(bbl[1]) : null; // 42 gallons per barrel
+  } else if (c.unit === "oz") {
+    const oz = text.match(/(\d[\d,.]*)\s*(?:troy\s*)?(?:oz|ounces?)/i);
+    units = oz ? num(oz[1]) : null;
+  } else if (c.unit === "lb") {
+    const lb = text.match(/(\d[\d,]*)\s*(?:lbs?|pounds?)/i);
+    units = lb ? num(lb[1]) : null;
+  } else {
+    const mm = text.match(/(\d[\d,]*)\s*mmbtu/i);
+    units = mm ? num(mm[1]) : null;
+  }
+  return { ref: c.ref, units };
+}
+
+function endOfWindow(text: string, now: Date): string {
+  if (/end of (the )?month|this month|before month[- ]end/i.test(text)) {
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59)).toISOString();
+  }
+  return new Date(now.getTime() + 14 * 24 * 3600_000).toISOString();
+}
+
+/**
+ * The team whose win triggers the cost. When both teams are named ("If Indianapolis
+ * beats Houston"), prefer the one followed by beats/wins; otherwise the first one named.
+ */
+export function findTeam(text: string, games: { m: Market }[]): { m: Market; team: string } | null {
+  const esc = (x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const hits: { m: Market; team: string; at: number; wins: boolean }[] = [];
+  for (const g of games) {
+    for (const c of g.m.contracts) {
+      const m = new RegExp(`\\b${esc(c.label)}\\b`, "i").exec(text);
+      if (!m) continue;
+      const wins = new RegExp(`\\b${esc(c.label)}\\s+(?:beats?|wins?|takes|tops)\\b`, "i").test(text);
+      hits.push({ m: g.m, team: c.label, at: m.index, wins });
+    }
+  }
+  if (!hits.length) return null;
+  const best = hits.find((h) => h.wins) ?? hits.sort((a, b) => a.at - b.at)[0];
+  return { m: best.m, team: best.team };
+}
+
+export interface FallbackResult {
+  profile: RiskProfile;
+  followUps: string[];
+  analysis: Analysis;
+}
+
+const noAI = {} as AIProvider; // price risks never call the AI in analyzeRisk
+
+export async function fallbackAnalyze(text: string, venue: VenueAdapter, now = new Date()): Promise<FallbackResult | null> {
+  const exposure = parseExposure(text);
+  const range = (v: number) => ({ low: Math.round(v * 0.8), expected: Math.round(v), high: Math.round(v * 1.2) });
+
+  // Rising costs first: "fuel" etc. are unambiguous.
+  const commodity = parseCommodity(text);
+  if (commodity && !/\bwins?\b|\bbeats?\b/i.test(text)) {
+    if (!commodity.units) return null; // can't size without "how much"
+    const profile: RiskProfile = {
+      id: `biz-${now.getTime()}`,
+      segment: "business",
+      kind: "price_rise",
+      underlying: { type: "commodity", ref: commodity.ref },
+      condition: `${commodity.ref === "Brent" ? "Fuel" : commodity.ref} prices rise`,
+      exposureUsd: range(exposure ?? 0),
+      window: { start: now.toISOString(), end: endOfWindow(text, now) },
+      source: "conversation",
+      notes: commodity.ref === "Brent" ? `${Math.round(commodity.units)} barrels-equivalent (42 gallons each); oil as a stand-in for fuel.` : undefined,
+      position: { asset: commodity.ref, quantity: commodity.units, spotPrice: 0 },
+    };
+    const analysis = await analyzeRisk(profile, { venue, ai: noAI, now });
+    return { profile, followUps: [], analysis };
+  }
+
+  // Game-day promos.
+  const games = await upcomingGames(venue);
+  const hit = findTeam(text, games);
+  if (!hit || !exposure) return null;
+  const contract = hit.m.contracts.find((c) => c.label === hit.team)!;
+  const profile: RiskProfile = {
+    id: `biz-${now.getTime()}`,
+    segment: "business",
+    kind: "event_trigger",
+    underlying: { type: "sports", ref: hit.m.title },
+    condition: `${hit.team} wins`,
+    exposureUsd: range(exposure),
+    window: { start: now.toISOString(), end: hit.m.expiry },
+    source: "conversation",
+    notes: `Cost estimated from your description; turnout ±20%.`,
+  };
+  return {
+    profile,
+    followUps: [],
+    analysis: {
+      type: "event",
+      matches: [
+        {
+          symbol: contract.symbol,
+          outcome: "yes",
+          quality: "exact",
+          rationale: `Pays out if ${hit.team} wins ${hit.m.title}, the same trigger you described.`,
+          ruleMismatches: ["Read the contract rules for overtime, postponement and cancellation before approving."],
+          contract,
+        },
+      ],
+    },
+  };
+}

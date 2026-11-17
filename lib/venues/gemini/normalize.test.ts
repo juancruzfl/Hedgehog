@@ -48,3 +48,14 @@ describe("toMarkets", () => {
     expect(r.totalCost).toBeGreaterThan(0);
   });
 });
+
+describe("order id precision", () => {
+  it("keeps 18-digit order ids exact when parsing responses", async () => {
+    const { parseKeepingIds } = await import("./client");
+    const body = parseKeepingIds('{"orderId":145853902320789950,"status":"open","quantity":"1"}') as { orderId: string };
+    expect(body.orderId).toBe("145853902320789950");
+    // Plain JSON.parse rounds to the nearest double: ...789953 comes back as ...789952.
+    expect(String(BigInt(JSON.parse('{"orderId":145853902320789953}').orderId))).not.toBe("145853902320789953");
+    expect((parseKeepingIds('{"orderId":145853902320789953}') as { orderId: string }).orderId).toBe("145853902320789953");
+  });
+});

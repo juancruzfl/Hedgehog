@@ -10,7 +10,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "collect": "tsx --env-file-if-exists=.env.local scripts/collect-odds.ts",
-    "ai:check": "tsx --env-file-if-exists=.env.local scripts/ai-check.ts"
+    "ai:check": "tsx --env-file-if-exists=.env.local scripts/ai-check.ts",
+    "demo:check": "tsx --env-file-if-exists=.env.local scripts/demo-check.ts"
   },
   "dependencies": {
     "next": "15.5.29",

@@ -3,7 +3,8 @@
 export const BUSINESS_EXAMPLES = [
   {
     label: "Game-day promo",
-    text: "I run a sports bar in Indianapolis. If the Colts beat Houston on Thursday night, wings are half price all night. We usually sell about 500 orders and the discount is $6 each.",
+    // Fallback only: the business page swaps in the next real game from Gemini.
+    text: "I run a sports bar. If the home team wins this Sunday, wings are half price all night. We usually sell about 500 orders and the discount is $6 each.",
   },
   {
     label: "Fuel costs",
