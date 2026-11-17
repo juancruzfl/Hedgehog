@@ -121,7 +121,7 @@ export function HoldingsPanel({
               setTab(t.id);
               setMessage(null);
             }}
-            className={`flex-1 rounded-md px-3 py-1.5 ${tab === t.id ? "bg-surface font-medium shadow-sm" : "text-text-2"}`}
+            className={`flex-1 rounded-md px-3 py-1.5 ${tab === t.id ? "bg-surface font-medium ring-1 ring-border" : "text-text-2"}`}
           >
             {t.label}
           </button>

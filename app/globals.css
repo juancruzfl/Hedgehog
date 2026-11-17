@@ -1,33 +1,33 @@
 @import "tailwindcss";
 
 /*
- * Hedgehog theme: dark, dense market-board layout with bold, high-contrast type
- * and a cyan accent. One selected dark palette (the app is dark-only).
+ * Hedgehog theme: off-white, dense market-board layout with bold type and a deep
+ * teal accent. Flat colors only (no gradients).
  */
 :root {
-  color-scheme: dark;
-  --background: #0b0f15;
-  --surface: #121821;
-  --surface-2: #19212c;
-  --border: #232d3a;
-  --text: #edf2f8;
-  --text-2: #9fabba;
-  --text-3: #6b7787;
-  --accent: #2fd0ef;       /* cyan: primary action, hedged line */
-  --accent-ink: #04131a;   /* text on accent */
-  --accent-soft: rgba(47, 208, 239, 0.12);
-  --neutral-series: #7c8796;
-  --grid: #1e2732;
-  --good: #3fcf8e;
-  --good-soft: rgba(63, 207, 142, 0.12);
-  --warn: #f2b84b;
-  --warn-bg: rgba(242, 184, 75, 0.12);
-  --bad: #f2645a;
-  --bad-soft: rgba(242, 100, 90, 0.12);
-  /* categorical chart slots (validated for this surface) */
-  --series-1: #3987e5;
-  --series-2: #d95926;
-  --series-3: #199e70;
+  color-scheme: light;
+  --background: #f6f5f1;   /* off-white page */
+  --surface: #fffefb;      /* cards */
+  --surface-2: #efede7;    /* chips, tracks, inactive tabs */
+  --border: #e3e0d8;
+  --text: #15181d;
+  --text-2: #565d69;
+  --text-3: #6c737e;
+  --accent: #0e7490;       /* deep teal: primary action, hedged line */
+  --accent-ink: #ffffff;   /* text on accent */
+  --accent-soft: #e2f0f3;
+  --neutral-series: #9aa0a8;
+  --grid: #ebe8e1;
+  --good: #137a47;
+  --good-soft: #e3f2e9;
+  --warn: #8f5f00;
+  --warn-bg: #faf0d9;
+  --bad: #c0392f;
+  --bad-soft: #f9e5e3;
+  /* categorical chart slots (validated light palette) */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
 }
 
 @theme inline {

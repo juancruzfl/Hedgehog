@@ -251,7 +251,7 @@ export function BusinessFlow() {
               <span className="text-text-2">Size it for</span>
               <div className="mt-1 flex gap-1 rounded-lg bg-background p-1">
                 {(["low", "expected", "high"] as const).map((k) => (
-                  <button key={k} onClick={() => setSizeTo(k)} className={`flex-1 rounded-md px-2 py-1 ${sizeTo === k ? "bg-surface font-medium shadow-sm" : "text-text-2"}`}>
+                  <button key={k} onClick={() => setSizeTo(k)} className={`flex-1 rounded-md px-2 py-1 ${sizeTo === k ? "bg-surface font-medium ring-1 ring-border" : "text-text-2"}`}>
                     {k === "expected" ? "Expected" : k === "low" ? "Low estimate" : "High estimate"} ({usd(profile.exposureUsd[k], 0)})
                   </button>
                 ))}

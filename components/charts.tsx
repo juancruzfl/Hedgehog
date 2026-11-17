@@ -27,7 +27,7 @@ const axisTick = { fill: C.text3, fontSize: 11 };
 
 function TooltipBox({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-border bg-surface px-3 py-2 text-xs shadow-sm" style={{ color: "var(--text)" }}>
+    <div className="rounded-lg border border-border bg-surface px-3 py-2 text-xs" style={{ color: "var(--text)" }}>
       {children}
     </div>
   );
@@ -39,7 +39,8 @@ export function OddsSparkline({ data, wide = false }: { data: { ts: number; prob
     <div className={wide ? "h-12 w-full" : "h-12 w-32"}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
-          <YAxis hide domain={[0, "dataMax"]} />
+          {/* Floor the scale at 10 pts so a 1-pt wiggle on a 6% market doesn't look like a spike. */}
+          <YAxis hide domain={[0, (max: number) => Math.max(max * 1.3, 0.1)]} />
           <XAxis hide dataKey="ts" type="number" domain={["dataMin", "dataMax"]} />
           <Tooltip
             cursor={{ stroke: C.text3, strokeWidth: 1 }}
@@ -226,7 +227,7 @@ export function OddsHistoryChart({ series, title }: { series: OddsSeries[]; titl
   );
 }
 
-/** Single-series odds over time as a soft area (featured market). The heading names the series. */
+/** Single-series odds over time as a flat-filled area (featured market). The heading names the series. */
 export function OddsAreaChart({ data, height = 220 }: { data: { ts: number; p: number }[]; height?: number }) {
   const maxVal = Math.max(0.01, ...data.map((d) => d.p));
   const step = [0.02, 0.05, 0.1, 0.2, 0.25].find((st) => Math.ceil((maxVal + 0.01) / st) <= 5) ?? 0.25;
@@ -239,12 +240,6 @@ export function OddsAreaChart({ data, height = 220 }: { data: { ts: number; p: n
     <div style={{ height }} className="w-full">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-          <defs>
-            <linearGradient id="oddsFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--accent)" stopOpacity={0.28} />
-              <stop offset="100%" stopColor="var(--accent)" stopOpacity={0} />
-            </linearGradient>
-          </defs>
           <CartesianGrid stroke={C.grid} vertical={false} />
           <XAxis dataKey="ts" type="number" scale="time" domain={["dataMin", "dataMax"]} tick={axisTick} tickFormatter={fmt} stroke={C.grid} minTickGap={48} />
           <YAxis orientation="right" tick={axisTick} tickFormatter={(v) => pct(v)} stroke={C.grid} width={40} domain={[0, top]} ticks={ticks} />
@@ -261,7 +256,7 @@ export function OddsAreaChart({ data, height = 220 }: { data: { ts: number; p: n
               );
             }}
           />
-          <Area type="monotone" dataKey="p" stroke="var(--accent)" strokeWidth={2} fill="url(#oddsFill)" isAnimationActive={false} activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface)" }} />
+          <Area type="monotone" dataKey="p" stroke="var(--accent)" strokeWidth={2} fill="var(--accent-soft)" fillOpacity={1} isAnimationActive={false} activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface)" }} />
         </AreaChart>
       </ResponsiveContainer>
     </div>
