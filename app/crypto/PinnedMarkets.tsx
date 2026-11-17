@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { CoinIcon } from "@/components/CoinIcon";
 import { ForecastCard, type FAsset, type FHorizon } from "./ForecastCard";
 
 const NAV = 72; // sticky offset below the site header (px)
 const SEG_VH = 60; // scroll distance per market (vh)
+const MIN_SCALE = 0.75; // below this, a card scrolls inside instead of shrinking further
+const HINT = 28; // room for the "1 of 3" line under the card (px)
 
 function useMedia(query: string) {
   const [match, setMatch] = useState(false);
@@ -26,12 +28,40 @@ function useMedia(query: string) {
  * pinned card wouldn't fit) or with a single coin, it's a normal list.
  */
 export function PinnedMarkets({ forecasts, asOf, onProtect }: { forecasts: FAsset[]; asOf: number; onProtect: (f: FAsset, h: FHorizon) => void }) {
-  const roomy = useMedia("(min-width: 768px) and (min-height: 760px)");
+  // Laptop windows are often only ~600-700px tall, so the swap runs from 500px up;
+  // cards are scaled to fit the space instead of requiring a tall window.
+  const roomy = useMedia("(min-width: 768px) and (min-height: 500px)");
   const reduceMotion = useMedia("(prefers-reduced-motion: reduce)");
   const pinned = roomy && forecasts.length > 1;
   const n = forecasts.length;
   const wrap = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
+  const stage = useRef<HTMLDivElement>(null);
+  const inner = useRef(new Map<string, HTMLDivElement>());
+  const [fit, setFit] = useState<Record<string, { scale: number; maxH: number }>>({});
+
+  // Scale each card so it fits the pinned stage (never below MIN_SCALE; past that it scrolls).
+  useLayoutEffect(() => {
+    if (!pinned) return;
+    const measure = () => {
+      const st = stage.current;
+      if (!st) return;
+      const pad = parseFloat(getComputedStyle(st).paddingTop) || 0;
+      const avail = st.clientHeight - pad - HINT;
+      const next: Record<string, { scale: number; maxH: number }> = {};
+      inner.current.forEach((el, key) => {
+        const natural = el.scrollHeight;
+        const scale = Math.max(MIN_SCALE, Math.min(1, avail / natural));
+        next[key] = { scale, maxH: avail / scale };
+      });
+      setFit(next);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    inner.current.forEach((el) => ro.observe(el));
+    if (stage.current) ro.observe(stage.current);
+    return () => ro.disconnect();
+  }, [pinned, n]);
 
   const seg = () => (window.innerHeight * SEG_VH) / 100;
 
@@ -86,7 +116,7 @@ export function PinnedMarkets({ forecasts, asOf, onProtect }: { forecasts: FAsse
 
       <div className="sticky flex gap-4" style={{ top: NAV, height: `calc(100vh - ${NAV + 16}px)` }}>
         {/* Which coin you're on */}
-        <nav aria-label="Your coins" className="flex w-16 shrink-0 flex-col items-center gap-3 pt-[6vh]">
+        <nav aria-label="Your coins" className="flex w-16 shrink-0 flex-col items-center gap-3 pt-[4vh]">
           {forecasts.map((f, i) => (
             <button
               key={f.asset}
@@ -105,7 +135,7 @@ export function PinnedMarkets({ forecasts, asOf, onProtect }: { forecasts: FAsse
 
         {/* The stage: every card occupies the same spot; only the current one shows */}
         {/* Cards share one top edge so the swap happens exactly in place. */}
-        <div className="relative grid min-w-0 flex-1 items-start pt-[6vh]">
+        <div ref={stage} className="relative grid min-w-0 flex-1 items-start pt-[4vh]">
           {forecasts.map((f, i) => {
             const state = i === current ? "now" : i < current ? "past" : "next";
             return (
@@ -113,15 +143,23 @@ export function PinnedMarkets({ forecasts, asOf, onProtect }: { forecasts: FAsse
                 key={f.asset}
                 inert={state !== "now"}
                 aria-hidden={state !== "now"}
-                className={`[grid-area:1/1] max-h-full overflow-y-auto rounded-2xl transition duration-500 ease-out motion-reduce:transition-none ${
+                style={{ scale: fit[f.asset]?.scale ?? 1, transformOrigin: "top center", maxHeight: fit[f.asset]?.maxH }}
+                className={`[grid-area:1/1] overflow-y-auto rounded-2xl transition-[translate,opacity] duration-500 ease-out motion-reduce:transition-none ${
                   state === "now" ? "translate-y-0 opacity-100" : state === "past" ? "pointer-events-none -translate-y-16 opacity-0" : "pointer-events-none translate-y-16 opacity-0"
                 }`}
               >
-                <ForecastCard f={f} asOf={asOf} onProtect={(h) => onProtect(f, h)} />
+                <div
+                  ref={(el) => {
+                    if (el) inner.current.set(f.asset, el);
+                    else inner.current.delete(f.asset);
+                  }}
+                >
+                  <ForecastCard f={f} asOf={asOf} onProtect={(h) => onProtect(f, h)} />
+                </div>
               </div>
             );
           })}
-          <p className="pointer-events-none absolute -bottom-1 left-0 right-0 text-center text-xs text-text-3">
+          <p className="pointer-events-none absolute bottom-1 left-0 right-0 text-center text-xs text-text-3">
             {current < n - 1 ? `${current + 1} of ${n} · scroll for ${forecasts[current + 1].asset} ↓` : `${n} of ${n}`}
           </p>
         </div>
