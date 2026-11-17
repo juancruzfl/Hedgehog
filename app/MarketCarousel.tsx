@@ -119,7 +119,6 @@ export function MarketCarousel({ cards }: { cards: BoardCard[] }) {
   const featured = pickFeatured(cards);
   const [i, setI] = useState(0);
   const [hovering, setHovering] = useState(false);
-  const [userPaused, setUserPaused] = useState(false);
   const [activeWidget, setActiveWidget] = useState<string | null>(null);
   const [reduceMotion, setReduceMotion] = useState(false);
 
@@ -131,7 +130,7 @@ export function MarketCarousel({ cards }: { cards: BoardCard[] }) {
     return () => mq.removeEventListener("change", on);
   }, []);
 
-  const paused = hovering || userPaused || reduceMotion;
+  const paused = hovering || reduceMotion;
 
   // Rotate to the next market every SLIDE_MS unless the user is hovering/focusing or paused it.
   useEffect(() => {
@@ -215,22 +214,9 @@ export function MarketCarousel({ cards }: { cards: BoardCard[] }) {
           </div>
         </div>
 
-        {/* Required stop control for auto-moving content; kept small and out of the way. */}
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <p className="text-xs text-text-3">
-            Live Gemini market: &ldquo;{m.marketName}&rdquo;. Example amounts; your numbers depend on your own costs.
-          </p>
-          <button
-            onClick={() => setUserPaused((v) => !v)}
-            aria-label={userPaused ? "Resume rotating markets" : "Pause rotating markets"}
-            className="flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1 text-xs text-text-3 hover:text-text"
-          >
-            <svg viewBox="0 0 16 16" className="h-3 w-3" fill="currentColor" aria-hidden>
-              {userPaused ? <path d="M4 2.5v11l9-5.5z" /> : <path d="M4 2h3v12H4zM9 2h3v12H9z" />}
-            </svg>
-            {userPaused ? "Play" : "Pause"}
-          </button>
-        </div>
+        <p className="mt-3 text-xs text-text-3">
+          Live Gemini market: &ldquo;{m.marketName}&rdquo;. Example amounts; your numbers depend on your own costs.
+        </p>
       </div>
     </section>
   );
