@@ -8,7 +8,7 @@ import type { AIProvider } from "@/lib/ai/types";
 import { upcomingGames } from "@/lib/landing/board";
 import type { Market, RiskProfile } from "@/lib/types";
 import type { VenueAdapter } from "@/lib/venues/types";
-import { analyzeRisk, type Analysis, type OnStep } from "./analyze";
+import { analyzeRisk, type Analysis, type EventMatch, type OnStep } from "./analyze";
 
 const num = (s: string) => Number(s.replace(/,/g, ""));
 
@@ -119,7 +119,12 @@ export async function fallbackAnalyze(text: string, venue: VenueAdapter, now = n
   if (!hit || !exposure) return null;
   onStep({ step: "understand", status: "done", detail: `${hit.team} wins · costs you about $${Math.round(exposure).toLocaleString()}` });
   onStep({ step: "search", status: "done", detail: `${games.length} upcoming games checked · found ${hit.m.title}` });
-  onStep({ step: "match", status: "done", detail: "1 option · exact match on the game result" });
+  const related = await relatedGameOptions(venue, hit.m, hit.team);
+  onStep({
+    step: "match",
+    status: "done",
+    detail: `${1 + related.length} option${related.length ? "s" : ""} · 1 exact match on the game result${related.length ? ` · ${related.length} partial` : ""}`,
+  });
   const contract = hit.m.contracts.find((c) => c.label === hit.team)!;
   const profile: RiskProfile = {
     id: `biz-${now.getTime()}`,
@@ -143,11 +148,60 @@ export async function fallbackAnalyze(text: string, venue: VenueAdapter, now = n
           symbol: contract.symbol,
           outcome: "yes",
           quality: "exact",
-          rationale: `Pays out if ${hit.team} wins ${hit.m.title}, the same trigger you described.`,
+          rationale: `Pays out if ${hit.team} beats ${hit.m.contracts.find((c) => c.label !== hit.team)?.label ?? "their opponent"}, the same thing that triggers your promo.`,
           ruleMismatches: ["Read the contract rules for overtime, postponement and cancellation before approving."],
           contract,
         },
+        ...related,
       ],
     },
   };
+}
+
+const pointsIn = (label: string, re: RegExp) => Number(label.match(re)?.[1] ?? NaN);
+
+/**
+ * Other markets on the same game that partly line up with "if <team> wins": the point
+ * spread (a narrow win doesn't pay) and the team's points total (correlated, not the same).
+ */
+async function relatedGameOptions(venue: VenueAdapter, game: Market, team: string) {
+  const prefix = game.id.replace(/-M$/, "-");
+  const markets = (await venue.listMarkets({ category: ["Sports"], sport: ["american_football"], search: team, limit: 50 }).catch(() => [])).filter(
+    (m) => m.id.startsWith(prefix) && m.id !== game.id,
+  );
+  const priced = (m: Market | undefined, starts: string) =>
+    (m?.contracts ?? []).filter((c) => c.tradable && c.quote.yesAsk !== null && c.label.startsWith(starts));
+  const out: EventMatch[] = [];
+
+  const spread = priced(markets.find((m) => m.id === `${prefix}S`), `${team} wins by more than`).sort(
+    (a, b) => pointsIn(a.label, /more than ([\d.]+)/) - pointsIn(b.label, /more than ([\d.]+)/),
+  )[0];
+  if (spread) {
+    const pts = pointsIn(spread.label, /more than ([\d.]+)/);
+    out.push({
+      symbol: spread.symbol,
+      outcome: "yes",
+      quality: "proxy",
+      rationale: `Pays if ${team} wins by more than ${pts} points. That covers most ${team} wins, but not a very close one.`,
+      ruleMismatches: [`If ${team} wins by ${Math.floor(pts)} point${Math.floor(pts) === 1 ? "" : "s"} or fewer, your promo still runs but this doesn't pay.`],
+      contract: spread,
+    });
+  }
+
+  const totals = priced(markets.find((m) => m.id === `${prefix}TT`), `${team} scores more than`).sort(
+    (a, b) => pointsIn(a.label, /more than ([\d.]+)/) - pointsIn(b.label, /more than ([\d.]+)/),
+  );
+  const total = totals[Math.floor(totals.length / 2)];
+  if (total) {
+    const pts = pointsIn(total.label, /more than ([\d.]+)/);
+    out.push({
+      symbol: total.symbol,
+      outcome: "yes",
+      quality: "proxy",
+      rationale: `Pays if ${team} scores more than ${pts} points. A team that scores a lot usually wins, but it's not the same event.`,
+      ruleMismatches: [`${team} can score more than ${pts} and still lose, or win while scoring less, so this can pay when your promo doesn't run, or miss when it does.`],
+      contract: total,
+    });
+  }
+  return out;
 }

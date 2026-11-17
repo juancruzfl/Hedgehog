@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
-import { aiErrorMessage, getAI } from "@/lib/ai";
+import { aiErrorMessage, aiOff, getAI } from "@/lib/ai";
 import { analyzeRisk, type StepEvent } from "@/lib/business/analyze";
 import { fallbackAnalyze } from "@/lib/business/fallback";
 import { shortDate, usd } from "@/lib/format";
@@ -51,11 +51,12 @@ export async function POST(req: NextRequest) {
       }
 
       // AI unavailable: basic matcher for the common cases.
-      step({ step: "understand", status: "active", detail: "AI assistant unavailable · using Hedgehog's basic matcher" });
+      const off = aiOff();
+      step({ step: "understand", status: "active", detail: off ? "AI turned off for testing · using Hedgehog's basic matcher" : "AI assistant unavailable · using Hedgehog's basic matcher" });
       try {
         const fb = await fallbackAnalyze(text, venue, new Date(), step);
         if (fb) {
-          send({ type: "result", ...fb, fallback: true });
+          send({ type: "result", ...fb, fallback: off ? "off" : true });
           return controller.close();
         }
       } catch {
@@ -65,7 +66,9 @@ export async function POST(req: NextRequest) {
       step({ step: "understand", status: "error", detail: "Couldn't read this one without the AI assistant" });
       send({
         type: "error",
-        error: "Our AI assistant is unavailable right now, and Hedgehog's basic matcher can't handle this one. It covers game-day promos and fuel or metal costs. Try one of the examples.",
+        error: off
+          ? "AI is turned off for testing (AI_MODE=off), and the basic matcher can't handle this one. It covers game-day promos and fuel or metal costs. Try one of those examples, or remove AI_MODE=off."
+          : "Our AI assistant is unavailable right now, and Hedgehog's basic matcher can't handle this one. It covers game-day promos and fuel or metal costs. Try one of the examples.",
       });
       controller.close();
     },

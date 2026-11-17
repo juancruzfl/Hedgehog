@@ -33,7 +33,7 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<RiskProfile | null>(null);
   const [followUps, setFollowUps] = useState<string[]>([]);
-  const [usedFallback, setUsedFallback] = useState(false);
+  const [usedFallback, setUsedFallback] = useState<false | true | "off">(false);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   // Per-option pricing for the cards: undefined = loading, null = can't be priced.
   const [priced, setPriced] = useState<(SizeResponse | null | undefined)[]>([]);
@@ -60,7 +60,7 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
     setSized(null);
     setUsedFallback(false);
 
-    let result: { profile: RiskProfile; followUps: string[]; analysis: Analysis; fallback?: boolean } | null = null;
+    let result: { profile: RiskProfile; followUps: string[]; analysis: Analysis; fallback?: boolean | "off" } | null = null;
     try {
       const res = await fetch("/api/business/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
       if (!res.body) throw new Error("No response from the server.");
@@ -91,7 +91,7 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
 
     setProfile(result.profile);
     setFollowUps(result.followUps);
-    setUsedFallback(Boolean(result.fallback));
+    setUsedFallback(result.fallback === "off" ? "off" : Boolean(result.fallback));
     setAnalysis(result.analysis);
     await priceOptions(result.profile, result.analysis, true);
     setPhase("results");
@@ -298,7 +298,13 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
           Edit risk
         </button>
       </div>
-      {usedFallback && <p className="mt-2 text-xs text-warn">Our AI assistant was unavailable, so Hedgehog used its basic matcher. Double-check the details.</p>}
+      {usedFallback && (
+        <p className="mt-2 text-xs text-warn">
+          {usedFallback === "off"
+            ? "Test mode: AI is turned off (AI_MODE=off), so Hedgehog used its basic matcher."
+            : "Our AI assistant was unavailable, so Hedgehog used its basic matcher. Double-check the details."}
+        </p>
+      )}
     </div>
   );
 
