@@ -1,8 +1,13 @@
-// Flat coin icons (no gradients). Unknown assets fall back to a lettered circle.
+// Coin icons. Flat except Solana, whose brand mark is a purple-to-green gradient.
+// Unknown assets fall back to a lettered circle.
+
+import { useId } from "react";
 
 const SIZE = { sm: "h-6 w-6", md: "h-10 w-10", lg: "h-12 w-12" } as const;
 
 export function CoinIcon({ asset, size = "md", className = "" }: { asset: string; size?: keyof typeof SIZE; className?: string }) {
+  // Unique per instance so several SOL icons on one page don't share a gradient id.
+  const gradId = `sol-${useId().replace(/:/g, "")}`;
   const cls = `${SIZE[size]} shrink-0 ${className}`;
   switch (asset.toUpperCase()) {
     case "BTC":
@@ -30,10 +35,17 @@ export function CoinIcon({ asset, size = "md", className = "" }: { asset: string
     case "SOL":
       return (
         <svg viewBox="0 0 32 32" className={cls} role="img" aria-label="Solana">
-          <circle cx="16" cy="16" r="16" fill="#9945FF" />
-          <path fill="#fff" d="M10.2 19.8a.6.6 0 0 1 .4-.2h12.6c.3 0 .4.3.2.5l-2.4 2.5a.6.6 0 0 1-.4.2H8c-.3 0-.4-.3-.2-.5z" />
-          <path fill="#fff" d="M10.2 9.2a.6.6 0 0 1 .4-.2h12.6c.3 0 .4.3.2.5L21 12a.6.6 0 0 1-.4.2H8c-.3 0-.4-.3-.2-.5z" />
-          <path fill="#fff" d="M21 14.5a.6.6 0 0 0-.4-.2H8c-.3 0-.4.3-.2.5l2.4 2.5c.1.1.3.2.4.2h12.6c.3 0 .4-.3.2-.5z" />
+          <defs>
+            {/* Solana brand gradient: purple (bottom-left) to green (top-right) */}
+            <linearGradient id={gradId} x1="8" y1="23" x2="24" y2="9" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stopColor="#9945FF" />
+              <stop offset="1" stopColor="#14F195" />
+            </linearGradient>
+          </defs>
+          <circle cx="16" cy="16" r="16" fill="#000" />
+          <path fill={`url(#${gradId})`} d="M10.2 19.8a.6.6 0 0 1 .4-.2h12.6c.3 0 .4.3.2.5l-2.4 2.5a.6.6 0 0 1-.4.2H8c-.3 0-.4-.3-.2-.5z" />
+          <path fill={`url(#${gradId})`} d="M10.2 9.2a.6.6 0 0 1 .4-.2h12.6c.3 0 .4.3.2.5L21 12a.6.6 0 0 1-.4.2H8c-.3 0-.4-.3-.2-.5z" />
+          <path fill={`url(#${gradId})`} d="M21 14.5a.6.6 0 0 0-.4-.2H8c-.3 0-.4.3-.2.5l2.4 2.5c.1.1.3.2.4.2h12.6c.3 0 .4-.3.2-.5z" />
         </svg>
       );
     case "XRP":
