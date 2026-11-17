@@ -19,6 +19,7 @@ function loadHoldings(): Holding[] {
 export function CryptoFlow() {
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [forecasts, setForecasts] = useState<FAsset[] | null>(null);
+  const [asOf, setAsOf] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [building, setBuilding] = useState<{ asset: string; quantity: number; marketId: string } | null>(null);
@@ -53,6 +54,7 @@ export function CryptoFlow() {
         const body = await r.json();
         if (!r.ok) throw new Error(body.error);
         setForecasts(body.forecasts);
+        setAsOf(new Date(body.asOf).getTime());
       })
       .catch((e) => e.name !== "AbortError" && setError(e.message))
       .finally(() => setLoading(false));
@@ -76,7 +78,7 @@ export function CryptoFlow() {
             {loading && <span className="text-sm text-text-3">Updating…</span>}
           </div>
           {error && <p className="text-sm text-bad">{error}</p>}
-          {forecasts?.map((f) => <ForecastCard key={f.asset} f={f} onProtect={(h) => protect(f, h)} />)}
+          {forecasts?.map((f) => <ForecastCard key={f.asset} f={f} asOf={asOf} onProtect={(h) => protect(f, h)} />)}
         </section>
       )}
 

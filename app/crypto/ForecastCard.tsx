@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { OddsSparkline } from "@/components/charts";
+import { OddsHistoryChart, OddsSparkline } from "@/components/charts";
 import type { AssetForecast, ForecastHorizon, ForecastPoint } from "@/lib/forecast/forecast";
 import { dateTime, pct, qty, shortDate, timeUntil, usd } from "@/lib/format";
 
@@ -24,9 +24,10 @@ function Change({ change }: { change: FPoint["change"] }) {
   );
 }
 
-export function ForecastCard({ f, onProtect }: { f: FAsset; onProtect: (horizon: FHorizon) => void }) {
+export function ForecastCard({ f, asOf, onProtect }: { f: FAsset; asOf: number; onProtect: (horizon: FHorizon) => void }) {
   // Default to the middle horizon (about a week out): the most useful planning window.
   const [hi, setHi] = useState(Math.min(1, f.horizons.length - 1));
+  const [showHistory, setShowHistory] = useState(false);
   const h = f.horizons[hi];
 
   if (!h) {
@@ -96,6 +97,26 @@ export function ForecastCard({ f, onProtect }: { f: FAsset; onProtect: (horizon:
           ))}
         </tbody>
       </table>
+
+      {h.points.some((p) => p.history.length >= 3) && (
+        <div className="mt-3">
+          <button onClick={() => setShowHistory((v) => !v)} className="text-sm text-accent" aria-expanded={showHistory}>
+            {showHistory ? "Hide" : "See"} how the odds have moved
+          </button>
+          {showHistory && (
+            <div className="mt-3 rounded-xl border border-border p-4">
+              <OddsHistoryChart
+                title={`Chance ${f.asset} ends below each price on ${shortDate(h.expiry)}`}
+                series={h.points.map((p) => ({
+                  key: p.symbol,
+                  label: `Below ${usd(p.strike)}`,
+                  data: [...p.history, { ts: asOf, probBelow: p.probBelow }], // end on the live value
+                }))}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <button onClick={() => onProtect(h)} className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink">

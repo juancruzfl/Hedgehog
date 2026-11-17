@@ -16,6 +16,9 @@
   --warn: #b26b00;
   --bad: #c43a39;
   --warn-bg: #fff6e5;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
 }
 @media (prefers-color-scheme: dark) {
   :root:where(:not([data-theme="light"])) {
@@ -33,6 +36,9 @@
     --warn: #e0a030;
     --bad: #e66767;
     --warn-bg: #2b2210;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
   }
 }
 
