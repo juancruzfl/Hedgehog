@@ -2,7 +2,6 @@
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { StepHeading } from "@/components/ui";
 import { combineHoldings, isHedgeable, type Holding } from "@/lib/holdings";
 import { ForecastCard, type FAsset, type FHorizon } from "./ForecastCard";
 import { useScrollFocus } from "./useScrollFocus";
@@ -152,10 +151,7 @@ export function CryptoFlow() {
       ) : (
         <>
           <section className="space-y-4">
-            <div className="flex items-start justify-between gap-3">
-              <StepHeading n={1} title="How likely is a drop?" sub="The odds come from live Gemini prediction markets, where people trade on where prices will end." />
-              {loading && <span className="shrink-0 pt-1 text-sm text-text-3">Updating…</span>}
-            </div>
+            {loading && forecasts && <p className="text-right text-sm text-text-3">Updating odds…</p>}
             {error && <p className="text-sm text-bad">{error}</p>}
             {!forecasts && !error && <div className="h-48 animate-pulse rounded-2xl border border-border bg-surface" aria-label="Loading odds" />}
             {forecasts?.map((f) => {

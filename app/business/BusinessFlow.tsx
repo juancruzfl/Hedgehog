@@ -122,7 +122,7 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
   return (
     <div className="space-y-6">
       <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
-        <StepHeading n={1} title="What's the risk?" sub="Describe it like you'd tell a friend: what happens, when, and roughly what it would cost you." />
+        <StepHeading title="What's the risk?" sub="Describe it like you'd tell a friend: what happens, when, and roughly what it would cost you." />
         <textarea
           id="risk"
           aria-label="Describe the risk"
@@ -157,7 +157,7 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
 
       {profile && analysis && (
         <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
-          <StepHeading n={2} title="Here's what we understood" sub="Fix anything that's off. The numbers below update as you type." />
+          <StepHeading title="Here's what we understood" sub="Fix anything that's off. The numbers below update as you type." />
           {usedFallback && (
             <p className="mt-3 rounded-xl bg-warn-bg px-4 py-3 text-sm">
               Our AI assistant is unavailable right now, so Hedgehog used its basic matcher. Double-check the details below.
@@ -225,7 +225,7 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
 
       {analysis?.type === "none" && (
         <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
-          <StepHeading n={3} title="No good match on Gemini right now" />
+          <StepHeading title="No good match on Gemini right now" />
           <p className="mt-1 text-sm text-text-2">{analysis.reason}</p>
           <p className="mt-2 text-sm text-text-2">
             Gemini currently lists sports, daily high temperatures in about 50 US cities, oil, natural gas, metals, and major crypto prices.
@@ -235,7 +235,7 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
 
       {analysis?.type === "event" && profile && (
         <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
-          <StepHeading n={3} title="The market that pays out" sub="Picked from live Gemini markets. Choose the one that best matches your risk." />
+          <StepHeading title="The market that pays out" sub="Picked from live Gemini markets. Choose the one that best matches your risk." />
           <div className="mt-4 space-y-2">
             {analysis.matches.map((m, i) => (
               <label key={m.symbol + m.outcome} className={`block cursor-pointer rounded-xl border p-4 text-sm transition ${i === choice ? "border-accent bg-accent-soft/40" : "border-border hover:border-text-3"}`}>
@@ -282,7 +282,7 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
 
       {analysis?.type === "price" && profile && (
         <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
-          <StepHeading n={3} title="The market that pays out" sub="A live Gemini price market that moves with your cost." />
+          <StepHeading title="The market that pays out" sub="A live Gemini price market that moves with your cost." />
           <div className="mt-4 rounded-xl border border-border p-4 text-sm">
             <p className="font-semibold">{analysis.marketTitle.replace("?", "")}</p>
             <p className="text-text-2">Market expects about {usd(analysis.spot)}</p>
@@ -323,7 +323,7 @@ function EventResult({ sized, profile, loading }: { sized: Extract<SizeResponse,
   const exposure = profile.exposureUsd.expected;
   return (
     <div className={`mt-6 border-t border-border pt-6 ${loading ? "opacity-60 transition-opacity" : ""}`}>
-      <StepHeading n={4} title="Your numbers" sub={`If ${lowerFirst(profile.condition)}, the market pays you. If not, you're out what you paid.`} />
+      <StepHeading title="Your numbers" sub={`If ${lowerFirst(profile.condition)}, the market pays you. If not, you're out what you paid.`} />
       <div className="mt-4 grid grid-cols-3 gap-2">
         <Stat label="You pay now" value={usd(p.totalCost)} note={`market prices it at ${pct(leg.limitPrice)}`} />
         <Stat label="If it happens, you get" value={usd(p.maxPayout)} note="paid by Gemini" />
@@ -391,7 +391,7 @@ function PriceResult({ sized, loading }: { sized: Extract<SizeResponse, { kind: 
   const first = p.legs[0].contract.strike!.value!;
   return (
     <div className={`mt-6 border-t border-border pt-6 ${loading ? "opacity-60 transition-opacity" : ""}`}>
-      <StepHeading n={4} title="Your numbers" sub={`Settles ${shortDate(sized.market.expiry)}. The payout grows the further the price ${rising ? "rises" : "falls"}.`} />
+      <StepHeading title="Your numbers" sub={`Settles ${shortDate(sized.market.expiry)}. The payout grows the further the price ${rising ? "rises" : "falls"}.`} />
       <div className="mt-4 grid grid-cols-3 gap-2">
         <Stat label="You pay now" value={usd(p.totalCost)} />
         <Stat label={`Starts paying ${rising ? "above" : "below"}`} value={usd(first, first >= 20 ? 0 : 2)} note={`${pos.asset} price`} />
