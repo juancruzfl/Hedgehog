@@ -14,7 +14,7 @@ export default async function BusinessPage() {
 
   return (
     // The title lives inside BusinessFlow: once a risk is analyzed, it becomes the title.
-    <main className="mx-auto max-w-4xl px-4 pb-10">
+    <main className="mx-auto max-w-6xl px-4 pb-10">
       <Suspense>
         <BusinessFlow examples={examples} />
       </Suspense>

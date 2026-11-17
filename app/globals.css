@@ -114,3 +114,7 @@ dialog::backdrop {
 @keyframes hh-swap-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 .hh-swap-in { animation: hh-swap-in 260ms ease-out both; }
 @media (prefers-reduced-motion: reduce) { .hh-swap-in { animation: none; } }
+
+/* Business page: steps and options fade in */
+.hh-fade-in { animation: hh-fade 500ms ease-out both; }
+@media (prefers-reduced-motion: reduce) { .hh-fade-in { animation: none; } }

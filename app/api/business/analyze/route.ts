@@ -5,6 +5,23 @@ import { analyzeRisk, type StepEvent } from "@/lib/business/analyze";
 import { fallbackAnalyze } from "@/lib/business/fallback";
 import { shortDate, usd } from "@/lib/format";
 import { getVenue } from "@/lib/venues";
+import { snapshotMarkets } from "@/lib/odds/collect";
+import { watchMarkets } from "@/lib/odds/store";
+
+/**
+ * Game markets aren't in the regularly collected categories, so start recording the ones
+ * we just showed (and take a first reading now) so their cards can show odds over time.
+ */
+function recordOdds(analysis: { type: string; matches?: { contract: { marketId: string } }[] }) {
+  if (analysis.type !== "event" || !analysis.matches) return;
+  const ids = [...new Set(analysis.matches.map((m) => m.contract.marketId))];
+  try {
+    watchMarkets(ids);
+    void snapshotMarkets(ids).catch(() => {});
+  } catch {
+    // History is a nice-to-have; never fail the analysis over it.
+  }
+}
 
 const Body = z.object({ text: z.string().trim().min(10).max(2000) });
 
@@ -44,6 +61,7 @@ export async function POST(req: NextRequest) {
           detail: `${profile.condition}${profile.exposureUsd.expected ? ` · costs you about ${usd(profile.exposureUsd.expected, 0)}` : ""} · by ${shortDate(profile.window.end)}`,
         });
         const analysis = await analyzeRisk(profile, { venue, ai, onStep: step });
+        recordOdds(analysis);
         send({ type: "result", profile, followUps, analysis });
         return controller.close();
       } catch (e) {
@@ -56,6 +74,7 @@ export async function POST(req: NextRequest) {
       try {
         const fb = await fallbackAnalyze(text, venue, new Date(), step);
         if (fb) {
+          recordOdds(fb.analysis);
           send({ type: "result", ...fb, fallback: off ? "off" : true });
           return controller.close();
         }

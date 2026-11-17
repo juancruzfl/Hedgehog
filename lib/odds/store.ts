@@ -46,6 +46,11 @@ export function oddsDb(): DatabaseSync {
       PRIMARY KEY (symbol, ts)
     );
     CREATE INDEX IF NOT EXISTS odds_market_ts ON odds (market_id, ts);
+    -- Markets outside the collected categories (e.g. a game) that someone looked at.
+    CREATE TABLE IF NOT EXISTS watch (
+      market_id TEXT PRIMARY KEY,
+      added_ts INTEGER NOT NULL
+    );
   `);
   return db;
 }
@@ -84,4 +89,18 @@ export function historyForSymbol(symbol: string, sinceMs = 0): OddsPoint[] {
        WHERE symbol = ? AND ts >= ? ORDER BY ts`,
     )
     .all(symbol, sinceMs) as unknown as OddsPoint[];
+}
+
+/** Start recording a market's odds on every snapshot (until it expires). */
+export function watchMarkets(ids: string[]): void {
+  const stmt = oddsDb().prepare(`INSERT OR IGNORE INTO watch (market_id, added_ts) VALUES (?, ?)`);
+  for (const id of ids) stmt.run(id, Date.now());
+}
+
+export function watchedMarketIds(): string[] {
+  return (oddsDb().prepare(`SELECT market_id AS id FROM watch`).all() as { id: string }[]).map((r) => r.id);
+}
+
+export function unwatchMarket(id: string): void {
+  oddsDb().prepare(`DELETE FROM watch WHERE market_id = ?`).run(id);
 }
