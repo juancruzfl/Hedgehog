@@ -1,8 +1,6 @@
 "use client";
 
 import {
-  Area,
-  AreaChart,
   CartesianGrid,
   Line,
   LineChart,
@@ -227,7 +225,6 @@ export function OddsHistoryChart({ series, title }: { series: OddsSeries[]; titl
   );
 }
 
-/** Single-series odds over time as a flat-filled area (featured market). The heading names the series. */
 export function OddsAreaChart({ data, height = 220 }: { data: { ts: number; p: number }[]; height?: number }) {
   const maxVal = Math.max(0.01, ...data.map((d) => d.p));
   const step = [0.02, 0.05, 0.1, 0.2, 0.25].find((st) => Math.ceil((maxVal + 0.01) / st) <= 5) ?? 0.25;

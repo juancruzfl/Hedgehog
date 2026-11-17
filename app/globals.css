@@ -60,3 +60,20 @@ body {
 input, select, textarea {
   color: var(--text);
 }
+
+/* Landing carousel motion */
+@keyframes hh-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes hh-slide-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+.hh-float { animation: hh-float 5s ease-in-out infinite; }
+.hh-slide-in { animation: hh-slide-in 450ms ease-out both; }
+.hh-paused .hh-float { animation-play-state: paused; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hh-float, .hh-slide-in { animation: none; }
+}
