@@ -1,0 +1,1998 @@
+{
+ "id": "462596",
+ "title": "Mississippi State vs UCF",
+ "slug": "mississippi-state-vs-ucf",
+ "type": "categorical",
+ "category": "Sports",
+ "ticker": "NCAAM-2611180000-MSST-UCF-M",
+ "status": "active",
+ "createdAt": "2026-11-15T00:08:12.616Z",
+ "contracts": [
+  {
+   "id": "462596-1151057",
+   "label": "Mississippi State",
+   "description": {
+    "data": {},
+    "content": [
+     {
+      "data": {},
+      "marks": [],
+      "value": "This market resolves to Yes if Mississippi State wins the men's college basketball game between Mississippi State and UCF originally scheduled for November 17, 2026 at 7:00 PM ET. Otherwise, it resolves to No. The Underlying is the official result of the specified sporting event. Source Agencies, in order, are the league governing the event, ESPN, Fox Sports, and the broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules.](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Win-Lose_Classdocx_893b1bbb-20f3-490c-81bb-650735bfb0f4.pdf)",
+      "nodeType": "text"
+     }
+    ],
+    "nodeType": "document"
+   },
+   "prices": {
+    "buy": {
+     "yes": "0.52",
+     "no": "0.49"
+    },
+    "sell": {
+     "yes": "0.51",
+     "no": "0.48"
+    },
+    "bestBid": "0.51",
+    "bestAsk": "0.52"
+   },
+   "status": "active",
+   "createdAt": "2026-11-15T00:08:12.616Z",
+   "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Win-Lose_Classdocx_893b1bbb-20f3-490c-81bb-650735bfb0f4.pdf",
+   "ticker": "MSST",
+   "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-M-MSST",
+   "marketState": "open",
+   "abbreviatedName": "MSST",
+   "color": "#660000",
+   "imageUrl": "https://assets.gemini.com/predictions/images/MississippiState_fd484570-e9e7-42c1-a90c-70d4d0fcbd47.png",
+   "expiryDate": "2026-11-20T00:00:00.000Z",
+   "effectiveDate": "2026-11-15T00:00:07.000Z",
+   "sortOrder": 1,
+   "sportsSide": "away",
+   "teamId": "a1ba4b89-d97c-44e2-835f-79ad3ccaa5ae",
+   "isCombo": false,
+   "quantityIncrement": "0.01",
+   "quantityMinimum": "0.01",
+   "priceIncrement": "0.01",
+   "quoteAssetPrecision": 2,
+   "priceMinimum": "0.01"
+  },
+  {
+   "id": "462596-1151059",
+   "label": "UCF",
+   "description": {
+    "data": {},
+    "content": [
+     {
+      "data": {},
+      "marks": [],
+      "value": "This market resolves to Yes if UCF wins the men's college basketball game between UCF and Mississippi State originally scheduled for November 17, 2026 at 7:00 PM ET. Otherwise, it resolves to No. The Underlying is the official result of the specified sporting event. Source Agencies, in order, are the league governing the event, ESPN, Fox Sports, and the broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules.](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Win-Lose_Classdocx_893b1bbb-20f3-490c-81bb-650735bfb0f4.pdf)",
+      "nodeType": "text"
+     }
+    ],
+    "nodeType": "document"
+   },
+   "prices": {
+    "buy": {
+     "yes": "0.49",
+     "no": "0.52"
+    },
+    "sell": {
+     "yes": "0.48",
+     "no": "0.51"
+    },
+    "bestBid": "0.48",
+    "bestAsk": "0.49",
+    "lastTradePrice": "0.5"
+   },
+   "status": "active",
+   "createdAt": "2026-11-15T00:08:12.616Z",
+   "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Win-Lose_Classdocx_893b1bbb-20f3-490c-81bb-650735bfb0f4.pdf",
+   "ticker": "UCF",
+   "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-M-UCF",
+   "marketState": "open",
+   "abbreviatedName": "UCF",
+   "color": "#000000",
+   "imageUrl": "https://assets.gemini.com/predictions/images/UCF_a6d155e8-cbe7-4779-9cc7-f79b444b1cda.png",
+   "expiryDate": "2026-11-20T00:00:00.000Z",
+   "effectiveDate": "2026-11-15T00:00:07.000Z",
+   "sortOrder": 2,
+   "sportsSide": "home",
+   "teamId": "054c3e85-0552-4549-b123-7e84af6e7b6c",
+   "isCombo": false,
+   "quantityIncrement": "0.01",
+   "quantityMinimum": "0.01",
+   "priceIncrement": "0.01",
+   "quoteAssetPrecision": 2,
+   "priceMinimum": "0.01"
+  }
+ ],
+ "effectiveDate": "2026-11-15T00:08:12.616Z",
+ "isLive": false,
+ "participants": [
+  {
+   "id": "812",
+   "name": "UCF Knights",
+   "abbreviation": "UCF",
+   "side": "home"
+  },
+  {
+   "id": "697",
+   "name": "Mississippi State Bulldogs",
+   "abbreviation": "MSST",
+   "side": "away"
+  }
+ ],
+ "description": "Mississippi State vs UCF",
+ "imageUrl": "https://assets.gemini.com/predictions/images/bb_f53a7e9b-c0fc-4a5c-a011-d0bf655f8263.avif",
+ "volume": "1031.88",
+ "volume24h": "1031.88",
+ "tags": [
+  "College Basketball"
+ ],
+ "expiryDate": "2026-11-20T00:00:00.000Z",
+ "startTime": "2026-11-18T00:00:00.000Z",
+ "termsLink": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Win-Lose_Classdocx_893b1bbb-20f3-490c-81bb-650735bfb0f4.pdf",
+ "subcategory": {
+  "id": 15,
+  "slug": "sports_college-basketball",
+  "name": "College Basketball",
+  "path": [
+   "Sports",
+   "College Basketball"
+  ]
+ },
+ "socialImageUrl": "https://assets.gemini.com/predictions/images/Card_Carousel__40__b3388226-c9ca-43be-9611-88185341baf0.png",
+ "events": [
+  {
+   "id": "471558",
+   "title": "Mississippi State vs UCF: Total Points",
+   "slug": "mississippi-state-vs-ucf-total-points",
+   "type": "categorical",
+   "category": "Sports",
+   "ticker": "NCAAM-2611180000-MSST-UCF-T",
+   "status": "active",
+   "createdAt": "2026-11-16T23:27:18.274Z",
+   "contracts": [
+    {
+     "id": "471558-1179088",
+     "label": "More than 151.5 points scored",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if Mississippi State and UCF collectively score over 151.5 total points in the men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.59",
+       "no": "0.46"
+      },
+      "sell": {
+       "yes": "0.54",
+       "no": "0.41"
+      },
+      "bestBid": "0.54",
+      "bestAsk": "0.59"
+     },
+     "status": "active",
+     "createdAt": "2026-11-16T23:27:18.274Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf",
+     "ticker": "O151",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-T-O151",
+     "marketState": "open",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/Basketball_48baed80-84ab-4004-aba2-ed1eb5c4e2c9.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 10,
+     "strike": {
+      "type": "over",
+      "value": "151.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "471558-1179091",
+     "label": "More than 152.5 points scored",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if Mississippi State and UCF collectively score over 152.5 total points in the men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.57",
+       "no": "0.48"
+      },
+      "sell": {
+       "yes": "0.52",
+       "no": "0.43"
+      },
+      "bestBid": "0.52",
+      "bestAsk": "0.57"
+     },
+     "status": "active",
+     "createdAt": "2026-11-16T23:27:18.274Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf",
+     "ticker": "O152",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-T-O152",
+     "marketState": "open",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/Basketball_48baed80-84ab-4004-aba2-ed1eb5c4e2c9.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 11,
+     "strike": {
+      "type": "over",
+      "value": "152.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "471558-1179105",
+     "label": "More than 153.5 points scored",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if Mississippi State and UCF collectively score over 153.5 total points in the men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.53",
+       "no": "0.49"
+      },
+      "sell": {
+       "yes": "0.51",
+       "no": "0.47"
+      },
+      "bestBid": "0.51",
+      "bestAsk": "0.53"
+     },
+     "status": "active",
+     "createdAt": "2026-11-16T23:27:18.274Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf",
+     "ticker": "O153",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-T-O153",
+     "marketState": "open",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/Basketball_48baed80-84ab-4004-aba2-ed1eb5c4e2c9.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 18,
+     "strike": {
+      "type": "over",
+      "value": "153.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "471558-1179093",
+     "label": "More than 154.5 points scored",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if Mississippi State and UCF collectively score over 154.5 total points in the men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.51",
+       "no": "0.54"
+      },
+      "sell": {
+       "yes": "0.46",
+       "no": "0.49"
+      },
+      "bestBid": "0.46",
+      "bestAsk": "0.51"
+     },
+     "status": "active",
+     "createdAt": "2026-11-16T23:27:18.274Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf",
+     "ticker": "O154",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-T-O154",
+     "marketState": "open",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/Basketball_48baed80-84ab-4004-aba2-ed1eb5c4e2c9.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 12,
+     "strike": {
+      "type": "over",
+      "value": "154.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "471558-1179082",
+     "label": "More than 155.5 points scored",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if Mississippi State and UCF collectively score over 155.5 total points in the men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.49",
+       "no": "0.56"
+      },
+      "sell": {
+       "yes": "0.44",
+       "no": "0.51"
+      },
+      "bestBid": "0.44",
+      "bestAsk": "0.49"
+     },
+     "status": "active",
+     "createdAt": "2026-11-16T23:27:18.274Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf",
+     "ticker": "O155",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-T-O155",
+     "marketState": "open",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/Basketball_48baed80-84ab-4004-aba2-ed1eb5c4e2c9.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 7,
+     "strike": {
+      "type": "over",
+      "value": "155.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "471558-1179069",
+     "label": "More than 132.5 points scored",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if Mississippi State and UCF collectively score over 132.5 total points in the men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-16T23:27:18.274Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf",
+     "ticker": "O132",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-T-O132",
+     "marketState": "open",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/Basketball_48baed80-84ab-4004-aba2-ed1eb5c4e2c9.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 0,
+     "strike": {
+      "type": "over",
+      "value": "132.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "471558-1179070",
+     "label": "More than 163.5 points scored",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if Mississippi State and UCF collectively score over 163.5 total points in the men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-16T23:27:18.274Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf",
+     "ticker": "O163",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-T-O163",
+     "marketState": "open",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/Basketball_48baed80-84ab-4004-aba2-ed1eb5c4e2c9.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 1,
+     "strike": {
+      "type": "over",
+      "value": "163.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "471558-1179072",
+     "label": "More than 128.5 points scored",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if Mississippi State and UCF collectively score over 128.5 total points in the men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-16T23:27:18.274Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf",
+     "ticker": "O128",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-T-O128",
+     "marketState": "open",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/Basketball_48baed80-84ab-4004-aba2-ed1eb5c4e2c9.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 2,
+     "strike": {
+      "type": "over",
+      "value": "128.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "471558-1179074",
+     "label": "More than 160.5 points scored",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if Mississippi State and UCF collectively score over 160.5 total points in the men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-16T23:27:18.274Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf",
+     "ticker": "O160",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-T-O160",
+     "marketState": "open",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/Basketball_48baed80-84ab-4004-aba2-ed1eb5c4e2c9.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 3,
+     "strike": {
+      "type": "over",
+      "value": "160.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "471558-1179076",
+     "label": "More than 140.5 points scored",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if Mississippi State and UCF collectively score over 140.5 total points in the men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-16T23:27:18.274Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf",
+     "ticker": "O140",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-T-O140",
+     "marketState": "open",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/Basketball_48baed80-84ab-4004-aba2-ed1eb5c4e2c9.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 4,
+     "strike": {
+      "type": "over",
+      "value": "140.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "471558-1179078",
+     "label": "More than 143.5 points scored",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if Mississippi State and UCF collectively score over 143.5 total points in the men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-16T23:27:18.274Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf",
+     "ticker": "O143",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-T-O143",
+     "marketState": "open",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/Basketball_48baed80-84ab-4004-aba2-ed1eb5c4e2c9.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 5,
+     "strike": {
+      "type": "over",
+      "value": "143.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "471558-1179080",
+     "label": "More than 136.5 points scored",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if Mississippi State and UCF collectively score over 136.5 total points in the men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-16T23:27:18.274Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf",
+     "ticker": "O136",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-T-O136",
+     "marketState": "open",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/Basketball_48baed80-84ab-4004-aba2-ed1eb5c4e2c9.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 6,
+     "strike": {
+      "type": "over",
+      "value": "136.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "471558-1179084",
+     "label": "More than 170.5 points scored",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if Mississippi State and UCF collectively score over 170.5 total points in the men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-16T23:27:18.274Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf",
+     "ticker": "O170",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-T-O170",
+     "marketState": "open",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/Basketball_48baed80-84ab-4004-aba2-ed1eb5c4e2c9.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 8,
+     "strike": {
+      "type": "over",
+      "value": "170.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "471558-1179086",
+     "label": "More than 146.5 points scored",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if Mississippi State and UCF collectively score over 146.5 total points in the men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-16T23:27:18.274Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf",
+     "ticker": "O146",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-T-O146",
+     "marketState": "open",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/Basketball_48baed80-84ab-4004-aba2-ed1eb5c4e2c9.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 9,
+     "strike": {
+      "type": "over",
+      "value": "146.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "471558-1179095",
+     "label": "More than 149.5 points scored",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if Mississippi State and UCF collectively score over 149.5 total points in the men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-16T23:27:18.274Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf",
+     "ticker": "O149",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-T-O149",
+     "marketState": "open",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/Basketball_48baed80-84ab-4004-aba2-ed1eb5c4e2c9.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 13,
+     "strike": {
+      "type": "over",
+      "value": "149.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "471558-1179097",
+     "label": "More than 157.5 points scored",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if Mississippi State and UCF collectively score over 157.5 total points in the men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-16T23:27:18.274Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf",
+     "ticker": "O157",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-T-O157",
+     "marketState": "open",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/Basketball_48baed80-84ab-4004-aba2-ed1eb5c4e2c9.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 14,
+     "strike": {
+      "type": "over",
+      "value": "157.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "471558-1179099",
+     "label": "More than 174.5 points scored",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if Mississippi State and UCF collectively score over 174.5 total points in the men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-16T23:27:18.274Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf",
+     "ticker": "O174",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-T-O174",
+     "marketState": "open",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/Basketball_48baed80-84ab-4004-aba2-ed1eb5c4e2c9.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 15,
+     "strike": {
+      "type": "over",
+      "value": "174.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "471558-1179101",
+     "label": "More than 166.5 points scored",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if Mississippi State and UCF collectively score over 166.5 total points in the men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-16T23:27:18.274Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf",
+     "ticker": "O166",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-T-O166",
+     "marketState": "open",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/Basketball_48baed80-84ab-4004-aba2-ed1eb5c4e2c9.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 16,
+     "strike": {
+      "type": "over",
+      "value": "166.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "471558-1179103",
+     "label": "More than 178.5 points scored",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if Mississippi State and UCF collectively score over 178.5 total points in the men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-16T23:27:18.274Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf",
+     "ticker": "O178",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-T-O178",
+     "marketState": "open",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/Basketball_48baed80-84ab-4004-aba2-ed1eb5c4e2c9.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 17,
+     "strike": {
+      "type": "over",
+      "value": "178.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    }
+   ],
+   "effectiveDate": "2026-11-16T23:27:18.274Z",
+   "isLive": false,
+   "participants": [
+    {
+     "id": "812",
+     "name": "UCF Knights",
+     "abbreviation": "UCF",
+     "side": "home"
+    },
+    {
+     "id": "697",
+     "name": "Mississippi State Bulldogs",
+     "abbreviation": "MSST",
+     "side": "away"
+    }
+   ],
+   "description": "How many points will be scored?",
+   "imageUrl": "https://assets.gemini.com/predictions/images/bb_f53a7e9b-c0fc-4a5c-a011-d0bf655f8263.avif",
+   "volume": "0",
+   "volume24h": "0",
+   "tags": [
+    "College Basketball"
+   ],
+   "expiryDate": "2026-11-20T00:00:00.000Z",
+   "startTime": "2026-11-18T00:00:00.000Z",
+   "termsLink": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Total_Points_Classdocx_23430a8d-338c-4d9e-95bb-4b68b6a233d1.pdf",
+   "subcategory": {
+    "id": 15,
+    "slug": "sports_college-basketball",
+    "name": "College Basketball",
+    "path": [
+     "Sports",
+     "College Basketball"
+    ]
+   },
+   "socialImageUrl": "https://assets.gemini.com/predictions/images/Card_Carousel__40__b3388226-c9ca-43be-9611-88185341baf0.png",
+   "featuredImageUrl": "https://assets.gemini.com/predictions/images/Card_Carousel__40__b3388226-c9ca-43be-9611-88185341baf0.avif",
+   "template": "sports-total",
+   "gameId": "247208c8-a2bb-4597-822a-9dbd52393e6c",
+   "sourceDetails": {
+    "agency": "statscore-rest-api",
+    "index": "Basketball"
+   },
+   "volumeDelta24hPct": "0",
+   "sportsMarket": {
+    "sport": "basketball",
+    "type": "total",
+    "subject": "contest",
+    "scope": {
+     "type": "full_contest"
+    },
+    "metric": "points"
+   }
+  },
+  {
+   "id": "472099",
+   "title": "Mississippi State vs UCF: Point Spread",
+   "slug": "mississippi-state-vs-ucf-point-spread",
+   "type": "categorical",
+   "category": "Sports",
+   "ticker": "NCAAM-2611180000-MSST-UCF-S",
+   "status": "active",
+   "createdAt": "2026-11-17T01:08:38.119Z",
+   "contracts": [
+    {
+     "id": "472099-1182610",
+     "label": "Mississippi State wins by more than 1.5 points",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if the score differential recorded in favor of Mississippi State in the entire men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT is above 1.5. Otherwise, it resolves to No. The Underlying is the score differential (Mississippi State's score minus UCF's score) for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.5",
+       "no": "0.54"
+      },
+      "sell": {
+       "yes": "0.46",
+       "no": "0.5"
+      },
+      "bestBid": "0.46",
+      "bestAsk": "0.5"
+     },
+     "status": "active",
+     "createdAt": "2026-11-17T01:08:38.119Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf",
+     "ticker": "MSST1",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-S-MSST1",
+     "marketState": "open",
+     "abbreviatedName": "Mississippi State",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/MississippiState_fd484570-e9e7-42c1-a90c-70d4d0fcbd47.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 12,
+     "strike": {
+      "type": "spread",
+      "value": "1.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "472099-1182606",
+     "label": "UCF wins by more than 4.5 points",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if the score differential recorded in favor of UCF in the entire men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT is above 4.5. Otherwise, it resolves to No. The Underlying is the score differential (UCF's score minus Mississippi State's score) for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.48"
+      },
+      "sell": {
+       "no": "0.52"
+      },
+      "bestAsk": "0.48"
+     },
+     "status": "active",
+     "createdAt": "2026-11-17T01:08:38.119Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf",
+     "ticker": "UCF4",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-S-UCF4",
+     "marketState": "open",
+     "abbreviatedName": "UCF",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/UCF_a6d155e8-cbe7-4779-9cc7-f79b444b1cda.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 8,
+     "strike": {
+      "type": "spread",
+      "value": "4.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "472099-1182607",
+     "label": "UCF wins by more than 3.5 points",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if the score differential recorded in favor of UCF in the entire men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT is above 3.5. Otherwise, it resolves to No. The Underlying is the score differential (UCF's score minus Mississippi State's score) for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.48",
+       "no": "0.68"
+      },
+      "sell": {
+       "yes": "0.32",
+       "no": "0.52"
+      },
+      "bestBid": "0.32",
+      "bestAsk": "0.48"
+     },
+     "status": "active",
+     "createdAt": "2026-11-17T01:08:38.119Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf",
+     "ticker": "UCF3",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-S-UCF3",
+     "marketState": "open",
+     "abbreviatedName": "UCF",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/UCF_a6d155e8-cbe7-4779-9cc7-f79b444b1cda.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 9,
+     "strike": {
+      "type": "spread",
+      "value": "3.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "472099-1182609",
+     "label": "UCF wins by more than 1.5 points",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if the score differential recorded in favor of UCF in the entire men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT is above 1.5. Otherwise, it resolves to No. The Underlying is the score differential (UCF's score minus Mississippi State's score) for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.48",
+       "no": "0.56"
+      },
+      "sell": {
+       "yes": "0.44",
+       "no": "0.52"
+      },
+      "bestBid": "0.44",
+      "bestAsk": "0.48"
+     },
+     "status": "active",
+     "createdAt": "2026-11-17T01:08:38.119Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf",
+     "ticker": "UCF1",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-S-UCF1",
+     "marketState": "open",
+     "abbreviatedName": "UCF",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/UCF_a6d155e8-cbe7-4779-9cc7-f79b444b1cda.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 11,
+     "strike": {
+      "type": "spread",
+      "value": "1.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "472099-1182611",
+     "label": "Mississippi State wins by more than 4.5 points",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if the score differential recorded in favor of Mississippi State in the entire men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT is above 4.5. Otherwise, it resolves to No. The Underlying is the score differential (Mississippi State's score minus UCF's score) for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.45"
+      },
+      "sell": {
+       "no": "0.55"
+      },
+      "bestAsk": "0.45"
+     },
+     "status": "active",
+     "createdAt": "2026-11-17T01:08:38.119Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf",
+     "ticker": "MSST4",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-S-MSST4",
+     "marketState": "open",
+     "abbreviatedName": "Mississippi State",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/MississippiState_fd484570-e9e7-42c1-a90c-70d4d0fcbd47.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 13,
+     "strike": {
+      "type": "spread",
+      "value": "4.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "472099-1182608",
+     "label": "UCF wins by more than 2.5 points",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if the score differential recorded in favor of UCF in the entire men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT is above 2.5. Otherwise, it resolves to No. The Underlying is the score differential (UCF's score minus Mississippi State's score) for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.44",
+       "no": "0.61"
+      },
+      "sell": {
+       "yes": "0.39",
+       "no": "0.56"
+      },
+      "bestBid": "0.39",
+      "bestAsk": "0.44"
+     },
+     "status": "active",
+     "createdAt": "2026-11-17T01:08:38.119Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf",
+     "ticker": "UCF2",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-S-UCF2",
+     "marketState": "open",
+     "abbreviatedName": "UCF",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/UCF_a6d155e8-cbe7-4779-9cc7-f79b444b1cda.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 10,
+     "strike": {
+      "type": "spread",
+      "value": "2.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "472099-1182604",
+     "label": "UCF wins by more than 7.5 points",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if the score differential recorded in favor of UCF in the entire men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT is above 7.5. Otherwise, it resolves to No. The Underlying is the score differential (UCF's score minus Mississippi State's score) for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.37",
+       "no": "0.83"
+      },
+      "sell": {
+       "yes": "0.17",
+       "no": "0.63"
+      },
+      "bestBid": "0.17",
+      "bestAsk": "0.37"
+     },
+     "status": "active",
+     "createdAt": "2026-11-17T01:08:38.119Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf",
+     "ticker": "UCF7",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-S-UCF7",
+     "marketState": "open",
+     "abbreviatedName": "UCF",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/UCF_a6d155e8-cbe7-4779-9cc7-f79b444b1cda.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 6,
+     "strike": {
+      "type": "spread",
+      "value": "7.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "472099-1182598",
+     "label": "UCF wins by more than 28.5 points",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if the score differential recorded in favor of UCF in the entire men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT is above 28.5. Otherwise, it resolves to No. The Underlying is the score differential (UCF's score minus Mississippi State's score) for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-17T01:08:38.119Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf",
+     "ticker": "UCF28",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-S-UCF28",
+     "marketState": "open",
+     "abbreviatedName": "UCF",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/UCF_a6d155e8-cbe7-4779-9cc7-f79b444b1cda.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 0,
+     "strike": {
+      "type": "spread",
+      "value": "28.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "472099-1182599",
+     "label": "UCF wins by more than 24.5 points",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if the score differential recorded in favor of UCF in the entire men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT is above 24.5. Otherwise, it resolves to No. The Underlying is the score differential (UCF's score minus Mississippi State's score) for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-17T01:08:38.119Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf",
+     "ticker": "UCF24",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-S-UCF24",
+     "marketState": "open",
+     "abbreviatedName": "UCF",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/UCF_a6d155e8-cbe7-4779-9cc7-f79b444b1cda.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 1,
+     "strike": {
+      "type": "spread",
+      "value": "24.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "472099-1182600",
+     "label": "UCF wins by more than 20.5 points",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if the score differential recorded in favor of UCF in the entire men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT is above 20.5. Otherwise, it resolves to No. The Underlying is the score differential (UCF's score minus Mississippi State's score) for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-17T01:08:38.119Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf",
+     "ticker": "UCF20",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-S-UCF20",
+     "marketState": "open",
+     "abbreviatedName": "UCF",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/UCF_a6d155e8-cbe7-4779-9cc7-f79b444b1cda.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 2,
+     "strike": {
+      "type": "spread",
+      "value": "20.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "472099-1182601",
+     "label": "UCF wins by more than 16.5 points",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if the score differential recorded in favor of UCF in the entire men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT is above 16.5. Otherwise, it resolves to No. The Underlying is the score differential (UCF's score minus Mississippi State's score) for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-17T01:08:38.119Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf",
+     "ticker": "UCF16",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-S-UCF16",
+     "marketState": "open",
+     "abbreviatedName": "UCF",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/UCF_a6d155e8-cbe7-4779-9cc7-f79b444b1cda.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 3,
+     "strike": {
+      "type": "spread",
+      "value": "16.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "472099-1182602",
+     "label": "UCF wins by more than 13.5 points",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if the score differential recorded in favor of UCF in the entire men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT is above 13.5. Otherwise, it resolves to No. The Underlying is the score differential (UCF's score minus Mississippi State's score) for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-17T01:08:38.119Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf",
+     "ticker": "UCF13",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-S-UCF13",
+     "marketState": "open",
+     "abbreviatedName": "UCF",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/UCF_a6d155e8-cbe7-4779-9cc7-f79b444b1cda.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 4,
+     "strike": {
+      "type": "spread",
+      "value": "13.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "472099-1182603",
+     "label": "UCF wins by more than 10.5 points",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if the score differential recorded in favor of UCF in the entire men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT is above 10.5. Otherwise, it resolves to No. The Underlying is the score differential (UCF's score minus Mississippi State's score) for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-17T01:08:38.119Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf",
+     "ticker": "UCF10",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-S-UCF10",
+     "marketState": "open",
+     "abbreviatedName": "UCF",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/UCF_a6d155e8-cbe7-4779-9cc7-f79b444b1cda.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 5,
+     "strike": {
+      "type": "spread",
+      "value": "10.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "472099-1182605",
+     "label": "UCF wins by more than 5.5 points",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if the score differential recorded in favor of UCF in the entire men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT is above 5.5. Otherwise, it resolves to No. The Underlying is the score differential (UCF's score minus Mississippi State's score) for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {
+       "no": "0.76"
+      },
+      "sell": {
+       "yes": "0.24"
+      },
+      "bestBid": "0.24"
+     },
+     "status": "active",
+     "createdAt": "2026-11-17T01:08:38.119Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf",
+     "ticker": "UCF5",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-S-UCF5",
+     "marketState": "open",
+     "abbreviatedName": "UCF",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/UCF_a6d155e8-cbe7-4779-9cc7-f79b444b1cda.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 7,
+     "strike": {
+      "type": "spread",
+      "value": "5.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "472099-1182612",
+     "label": "Mississippi State wins by more than 7.5 points",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if the score differential recorded in favor of Mississippi State in the entire men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT is above 7.5. Otherwise, it resolves to No. The Underlying is the score differential (Mississippi State's score minus UCF's score) for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-17T01:08:38.119Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf",
+     "ticker": "MSST7",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-S-MSST7",
+     "marketState": "open",
+     "abbreviatedName": "Mississippi State",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/MississippiState_fd484570-e9e7-42c1-a90c-70d4d0fcbd47.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 14,
+     "strike": {
+      "type": "spread",
+      "value": "7.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "472099-1182614",
+     "label": "Mississippi State wins by more than 10.5 points",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if the score differential recorded in favor of Mississippi State in the entire men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT is above 10.5. Otherwise, it resolves to No. The Underlying is the score differential (Mississippi State's score minus UCF's score) for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-17T01:08:38.119Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf",
+     "ticker": "MSST10",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-S-MSST10",
+     "marketState": "open",
+     "abbreviatedName": "Mississippi State",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/MississippiState_fd484570-e9e7-42c1-a90c-70d4d0fcbd47.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 15,
+     "strike": {
+      "type": "spread",
+      "value": "10.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "472099-1182615",
+     "label": "Mississippi State wins by more than 14.5 points",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if the score differential recorded in favor of Mississippi State in the entire men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT is above 14.5. Otherwise, it resolves to No. The Underlying is the score differential (Mississippi State's score minus UCF's score) for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-17T01:08:38.119Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf",
+     "ticker": "MSST14",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-S-MSST14",
+     "marketState": "open",
+     "abbreviatedName": "Mississippi State",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/MississippiState_fd484570-e9e7-42c1-a90c-70d4d0fcbd47.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 16,
+     "strike": {
+      "type": "spread",
+      "value": "14.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "472099-1182616",
+     "label": "Mississippi State wins by more than 18.5 points",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if the score differential recorded in favor of Mississippi State in the entire men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT is above 18.5. Otherwise, it resolves to No. The Underlying is the score differential (Mississippi State's score minus UCF's score) for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-17T01:08:38.119Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf",
+     "ticker": "MSST18",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-S-MSST18",
+     "marketState": "open",
+     "abbreviatedName": "Mississippi State",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/MississippiState_fd484570-e9e7-42c1-a90c-70d4d0fcbd47.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 17,
+     "strike": {
+      "type": "spread",
+      "value": "18.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    },
+    {
+     "id": "472099-1182617",
+     "label": "Mississippi State wins by more than 22.5 points",
+     "description": {
+      "data": {},
+      "content": [
+       {
+        "data": {},
+        "marks": [],
+        "value": "This market resolves to Yes if the score differential recorded in favor of Mississippi State in the entire men's college basketball game between Mississippi State and UCF scheduled for 2026-11-17 at 6:00 p.m. CT is above 22.5. Otherwise, it resolves to No. The Underlying is the score differential (Mississippi State's score minus UCF's score) for the specified game. Source Agencies, in order, are the league governing the event (NCAA), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf).",
+        "nodeType": "text"
+       }
+      ],
+      "nodeType": "document"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "status": "active",
+     "createdAt": "2026-11-17T01:08:38.119Z",
+     "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf",
+     "ticker": "MSST22",
+     "instrumentSymbol": "GEMI-NCAAM-2611180000-MSST-UCF-S-MSST22",
+     "marketState": "open",
+     "abbreviatedName": "Mississippi State",
+     "color": "#0f9ee7",
+     "imageUrl": "https://assets.gemini.com/predictions/images/MississippiState_fd484570-e9e7-42c1-a90c-70d4d0fcbd47.png",
+     "expiryDate": "2026-11-20T00:00:00.000Z",
+     "effectiveDate": "2026-11-15T00:00:07.000Z",
+     "sortOrder": 18,
+     "strike": {
+      "type": "spread",
+      "value": "22.5"
+     },
+     "isCombo": false,
+     "quantityIncrement": "0.01",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "quoteAssetPrecision": 2,
+     "priceMinimum": "0.01"
+    }
+   ],
+   "effectiveDate": "2026-11-17T01:08:38.119Z",
+   "isLive": false,
+   "participants": [
+    {
+     "id": "812",
+     "name": "UCF Knights",
+     "abbreviation": "UCF",
+     "side": "home"
+    },
+    {
+     "id": "697",
+     "name": "Mississippi State Bulldogs",
+     "abbreviation": "MSST",
+     "side": "away"
+    }
+   ],
+   "description": "What will the point difference be?",
+   "imageUrl": "https://assets.gemini.com/predictions/images/bb_f53a7e9b-c0fc-4a5c-a011-d0bf655f8263.avif",
+   "volume": "0",
+   "volume24h": "0",
+   "tags": [
+    "College Basketball"
+   ],
+   "expiryDate": "2026-11-20T00:00:00.000Z",
+   "startTime": "2026-11-18T00:00:00.000Z",
+   "termsLink": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NCAA_MB_Margin_Classdocx_0e17934c-24ae-4b91-99e3-4c46d7d5d741.pdf",
+   "subcategory": {
+    "id": 15,
+    "slug": "sports_college-basketball",
+    "name": "College Basketball",
+    "path": [
+     "Sports",
+     "College Basketball"
+    ]
+   },
+   "socialImageUrl": "https://assets.gemini.com/predictions/images/Card_Carousel__40__b3388226-c9ca-43be-9611-88185341baf0.png",
+   "featuredImageUrl": "https://assets.gemini.com/predictions/images/Card_Carousel__40__b3388226-c9ca-43be-9611-88185341baf0.avif",
+   "template": "sports-spread",
+   "gameId": "247208c8-a2bb-4597-822a-9dbd52393e6c",
+   "sourceDetails": {
+    "agency": "statscore-rest-api",
+    "index": "Basketball"
+   },
+   "volumeDelta24hPct": "0",
+   "sportsMarket": {
+    "sport": "basketball",
+    "type": "spread",
+    "subject": "team",
+    "scope": {
+     "type": "full_contest"
+    },
+    "metric": "points"
+   }
+  }
+ ],
+ "template": "sports-game",
+ "gameId": "247208c8-a2bb-4597-822a-9dbd52393e6c",
+ "eventTags": [
+  {
+   "id": 7353,
+   "name": "Big 12",
+   "slug": "big-12"
+  },
+  {
+   "id": 2,
+   "name": "Games",
+   "slug": "games"
+  },
+  {
+   "id": 26167,
+   "name": "Mississippi State Bulldogs",
+   "slug": "mississippi-state-bulldogs"
+  },
+  {
+   "id": 7355,
+   "name": "SEC",
+   "slug": "sec"
+  },
+  {
+   "id": 26035,
+   "name": "UCF Knights",
+   "slug": "ucf-knights"
+  }
+ ],
+ "sourceDetails": {
+  "agency": "statscore-rest-api",
+  "index": "Basketball"
+ },
+ "volumeDelta24hPct": "0",
+ "sportsMarket": {
+  "sport": "basketball",
+  "type": "moneyline",
+  "subject": "contest",
+  "scope": {
+   "type": "full_contest"
+  },
+  "team": {
+   "symbol": "UCF",
+   "name": "UCF Knights",
+   "externalIds": {
+    "sportradarId": "054c3e85-0552-4549-b123-7e84af6e7b6c"
+   }
+  }
+ }
+}
