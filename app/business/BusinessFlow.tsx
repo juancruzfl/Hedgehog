@@ -1,5 +1,6 @@
 "use client";
 
+import { Sheet } from "@/components/Sheet";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { PinnedStage } from "@/components/PinnedStage";
@@ -46,7 +47,6 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
   const [capMove, setCapMove] = useState(PRICE_DEFAULTS.capMove);
   const [sized, setSized] = useState<SizeResponse | null>(null);
   const [sizing, setSizing] = useState(false);
-  const builderRef = useRef<HTMLDivElement>(null);
 
   const setStep = (e: StepEvent) => setSteps((prev) => prev.map((s) => (s.id === e.step ? { ...s, status: e.status, detail: e.detail ?? s.detail } : s)));
 
@@ -135,6 +135,7 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
 
   // Arriving from the landing page with ?auto=1 runs the analysis straight away (once).
   const autoRan = useRef(false);
+  const riskBox = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     if (autoRan.current || params.get("auto") !== "1" || text.trim().length < 10) return;
     autoRan.current = true;
@@ -178,7 +179,6 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
     setChosen(i);
     setSizeTo("expected");
     setHedgeRatio(1);
-    setTimeout(() => builderRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
   }
 
   function editRisk() {
@@ -187,6 +187,13 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
     setChosen(null);
     setSized(null);
     window.scrollTo({ top: 0 });
+    // Put the cursor at the end of what they typed, ready to change it.
+    setTimeout(() => {
+      const t = riskBox.current;
+      if (!t) return;
+      t.focus();
+      t.setSelectionRange(t.value.length, t.value.length);
+    }, 0);
   }
 
   function setExpected(v: number) {
@@ -210,6 +217,7 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
               What&apos;s the risk?
             </label>
             <textarea
+              ref={riskBox}
               id="risk"
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -260,7 +268,20 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
   // ---------------- results ----------------
   const header = (
     <div>
-      <p className="text-sm font-semibold text-accent">Your risk</p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-accent">Your risk</p>
+        {/* A clear way back to the chat box, with what they typed still in it */}
+        <button
+          onClick={editRisk}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-border bg-surface px-3.5 py-2 text-sm font-semibold text-text shadow-sm hover:border-accent hover:text-accent"
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3Z" />
+            <path d="m13.5 8.5 3 3" />
+          </svg>
+          Edit my risk
+        </button>
+      </div>
       <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl [@media(max-height:800px)]:text-3xl">{profile.headline ?? profile.condition}</h1>
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-text-2">
         <span>
@@ -294,9 +315,6 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
             />
           </label>
         )}
-        <button onClick={editRisk} className="font-semibold text-accent hover:underline">
-          Edit risk
-        </button>
       </div>
       {usedFallback && (
         <p className="mt-2 text-xs text-warn">
@@ -385,20 +403,13 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
       </div>
 
       {/* Fine-tune and approve the chosen option */}
-      <div ref={builderRef} className="scroll-mt-20">
-        {chosen !== null && analysis.type !== "none" && (
-          <section className="mt-6 rounded-2xl border border-border bg-surface p-5 sm:p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-bold">Fine-tune and approve</h2>
-                <p className="text-sm text-text-2">
-                  {analysis.type === "event" ? `Option ${chosen + 1}: ${analysis.matches[chosen].contract.marketTitle}: ${analysis.matches[chosen].contract.label}` : analysis.marketTitle.replace("?", "")}
-                </p>
-              </div>
-              <button onClick={() => setChosen(null)} aria-label="Close" className="rounded-lg px-2 py-1 text-text-3 hover:bg-surface-2 hover:text-text">
-                ✕
-              </button>
-            </div>
+      {/* Fine-tuning opens as a popup over the options. */}
+      {chosen !== null && analysis.type !== "none" && (
+          <Sheet
+            onClose={() => setChosen(null)}
+            title="Fine-tune and approve"
+            sub={analysis.type === "event" ? `Option ${chosen + 1}: ${analysis.matches[chosen].contract.marketTitle}: ${analysis.matches[chosen].contract.label}` : analysis.marketTitle.replace("?", "")}
+          >
 
             {analysis.type === "event" ? (
               <div className="mt-5 grid gap-5 sm:grid-cols-2">
@@ -438,9 +449,8 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
             {sized?.kind === "event" && <EventResult sized={sized} profile={profile} loading={sizing} />}
             {sized?.kind === "price" && <PriceResult sized={sized} loading={sizing} />}
             {!sized && <p className="mt-6 text-sm text-text-3">{sizing ? "Pricing…" : "Couldn't price this option right now."}</p>}
-          </section>
-        )}
-      </div>
+          </Sheet>
+      )}
     </div>
   );
 }

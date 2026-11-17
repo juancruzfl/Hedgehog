@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { combineHoldings, isHedgeable, type Holding } from "@/lib/holdings";
 import { STORAGE_KEYS } from "@/lib/legal";
 import type { FAsset, FHorizon } from "./ForecastCard";
@@ -40,7 +40,6 @@ export function CryptoFlow() {
   const [error, setError] = useState<string | null>(null);
   // Only the coin and date are remembered; the amount always comes from current holdings.
   const [building, setBuilding] = useState<{ asset: string; marketId: string } | null>(null);
-  const builderRef = useRef<HTMLDivElement>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   // Arriving from a landing card ("SOL holder") with a coin but no amount opens manual entry for it.
   const [dialogMethod] = useState<Method | null>(initialAsset && !params.get("qty") ? "manual" : null);
@@ -127,7 +126,6 @@ export function CryptoFlow() {
 
   function protect(f: FAsset, h: FHorizon) {
     setBuilding({ asset: f.asset, marketId: h.marketId });
-    setTimeout(() => builderRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   }
 
   const header = (
@@ -173,8 +171,8 @@ export function CryptoFlow() {
         </div>
       )}
 
-      <div ref={builderRef} className="scroll-mt-20">
-        {building &&
+      {/* The builder opens as a popup over the market cards. */}
+      {building &&
           (() => {
             const held = combined.find((c) => c.asset === building.asset)?.quantity ?? 0;
             // If the coin was removed, there's nothing to hedge.
@@ -182,7 +180,6 @@ export function CryptoFlow() {
               <HedgeBuilder key={`${building.asset}-${building.marketId}`} {...building} quantity={held} onClose={() => setBuilding(null)} />
             ) : null;
           })()}
-      </div>
     </div>
   );
 }

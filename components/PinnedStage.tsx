@@ -137,6 +137,7 @@ export function PinnedStage({
 
     // The stage is "engaged" while it's pinned and fills the screen.
     const engaged = () => {
+      if (document.querySelector("dialog[open]")) return false; // a popup owns scrolling and keys
       const r = wrap.current?.getBoundingClientRect();
       return !!r && r.top <= nav + 2 && r.bottom >= window.innerHeight - 2;
     };

@@ -57,7 +57,7 @@ export function EventResult({ sized, profile, loading }: { sized: Extract<SizeRe
         )}
       </div>
 
-      <table className="mt-5 w-full overflow-hidden rounded-xl text-sm tabular-nums">
+      <table className="mt-5 w-full text-sm tabular-nums">
         <caption className="sr-only">Your net cost in each outcome</caption>
         <thead className="text-left text-xs text-text-3">
           <tr>
