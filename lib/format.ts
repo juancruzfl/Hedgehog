@@ -1,10 +1,8 @@
-export const usd = (n: number, digits?: number) =>
-  n.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: digits ?? (Math.abs(n) >= 1000 ? 0 : 2),
-    minimumFractionDigits: digits ?? (Math.abs(n) >= 1000 ? 0 : 2),
-  });
+/** $1,234 / $65 / $217.80: cents only when they matter, unless `digits` is given. */
+export const usd = (n: number, digits?: number) => {
+  const d = digits ?? (Math.abs(n) >= 1000 || Number.isInteger(Math.round(n * 100) / 100) ? 0 : 2);
+  return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: d, minimumFractionDigits: d });
+};
 
 export const pct = (p: number, digits = 0) => `${(p * 100).toFixed(digits)}%`;
 
