@@ -2,7 +2,6 @@ import Link from "next/link";
 import { buildBoard } from "@/lib/landing/board";
 import { getVenue } from "@/lib/venues";
 import { MarketExplorer } from "./MarketExplorer";
-import { RiskBoard } from "./RiskBoard";
 
 export const revalidate = 60;
 
@@ -17,36 +16,26 @@ export default async function Home() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-16">
-      <section className="py-14 sm:py-20">
-        <p className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-text-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-accent" /> Powered by Gemini prediction markets
-        </p>
-        <h1 className="mt-5 max-w-4xl text-5xl font-extrabold leading-[1.02] tracking-tight sm:text-7xl">
-          Know the odds.
-          <br />
-          <span className="text-accent">Cap the downside.</span>
-        </h1>
-        <p className="mt-6 max-w-2xl text-lg text-text-2">
-          Hedgehog turns live market odds into plain answers: how likely is the bad thing, and what would it cost to soften it? For your crypto,
-          and for your business.
-        </p>
-        <div className="mt-8 flex flex-wrap gap-3">
+      <div className="pt-12 sm:pt-16">
+        <MarketExplorer cards={cards} />
+      </div>
+
+      <section className="mt-10 flex flex-col items-start gap-4 rounded-2xl border border-border bg-surface p-6 sm:flex-row sm:items-center">
+        <div className="flex-1">
+          <h2 className="text-xl font-bold">What could hurt you?</h2>
+          <p className="mt-1 text-text-2">Check your crypto in seconds, or describe a business risk in plain words.</p>
+        </div>
+        <div className="flex flex-wrap gap-3">
           <Link href="/crypto" className="rounded-xl bg-accent px-5 py-3 font-semibold text-accent-ink hover:brightness-110">
             Check my crypto
           </Link>
-          <Link href="/business" className="rounded-xl border border-border bg-surface px-5 py-3 font-semibold hover:border-text-3">
+          <Link href="/business" className="rounded-xl border border-border bg-background px-5 py-3 font-semibold hover:border-text-3">
             Reduce a business risk
           </Link>
         </div>
       </section>
 
-      <MarketExplorer cards={cards} />
-
-      <div className="mt-16">
-        <RiskBoard cards={cards} />
-      </div>
-
-      <section className="mt-20 grid gap-8 border-t border-border pt-10 sm:grid-cols-3">
+      <section className="mt-14 grid gap-8 border-t border-border pt-10 sm:grid-cols-3">
         {steps.map((s) => (
           <div key={s.n}>
             <span className="font-mono text-sm font-bold text-accent">{s.n}</span>

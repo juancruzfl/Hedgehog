@@ -37,12 +37,22 @@ export function MarketExplorer({ cards }: { cards: BoardCard[] }) {
 
   return (
     <section aria-labelledby="explorer-title">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 id="explorer-title" className="text-2xl font-bold tracking-tight sm:text-3xl">One market. Many real-world risks.</h2>
-          <p className="mt-1 text-text-2">A prediction market pays out when an event happens. Whoever gets hurt by that event can use it.</p>
-        </div>
-        <div role="tablist" aria-label="Featured market" className="flex gap-1 rounded-xl bg-surface p-1">
+      <p className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-text-2">
+        <span className="h-1.5 w-1.5 rounded-full bg-accent" /> Powered by Gemini prediction markets
+      </p>
+      <h1 id="explorer-title" className="mt-5 max-w-4xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
+        One market.
+        <br />
+        <span className="text-accent">Many real-world risks.</span>
+      </h1>
+      <p className="mt-4 max-w-2xl text-lg text-text-2">
+        A prediction market pays $1 when an event happens. Anyone who gets hurt by that event can use it to soften the blow. Hedgehog finds the
+        market for your risk and shows you what it costs.
+      </p>
+
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm font-semibold uppercase tracking-wide text-text-3">Pick a live market</p>
+        <div role="tablist" aria-label="Featured market" className="flex gap-1 rounded-xl border border-border bg-surface p-1">
           {featured.map((c, j) => (
             <button
               key={c.id}

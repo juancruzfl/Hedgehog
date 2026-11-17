@@ -34,9 +34,9 @@ function TooltipBox({ children }: { children: React.ReactNode }) {
 }
 
 /** Odds over time for one strike (single series: no legend; the caption names it). */
-export function OddsSparkline({ data, wide = false }: { data: { ts: number; probBelow: number }[]; wide?: boolean }) {
+export function OddsSparkline({ data }: { data: { ts: number; probBelow: number }[] }) {
   return (
-    <div className={wide ? "h-12 w-full" : "h-12 w-32"}>
+    <div className="h-12 w-32">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
           {/* Floor the scale at 10 pts so a 1-pt wiggle on a 6% market doesn't look like a spike. */}
