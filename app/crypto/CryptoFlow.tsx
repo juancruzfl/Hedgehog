@@ -3,12 +3,15 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { StepHeading } from "@/components/ui";
+import { qty as fmtQty, usd } from "@/lib/format";
 import { combineHoldings, isHedgeable, type Holding } from "@/lib/holdings";
 import { ForecastCard, type FAsset, type FHorizon } from "./ForecastCard";
 import { HedgeBuilder } from "./HedgeBuilder";
-import { HoldingsPanel } from "./HoldingsPanel";
+import { HoldingsDialog, type Method } from "./HoldingsDialog";
 
 const STORAGE_KEY = "hedgehog.holdings.v1";
+/** Fired by the nav's "Edit assets" button. */
+export const EDIT_ASSETS_EVENT = "hedgehog:edit-assets";
 
 function loadHoldings(): Holding[] {
   try {
@@ -32,6 +35,9 @@ export function CryptoFlow() {
   // Only the coin and date are remembered; the amount always comes from current holdings.
   const [building, setBuilding] = useState<{ asset: string; marketId: string } | null>(null);
   const builderRef = useRef<HTMLDivElement>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  // Arriving from a landing card ("SOL holder") with a coin but no amount opens manual entry for it.
+  const [dialogMethod] = useState<Method | null>(initialAsset && !params.get("qty") ? "manual" : null);
 
   // Load saved holdings, then apply anything passed from the landing page:
   // ?asset=SOL&qty=20 adds/updates a typed-in holding; ?wallet=<address> reads a Solana wallet.
@@ -47,6 +53,8 @@ export function CryptoFlow() {
     } catch {}
 
     const wallet = params.get("wallet");
+    // Nothing saved and nothing coming in: start by asking what they hold.
+    if (h.length === 0 && !wallet) setDialogOpen(true);
     if (wallet) {
       setImportNote("Reading your Solana wallet…");
       fetch(`/api/holdings/solana?address=${encodeURIComponent(wallet)}`)
@@ -67,6 +75,13 @@ export function CryptoFlow() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // The nav's "Edit assets" button reopens the popup.
+  useEffect(() => {
+    const open = () => setDialogOpen(true);
+    window.addEventListener(EDIT_ASSETS_EVENT, open);
+    return () => window.removeEventListener(EDIT_ASSETS_EVENT, open);
+  }, []);
+
   const update = (h: Holding[]) => {
     setHoldings(h);
     try {
@@ -109,29 +124,58 @@ export function CryptoFlow() {
     setTimeout(() => builderRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   }
 
+  const total = combined.reduce((t, c) => t + (prices[c.asset] ?? 0) * c.quantity, 0);
+
   return (
     <div className="space-y-6">
+      <HoldingsDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        holdings={holdings}
+        onChange={update}
+        prices={prices}
+        initialMethod={dialogMethod}
+        initialAsset={initialAsset}
+      />
+
       {importNote && <p className="rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text-2">{importNote}</p>}
-      <HoldingsPanel holdings={holdings} onChange={update} prices={prices} initialAsset={initialAsset} />
 
       {combined.length === 0 ? (
-        <section className="rounded-2xl border border-dashed border-border p-5 sm:p-6">
-          <div className="opacity-60">
-            <StepHeading n={2} title="How likely is a drop?" sub="Add a coin above and you'll see the market's odds of it falling, and what that would cost you." />
-          </div>
+        <section className="flex flex-col items-center rounded-2xl border border-dashed border-border px-5 py-12 text-center">
+          <p className="text-lg font-semibold">Start by telling us what you hold</p>
+          <p className="mt-1 max-w-md text-sm text-text-2">Connect a wallet, import from Gemini, or type it in. Then you&apos;ll see the odds of a drop.</p>
+          <button onClick={() => setDialogOpen(true)} className="mt-5 rounded-xl bg-accent px-5 py-3 font-semibold text-accent-ink hover:brightness-110">
+            Add what you hold
+          </button>
         </section>
       ) : (
-        <section className="space-y-4">
-          <div className="flex items-start justify-between gap-3">
-            <StepHeading n={2} title="How likely is a drop?" sub="The odds come from live Gemini prediction markets, where people trade on where prices will end." />
-            {loading && <span className="shrink-0 pt-1 text-sm text-text-3">Updating…</span>}
-          </div>
-          {error && <p className="text-sm text-bad">{error}</p>}
-          {!forecasts && !error && (
-            <div className="h-48 animate-pulse rounded-2xl border border-border bg-surface" aria-label="Loading odds" />
-          )}
-          {forecasts?.map((f) => <ForecastCard key={f.asset} f={f} asOf={asOf} onProtect={(h) => protect(f, h)} />)}
-        </section>
+        <>
+          {/* What they hold, in one line */}
+          <section className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-border bg-surface px-5 py-4">
+            <p className="text-sm text-text-2">Your crypto</p>
+            <ul className="flex flex-wrap gap-2">
+              {combined.map((c) => (
+                <li key={c.asset} className="rounded-full bg-surface-2 px-3 py-1 text-sm font-semibold tabular-nums">
+                  {fmtQty(c.quantity)} {c.asset}
+                </li>
+              ))}
+            </ul>
+            {total > 0 && <p className="text-sm tabular-nums">{usd(total)} total</p>}
+            <button onClick={() => setDialogOpen(true)} className="ml-auto text-sm font-semibold text-accent hover:underline">
+              Edit
+            </button>
+          </section>
+
+          <section className="space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <StepHeading n={1} title="How likely is a drop?" sub="The odds come from live Gemini prediction markets, where people trade on where prices will end." />
+              {loading && <span className="shrink-0 pt-1 text-sm text-text-3">Updating…</span>}
+            </div>
+            {error && <p className="text-sm text-bad">{error}</p>}
+            {!forecasts && !error && <div className="h-48 animate-pulse rounded-2xl border border-border bg-surface" aria-label="Loading odds" />}
+            {forecasts?.map((f) => <ForecastCard key={f.asset} f={f} asOf={asOf} onProtect={(h) => protect(f, h)} />)}
+          </section>
+        </>
       )}
 
       <div ref={builderRef} className="scroll-mt-20">

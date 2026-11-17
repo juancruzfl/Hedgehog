@@ -27,9 +27,18 @@ export function Nav() {
             {l.label}
           </Link>
         ))}
-        <Link href="/crypto" className="ml-auto hidden whitespace-nowrap rounded-lg bg-accent px-3.5 py-1.5 font-semibold text-accent-ink hover:brightness-110 sm:inline-block">
-          Check my risk
-        </Link>
+        {path.startsWith("/crypto") ? (
+          <button
+            onClick={() => window.dispatchEvent(new Event("hedgehog:edit-assets"))}
+            className="ml-auto whitespace-nowrap rounded-lg bg-accent px-3.5 py-1.5 font-semibold text-accent-ink hover:brightness-110"
+          >
+            Edit assets
+          </button>
+        ) : (
+          <Link href="/crypto" className="ml-auto hidden whitespace-nowrap rounded-lg bg-accent px-3.5 py-1.5 font-semibold text-accent-ink hover:brightness-110 sm:inline-block">
+            Check my risk
+          </Link>
+        )}
       </nav>
     </header>
   );
