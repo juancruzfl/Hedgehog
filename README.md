@@ -98,6 +98,20 @@ npm run typecheck
 npm run demo:check   # pre-demo readiness: collector, market data, next game, AI, Gemini key, settled hedges
 ```
 
+## Deploy (Railway)
+
+`railway.json` builds with `npm run build` and starts with `npm run start` (Node 22, health check `/api/health`).
+One service plus one volume mounted at `/data`. Set:
+
+| Variable | Value |
+|---|---|
+| `ODDS_DB_PATH` / `HEDGES_DB_PATH` | `/data/odds.sqlite` / `/data/hedgehog.sqlite` |
+| `ENABLE_COLLECTOR` | `1` (runs the odds collector inside the web process) |
+| `HEDGE_EXECUTION` | `paper` |
+| `AI_API_KEY`, `AI_BASE_URL`, `AI_MODEL` | as locally |
+
+Gemini API keys are optional for the hosted demo: market data and paper trading need no key. Leaving them unset keeps your account's balances off a public site.
+
 ## Honest limits
 
 - **Approximate matches are labeled.** Oil is a stand-in for diesel; a game result isn't foot traffic. The app says how close the match is.
