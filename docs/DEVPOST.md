@@ -1,6 +1,6 @@
 # Hedgehog: Devpost submission draft
 
-**Tagline:** One market. Many real-world risks. Hedgehog turns live Gemini prediction markets into plain-English hedges for crypto holders and small businesses.
+**Tagline:** Are the odds in your favor? Hedgehog turns live Gemini prediction markets into plain-English hedges for crypto holders and small businesses.
 
 **Submit to:** Main track: Consumer Applications · Chain award: Best use of Solana · Bounty: Gemini Prediction Markets
 
@@ -31,7 +31,7 @@ The landing page explains the idea in one glance: live markets rotate in the cen
 - **Odds history:** Gemini doesn't return price history for these markets, so we built a collector that snapshots every crypto, commodity and weather contract every 5 minutes into SQLite. The forecast cards chart how the odds moved.
 - **Solana:** read-only wallet reading over JSON-RPC (`getBalance`, `getTokenAccountsByOwner`), mapping native SOL and SPL tokens (cbBTC, Wormhole WBTC/WETH, mSOL, JitoSOL) to hedgeable assets. Phantom is used only to share the public key.
 - **Hedging engine:** a pure, unit-tested sizer that builds event hedges and multi-strike ladders for falling prices (crypto) and rising prices (fuel, metals), plus payoff curves.
-- **AI (OpenAI-compatible, Grok by default):** parses plain-English risks, plans the market search and checks the fine print. It never does money math, and it can only pick from real candidate contracts; invented market symbols are dropped.
+- **AI (OpenAI-compatible through OpenRouter, so the model is swappable):** parses plain-English risks, plans the market search and checks the fine print. It never does money math, and it can only pick from real candidate contracts; invented market symbols are dropped.
 - **Venue adapter:** the engine only talks to a `VenueAdapter` interface. Gemini is the implementation; Kalshi or others can plug in.
 
 ## Challenges we ran into
@@ -58,4 +58,4 @@ The hardest part wasn't the trading. It was translation: turning "$93 or above, 
 
 ## Built with
 
-Next.js · TypeScript · Gemini Prediction Markets API · Solana JSON-RPC · Phantom · xAI Grok (OpenAI-compatible) · Hyperliquid price feed · SQLite · Recharts · Tailwind CSS · Vitest
+Next.js · TypeScript · Gemini Prediction Markets API · Gemini price ticker · Solana JSON-RPC · Phantom · OpenRouter (OpenAI-compatible) · SQLite · Recharts · Tailwind CSS · Vitest

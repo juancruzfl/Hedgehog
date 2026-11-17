@@ -49,6 +49,7 @@ async function main() {
   });
 
   await check("AI provider", async () => {
+    if (process.env.AI_MODE === "off") return { ok: "warn", detail: "Turned off (AI_MODE=off). Remove it before the demo to use the live AI" };
     const parsed = await getAI().parseRisk("Half-price wings if the home team wins Sunday, about 500 orders at $6 off.", new Date());
     return { ok: true, detail: `parsed "${parsed.profile.condition}"` };
   });

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { CoinIcon } from "@/components/CoinIcon";
 import { OddsHistoryChart } from "@/components/charts";
 import { Segmented, oddsInWords } from "@/components/ui";
 import type { AssetForecast, ForecastHorizon, ForecastPoint } from "@/lib/forecast/forecast";
@@ -34,7 +35,19 @@ function horizonOption(h: FHorizon, j: number) {
 export function ForecastCard({ f, asOf, onProtect }: { f: FAsset; asOf: number; onProtect: (horizon: FHorizon) => void }) {
   // Default to the middle horizon (about a week out): the most useful planning window.
   const [hi, setHi] = useState(Math.min(1, f.horizons.length - 1));
-  const [showHistory, setShowHistory] = useState(false);
+  // Each card flips on its own; flipping one never changes another.
+  const [flipped, setFlipped] = useState(false);
+  const flipRef = useRef<HTMLButtonElement>(null);
+  const backRef = useRef<HTMLButtonElement>(null);
+  const firstRender = useRef(true);
+  useEffect(() => {
+    // Move keyboard focus to the side that's now showing (not on first render).
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    (flipped ? backRef : flipRef).current?.focus({ preventScroll: true });
+  }, [flipped]);
   const h = f.horizons[hi];
 
   if (!h) {
@@ -50,67 +63,106 @@ export function ForecastCard({ f, asOf, onProtect }: { f: FAsset; asOf: number; 
   const headline = [...h.points].sort((a, b) => Math.abs(a.drop - 0.1) - Math.abs(b.drop - 0.1))[0];
   const ladder = [...h.points].sort((a, b) => a.drop - b.drop);
 
+  const hasHistory = h.points.some((p) => p.history.length >= 3);
+  const face = "rounded-2xl border border-border bg-surface p-5 sm:p-6 [backface-visibility:hidden]";
+
   return (
-    <article className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
-      <header className="flex flex-wrap items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-2 text-xs font-bold">{f.asset}</span>
-        <div className="mr-auto">
-          <p className="font-semibold">{f.asset}</p>
-          <p className="text-sm text-text-2 tabular-nums">
-            {qty(f.quantity)} {f.asset} · {usd(f.valueUsd)} at {usd(f.spot)} each
-          </p>
-        </div>
-      </header>
+    // A card with two faces: the odds (front) and how they've moved (back). The back
+    // is laid over the front, so the card keeps exactly the same size when flipped.
+    // It fills whatever height the stage gives it, so every coin's card is the same size.
+    <div className="flex flex-col [perspective:1600px]">
+      <div
+        className="relative flex flex-1 flex-col transition-transform duration-500 ease-out [transform-style:preserve-3d] motion-reduce:transition-none"
+        style={{ transform: flipped ? "rotateY(180deg)" : "none" }}
+      >
+        <article className={`${face} flex flex-1 flex-col`} inert={flipped} aria-hidden={flipped}>
+          <header className="flex flex-wrap items-center gap-3">
+            <CoinIcon asset={f.asset} />
+            <div className="mr-auto">
+              <p className="font-semibold">{f.asset}</p>
+              <p className="text-sm text-text-2 tabular-nums">
+                {qty(f.quantity)} {f.asset} · {usd(f.valueUsd)} at {usd(f.spot)} each
+              </p>
+            </div>
+          </header>
 
-      <div className="mt-4">
-        <Segmented label="Time frame" options={f.horizons.map(horizonOption)} value={hi} onChange={setHi} />
-      </div>
+          <div className="mt-4">
+            <Segmented label="Time frame" options={f.horizons.map(horizonOption)} value={hi} onChange={setHi} />
+          </div>
 
-      {/* The headline question */}
-      <div className="mt-5 rounded-xl bg-surface-2 p-4 sm:p-5">
-        <h3 className="text-lg font-bold leading-snug sm:text-xl">
-          Will {f.asset} drop below {usd(headline.strike)} by {shortDate(h.expiry)}?
-        </h3>
-        <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span className="text-4xl font-extrabold tabular-nums tracking-tight text-accent">{pct(headline.probBelow)}</span>
-          <span className="text-text-2">chance · {oddsInWords(headline.probBelow)}</span>
-          <Change change={headline.change} />
-        </div>
-        <p className="mt-2 text-[15px]">
-          If it does, you&apos;d be down about <b className="tabular-nums">{usd(headline.lossAtStrike)}</b> (a {pct(headline.drop)} fall).
-        </p>
-      </div>
+          {/* The headline question */}
+          <div className="mt-5 rounded-xl bg-surface-2 p-4 sm:p-5">
+            <h3 className="text-lg font-bold leading-snug sm:text-xl">
+              Will {f.asset} drop below {usd(headline.strike)} by {shortDate(h.expiry)}?
+            </h3>
+            <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span className="text-4xl font-extrabold tabular-nums tracking-tight text-accent">{pct(headline.probBelow)}</span>
+              <span className="text-text-2">chance · {oddsInWords(headline.probBelow)}</span>
+              <Change change={headline.change} />
+            </div>
+            <p className="mt-2 text-[15px]">
+              If it does, you&apos;d be down about <b className="tabular-nums">{usd(headline.lossAtStrike)}</b> (a {pct(headline.drop)} fall).
+            </p>
+          </div>
 
-      {/* Ladder of drops */}
-      {ladder.length > 1 && (
-        <div className="mt-5">
-          <p className="text-sm font-semibold">Smaller and bigger drops</p>
-          <ul className="mt-2 space-y-2.5">
-            {ladder.map((p) => (
-              <li key={p.symbol} className="grid grid-cols-[7.5rem_1fr_3rem] items-center gap-3 text-sm sm:grid-cols-[9rem_1fr_3rem_5rem]">
-                <span className="tabular-nums">
-                  −{pct(p.drop)} <span className="text-text-3">· {usd(p.strike)}</span>
-                </span>
-                <span className="h-2.5 overflow-hidden rounded-full bg-surface-2" aria-hidden>
-                  <span className="block h-full rounded-full bg-accent" style={{ width: `${Math.max(2, p.probBelow * 100)}%` }} />
-                </span>
-                <span className="text-right font-semibold tabular-nums">{pct(p.probBelow)}</span>
-                <span className="hidden text-right text-text-2 tabular-nums sm:block">−{usd(p.lossAtStrike)}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+          {/* Ladder of drops */}
+          {/* Always room for three price levels, so switching dates never resizes the card */}
+          <div className="mt-5">
+              <p className="text-sm font-semibold">Smaller and bigger drops</p>
+              <ul className="mt-2 min-h-[5.25rem] space-y-2.5">
+                {ladder.map((p) => (
+                  <li key={p.symbol} className="grid grid-cols-[7.5rem_1fr_3rem] items-center gap-3 text-sm sm:grid-cols-[9rem_1fr_3rem_5rem]">
+                    <span className="tabular-nums">
+                      −{pct(p.drop)} <span className="text-text-3">· {usd(p.strike)}</span>
+                    </span>
+                    <span className="h-2.5 overflow-hidden rounded-full bg-surface-2" aria-hidden>
+                      <span className="block h-full rounded-full bg-accent" style={{ width: `${Math.max(2, p.probBelow * 100)}%` }} />
+                    </span>
+                    <span className="text-right font-semibold tabular-nums">{pct(p.probBelow)}</span>
+                    <span className="hidden text-right text-text-2 tabular-nums sm:block">−{usd(p.lossAtStrike)}</span>
+                  </li>
+                ))}
+                {ladder.length < 2 && <li className="text-sm text-text-3">Gemini lists only this price level for this date.</li>}
+              </ul>
+          </div>
 
-      {h.points.some((p) => p.history.length >= 3) && (
-        <div className="mt-4">
-          <button onClick={() => setShowHistory((v) => !v)} className="text-sm font-medium text-accent" aria-expanded={showHistory}>
-            {showHistory ? "Hide" : "See"} how these odds have moved
-          </button>
-          {showHistory && (
-            <div className="mt-3 rounded-xl border border-border p-4">
+          <div className="mt-4 mb-5">
+            {hasHistory ? (
+              <button ref={flipRef} onClick={() => setFlipped(true)} className="text-sm font-medium text-accent hover:underline">
+                See how these odds have moved ↻
+              </button>
+            ) : (
+              <p className="text-sm text-text-3">Odds history shows up after a few snapshots.</p>
+            )}
+          </div>
+
+          {/* Button row sits at the bottom, whatever the card's height */}
+          <div className="mt-auto flex flex-wrap items-center gap-3 border-t border-border pt-4">
+            <button onClick={() => onProtect(h)} className="rounded-xl bg-accent px-5 py-3 font-semibold text-accent-ink hover:brightness-110">
+              Soften a drop in my {f.asset} →
+            </button>
+            <span className="text-xs text-text-3">Odds from Gemini prediction markets</span>
+          </div>
+        </article>
+
+        {hasHistory && (
+          <article
+            className={`${face} absolute inset-0 flex flex-col overflow-y-auto`}
+            style={{ transform: "rotateY(180deg)" }}
+            inert={!flipped}
+            aria-hidden={!flipped}
+            aria-label={`How the odds for ${f.asset} have moved`}
+          >
+            <header className="flex items-center gap-3">
+              <CoinIcon asset={f.asset} />
+              <div className="mr-auto">
+                <p className="font-semibold">{f.asset} · how the odds have moved</p>
+                <p className="text-sm text-text-2">Chance it ends below each price by {shortDate(h.expiry)}</p>
+              </div>
+            </header>
+            <div className="mt-4 min-h-0 flex-1">
               <OddsHistoryChart
-                title={`Chance ${f.asset} ends below each price on ${shortDate(h.expiry)}`}
+                title=""
                 series={h.points.map((p) => ({
                   key: p.symbol,
                   label: `Below ${usd(p.strike)}`,
@@ -118,16 +170,18 @@ export function ForecastCard({ f, asOf, onProtect }: { f: FAsset; asOf: number; 
                 }))}
               />
             </div>
-          )}
-        </div>
-      )}
-
-      <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-border pt-4">
-        <button onClick={() => onProtect(h)} className="rounded-xl bg-accent px-5 py-3 font-semibold text-accent-ink hover:brightness-110">
-          Soften a drop in my {f.asset} →
-        </button>
-        <span className="text-xs text-text-3">Odds from Gemini prediction markets</span>
+            <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-4">
+              <button
+                ref={backRef}
+                onClick={() => setFlipped(false)}
+                className="rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-semibold hover:border-text-3"
+              >
+                ← Back to the odds
+              </button>
+            </div>
+          </article>
+        )}
       </div>
-    </article>
+    </div>
   );
 }

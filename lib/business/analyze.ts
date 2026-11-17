@@ -57,37 +57,63 @@ export function pickPriceMarket(markets: Market[], titlePrefix: string, windowEn
     .filter((m) => m.title.toLowerCase().startsWith(titlePrefix.toLowerCase()) && new Date(m.expiry) > now)
     .sort((a, b) => a.expiry.localeCompare(b.expiry));
   if (!live.length) return null;
-  const covering = live.find((m) => m.expiry >= windowEnd);
+  // A market that settles on the same calendar day as the window ends counts as covering it.
+  const covering = live.find((m) => m.expiry.slice(0, 10) >= windowEnd.slice(0, 10));
   return covering ? { market: covering, covers: true } : { market: live[live.length - 1], covers: false };
 }
 
 const hasQuote = (c: Contract) => c.quote.yesAsk !== null || c.quote.noAsk !== null;
 
+/** Progress reported while analyzing, shown to the user as the engine's working steps. */
+export type StepId = "understand" | "search" | "match" | "price";
+export interface StepEvent {
+  step: StepId;
+  status: "active" | "done" | "error";
+  detail?: string;
+}
+export type OnStep = (e: StepEvent) => void;
+
 export async function analyzeRisk(
   profile: RiskProfile,
-  deps: { venue: VenueAdapter; ai: AIProvider; now?: Date },
+  deps: { venue: VenueAdapter; ai: AIProvider; now?: Date; onStep?: OnStep },
 ): Promise<Analysis> {
   const { venue, ai } = deps;
   const now = deps.now ?? new Date();
+  const step = deps.onStep ?? (() => {});
 
   // Price risks: deterministic market lookup, spot implied by the market itself.
   if (profile.kind === "price_rise" || profile.kind === "price_drop") {
     const prefix = priceTitleFor(profile.underlying.ref);
     if (!prefix) return { type: "none", reason: `Gemini doesn't list price markets for ${profile.underlying.ref}.` };
     const category = profile.underlying.type === "crypto" ? "Crypto" : "Commodities";
-    const markets = await venue.listMarkets({ category: [category], search: prefix.split(" price")[0], limit: 100 });
+    const name = prefix.split(" price")[0];
+    step({ step: "search", status: "active", detail: `Looking for ${name} price markets` });
+    const markets = await venue.listMarkets({ category: [category], search: name, limit: 100 });
     const pick = pickPriceMarket(markets, prefix, profile.window.end, now);
-    if (!pick) return { type: "none", reason: `No open ${prefix.replace(" price on", "")} markets right now.` };
+    if (!pick) {
+      step({ step: "search", status: "error", detail: `No open ${name} markets` });
+      return { type: "none", reason: `No open ${prefix.replace(" price on", "")} markets right now.` };
+    }
+    step({ step: "search", status: "done", detail: `${markets.length} ${category.toLowerCase()} markets checked · picked ${pick.market.title.replace("?", "")}` });
+    step({ step: "match", status: "active", detail: "Reading the market's prices" });
     const spot = impliedMedian(pick.market.contracts);
-    if (spot === null) return { type: "none", reason: `${pick.market.title} has no live prices right now.` };
+    if (spot === null) {
+      step({ step: "match", status: "error", detail: "No live prices" });
+      return { type: "none", reason: `${pick.market.title} has no live prices right now.` };
+    }
+    step({ step: "match", status: "done", detail: `A stand-in for your cost · market expects about $${spot >= 20 ? Math.round(spot) : spot.toFixed(2)}` });
     const notes = [
       `Hedgehog uses ${pick.market.title.replace("?", "")} as a stand-in for your cost. Your actual price won't move exactly with it.`,
     ];
-    if (!pick.covers) notes.push(`Gemini's latest market settles ${pick.market.expiry.slice(0, 10)}, before your window ends. You'd need to renew the hedge.`);
+    if (!pick.covers) {
+      const day = new Date(pick.market.expiry).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      notes.push(`Gemini's latest market settles ${day}, before your risk window ends. You'd need to renew the hedge then.`);
+    }
     return { type: "price", marketId: pick.market.id, marketTitle: pick.market.title, expiry: pick.market.expiry, spot, notes };
   }
 
   // Event and threshold risks: AI search plan -> candidates -> AI match + fine-print check.
+  step({ step: "search", status: "active", detail: "Planning where to look" });
   const plan = await ai.searchPlan(profile);
   const terms = plan.terms.length ? plan.terms : [profile.underlying.ref];
   const seen = new Map<string, Market>();
@@ -102,13 +128,27 @@ export async function analyzeRisk(
     .flatMap((m) => m.contracts)
     .filter((c) => c.tradable && hasQuote(c))
     .slice(0, 60);
+  const where = `${plan.categories.join(", ") || "All markets"} · ${terms.slice(0, 4).map((t) => `"${t}"`).join(", ")}`;
   if (!candidates.length) {
+    step({ step: "search", status: "error", detail: `${where} · nothing open` });
     return { type: "none", reason: "Gemini doesn't list a market for this event right now." };
   }
+  step({ step: "search", status: "done", detail: `${where} · ${candidates.length} contracts found` });
 
+  step({ step: "match", status: "active", detail: `Comparing ${candidates.length} contracts with your risk` });
   const ranked = await ai.rankMarkets(profile, candidates);
   const bySymbol = new Map(candidates.map((c) => [c.symbol, c]));
   const matches = ranked.map((m) => ({ ...m, contract: bySymbol.get(m.symbol)! })).filter((m) => m.contract);
-  if (!matches.length) return { type: "none", reason: "None of Gemini's current markets line up with this risk." };
+  if (!matches.length) {
+    step({ step: "match", status: "error", detail: "None line up with your risk" });
+    return { type: "none", reason: "None of Gemini's current markets line up with this risk." };
+  }
+  const exact = matches.filter((m) => m.quality === "exact").length;
+  const fine = matches.reduce((n, m) => n + m.ruleMismatches.length, 0);
+  step({
+    step: "match",
+    status: "done",
+    detail: `${matches.length} option${matches.length > 1 ? "s" : ""} · ${exact} exact match${exact === 1 ? "" : "es"} · ${fine} fine-print note${fine === 1 ? "" : "s"}`,
+  });
   return { type: "event", matches };
 }

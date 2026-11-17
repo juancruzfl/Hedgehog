@@ -1,9 +1,11 @@
 // Small shared building blocks for the step-by-step flows.
 
-export function StepHeading({ n, title, sub }: { n: number; title: string; sub?: string }) {
+export function StepHeading({ n, title, sub }: { n?: number; title: string; sub?: string }) {
   return (
     <div className="flex items-start gap-3">
-      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-bold text-accent-ink">{n}</span>
+      {n !== undefined && (
+        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-bold text-accent-ink">{n}</span>
+      )}
       <div>
         <h2 className="text-xl font-bold leading-tight">{title}</h2>
         {sub && <p className="mt-0.5 text-sm text-text-2">{sub}</p>}

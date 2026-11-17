@@ -1,6 +1,6 @@
 # Hedgehog
 
-**One market. Many real-world risks.**
+**Are the odds in your favor?**
 
 A prediction market pays $1 if something happens. If that same thing would cost you money, the payout softens the hit. Hedgehog turns live
 [Gemini prediction markets](https://developer.gemini.com/products/prediction-markets) into plain-English hedges for two kinds of people:
@@ -65,11 +65,11 @@ The crypto flow reads a wallet **read-only** over Solana JSON-RPC (`getBalance`,
 ```
 
 - `lib/engine/sizer.ts`: all money math (event hedges, downside/upside strike ladders, payoff curves). Pure and unit-tested.
-- `lib/ai/`: `AIProvider` interface; one OpenAI-compatible implementation (xAI Grok by default). **The AI interprets; it never sizes or places orders**, and it can only pick from real candidate contracts.
+- `lib/ai/`: `AIProvider` interface; one OpenAI-compatible implementation (OpenRouter by default, so any model works: Grok, Claude, Gemini, GPT). If a model doesn't support strict JSON schemas it falls back to JSON mode automatically. **The AI interprets; it never sizes or places orders**, and it can only pick from real candidate contracts.
 - `lib/business/fallback.ts`: if the AI is unavailable, a basic matcher still handles game-day promos (team found in live NFL markets, cost from "500 orders at $6") and fuel/metal costs (gallons converted to barrels), and the page says it was used.
 - `lib/venues/`: venue-agnostic types; `gemini/` client, normalizer and adapter.
 - `lib/hedges/`: approval, re-validation, paper execution and settlement.
-- `lib/holdings/`, `lib/chain/`: Solana wallet reading, Gemini balances, live prices.
+- `lib/holdings/`, `lib/chain/`: Solana wallet reading, Gemini balances, live prices (Gemini's public ticker, Hyperliquid as a fallback).
 
 ### Paper vs. live trading
 
@@ -90,13 +90,27 @@ npm run dev                    # http://localhost:3000
 | `GEMINI_TRADING_ENV` / `GEMINI_MARKET_DATA_ENV` | Where orders go (`sandbox`) / where market data comes from (`production`) |
 | `HEDGE_EXECUTION` | `paper` (default) or `live` |
 | `MAX_HEDGE_USD` | Per-hedge spend cap enforced server-side (default 5000) |
-| `AI_API_KEY`, `AI_BASE_URL`, `AI_MODEL` | Any OpenAI-compatible provider; `npm run ai:check` lists your models |
+| `AI_API_KEY`, `AI_BASE_URL`, `AI_MODEL` | OpenRouter by default (`https://openrouter.ai/api/v1`); any OpenAI-compatible provider works. `npm run ai:check` verifies the key and model |
 
 ```bash
 npm test             # 48 unit tests: sizer, forecast, normalizer, AI guardrails, fallback matcher, execution, settlement
 npm run typecheck
 npm run demo:check   # pre-demo readiness: collector, market data, next game, AI, Gemini key, settled hedges
 ```
+
+## Deploy (Railway)
+
+`railway.json` builds with `npm run build` and starts with `npm run start` (Node 22, health check `/api/health`).
+One service plus one volume mounted at `/data`. Set:
+
+| Variable | Value |
+|---|---|
+| `ODDS_DB_PATH` / `HEDGES_DB_PATH` | `/data/odds.sqlite` / `/data/hedgehog.sqlite` |
+| `ENABLE_COLLECTOR` | `1` (runs the odds collector inside the web process) |
+| `HEDGE_EXECUTION` | `paper` |
+| `AI_API_KEY`, `AI_BASE_URL`, `AI_MODEL` | as locally |
+
+Gemini API keys are optional for the hosted demo: market data and paper trading need no key. Leaving them unset keeps your account's balances off a public site.
 
 ## Honest limits
 

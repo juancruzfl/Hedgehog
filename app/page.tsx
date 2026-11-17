@@ -84,13 +84,12 @@ export default async function Home() {
           <span className="h-1.5 w-1.5 rounded-full bg-accent" /> Live odds from Gemini prediction markets
         </p>
         <h1 className="mx-auto mt-5 max-w-4xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
-          One market.
+          Are the odds
           <br />
-          <span className="text-accent">Many real-world risks.</span>
+          in your favor?
         </h1>
         <p className="mx-auto mt-3 max-w-2xl text-lg text-text-2">
-          A prediction market pays out if something happens. If that same thing would cost you money, the payout softens the hit. Hover any
-          risk to see the numbers.
+          See how likely the things that could cost you are, and cushion the hit before it happens. Pick any risk to see the numbers.
         </p>
       </section>
 
@@ -187,10 +186,6 @@ export default async function Home() {
         </ul>
       </section>
 
-      <footer className="mt-12 border-t border-border pt-6 text-xs text-text-3">
-        Hedgehog is software, not an exchange or an advisor. Orders go to Gemini in your own account, and prices change. Check the current price,
-        fees and contract rules before you approve. A hedge reduces, but does not remove, losses, and you can lose what you pay for it.
-      </footer>
     </main>
   );
 }

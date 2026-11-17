@@ -68,6 +68,10 @@ describe("pickPriceMarket", () => {
   it("picks the first expiry that covers the window", () => {
     expect(pickPriceMarket(ms, "Oil (WTI) price on", "2026-11-19T00:00:00Z", now)).toMatchObject({ market: { id: "B" }, covers: true });
   });
+  it("counts a market settling on the window's last day as covering it", () => {
+    expect(pickPriceMarket(ms, "Oil (WTI) price on", "2026-11-20T23:59:00Z", now)).toMatchObject({ market: { id: "B" }, covers: true });
+  });
+
   it("falls back to the latest one and says it doesn't cover", () => {
     expect(pickPriceMarket(ms, "Oil (WTI) price on", "2026-12-15T00:00:00Z", now)).toMatchObject({ market: { id: "B" }, covers: false });
   });

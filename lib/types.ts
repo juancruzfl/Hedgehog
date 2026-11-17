@@ -31,6 +31,8 @@ export interface RiskProfile {
   /** Price-risk details; present for price_drop / price_rise. */
   position?: { asset: string; quantity: number; spotPrice: number };
   notes?: string;
+  /** The risk in the user's own words, short enough for a title. */
+  headline?: string;
 }
 
 export type Outcome = "yes" | "no";

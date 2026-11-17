@@ -197,7 +197,7 @@ export function MarketCarousel({ cards }: { cards: BoardCard[] }) {
           {/* Mobile / tablet: market, then its risks */}
           <div className="lg:hidden">
             <MarketCard m={m} />
-            <p className="mt-5 text-sm font-semibold text-text-2">Who this market protects</p>
+            <p className="mt-5 text-sm font-semibold text-text-2">Who this market can help</p>
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
               {uses.map((u) => (
                 <RiskWidget

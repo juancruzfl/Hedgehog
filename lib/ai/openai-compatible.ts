@@ -3,9 +3,10 @@ import { z } from "zod";
 import type { Contract, RiskProfile } from "@/lib/types";
 import type { AIProvider, MarketMatch, ParsedRisk, SearchPlan } from "./types";
 
-// One implementation for any OpenAI-compatible API: xAI Grok (default), OpenAI,
-// Google's OpenAI-compatible endpoint, etc. Configure with:
-//   AI_BASE_URL (default https://api.x.ai/v1), AI_API_KEY (or XAI_API_KEY), AI_MODEL
+// One implementation for any OpenAI-compatible API: OpenRouter (default), xAI,
+// OpenAI, Google's OpenAI-compatible endpoint, etc. Configure with:
+//   AI_BASE_URL (default https://openrouter.ai/api/v1), AI_API_KEY, AI_MODEL
+//   e.g. AI_MODEL=x-ai/grok-4.20 or anthropic/claude-haiku-5.5 on OpenRouter
 
 export const CATEGORIES = ["Sports", "Crypto", "Weather", "Commodities"] as const;
 
@@ -16,7 +17,7 @@ type Chat = Pick<OpenAI, "chat">;
 const riskJsonSchema = {
   type: "object",
   additionalProperties: false,
-  required: ["kind", "underlyingType", "underlyingRef", "condition", "exposureLow", "exposureExpected", "exposureHigh", "priceUnits", "windowStart", "windowEnd", "notes", "followUps"],
+  required: ["kind", "headline", "underlyingType", "underlyingRef", "condition", "exposureLow", "exposureExpected", "exposureHigh", "priceUnits", "windowStart", "windowEnd", "notes", "followUps"],
   properties: {
     kind: { type: "string", enum: ["price_drop", "price_rise", "event_trigger", "threshold"] },
     underlyingType: { type: "string", enum: ["crypto", "sports", "weather", "commodity"] },
@@ -35,6 +36,10 @@ const riskJsonSchema = {
     windowStart: { type: "string", description: "ISO 8601" },
     windowEnd: { type: "string", description: "ISO 8601" },
     notes: { type: "string", description: "Assumptions you made" },
+    headline: {
+      type: "string",
+      description: "The risk in the owner's own words, as a short title under 60 characters, e.g. 'Half-price wings if Indianapolis beats Houston' or 'Diesel prices rising before month-end'",
+    },
     followUps: { type: "array", items: { type: "string" }, description: "Questions if key facts are missing; empty if none" },
   },
 } as const;
@@ -51,6 +56,7 @@ const RiskOut = z.object({
   windowStart: z.string(),
   windowEnd: z.string(),
   notes: z.string(),
+  headline: z.string(),
   followUps: z.array(z.string()),
 });
 
@@ -101,6 +107,51 @@ const MatchOut = z.object({
   ),
 });
 
+// ---------- config ----------
+
+export const OPENROUTER_URL = "https://openrouter.ai/api/v1";
+export const XAI_URL = "https://api.x.ai/v1";
+
+/**
+ * Which key goes to which provider. A key is only ever sent to its own provider:
+ * AI_BASE_URL wins if set; otherwise an xAI key (XAI_API_KEY or "xai-...") goes to
+ * xAI and anything else (AI_API_KEY / OPENROUTER_API_KEY) goes to OpenRouter.
+ */
+export function resolveAIConfig(env: NodeJS.ProcessEnv = process.env) {
+  const model = env.AI_MODEL;
+  let apiKey: string | undefined;
+  let baseURL: string;
+  if (env.AI_API_KEY) {
+    apiKey = env.AI_API_KEY;
+    baseURL = env.AI_BASE_URL ?? (apiKey.startsWith("xai-") ? XAI_URL : OPENROUTER_URL);
+  } else if (env.OPENROUTER_API_KEY) {
+    apiKey = env.OPENROUTER_API_KEY;
+    baseURL = env.AI_BASE_URL ?? OPENROUTER_URL;
+  } else {
+    apiKey = env.XAI_API_KEY;
+    baseURL = env.AI_BASE_URL ?? XAI_URL;
+  }
+  if (!apiKey) throw new Error("AI_API_KEY is not set");
+  if (!model) throw new Error("AI_MODEL is not set (run `npm run ai:check` to see suggestions)");
+  return { apiKey, baseURL, model, openrouter: baseURL.includes("openrouter.ai") };
+}
+
+// ---------- helpers ----------
+
+/** Some models wrap JSON in ```json fences even when asked not to. */
+export function stripFences(text: string): string {
+  const t = text.trim();
+  const m = t.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  return m ? m[1] : t;
+}
+
+/** The provider/model rejected the json_schema response format (vs. a real failure). */
+function isFormatUnsupported(e: unknown): boolean {
+  const status = (e as { status?: number })?.status;
+  const msg = String((e as Error)?.message ?? "");
+  return (status === 400 || status === 404 || status === 422) && /response_format|json_schema|structured|schema/i.test(msg);
+}
+
 // ---------- provider ----------
 
 export class OpenAICompatibleProvider implements AIProvider {
@@ -115,27 +166,49 @@ export class OpenAICompatibleProvider implements AIProvider {
   }
 
   static fromEnv(): OpenAICompatibleProvider {
-    const apiKey = process.env.AI_API_KEY ?? process.env.XAI_API_KEY;
-    const model = process.env.AI_MODEL;
-    if (!apiKey) throw new Error("AI_API_KEY (or XAI_API_KEY) is not set");
-    if (!model) throw new Error("AI_MODEL is not set (e.g. a Grok model id from https://docs.x.ai)");
-    const baseURL = process.env.AI_BASE_URL ?? "https://api.x.ai/v1";
-    return new OpenAICompatibleProvider(new OpenAI({ apiKey, baseURL }), model, baseURL.includes("x.ai") ? "grok" : "openai-compatible");
+    const { apiKey, baseURL, model, openrouter } = resolveAIConfig();
+    const client = new OpenAI({
+      apiKey,
+      baseURL,
+      // OpenRouter's optional attribution headers.
+      defaultHeaders: openrouter ? { "HTTP-Referer": process.env.APP_URL ?? "http://localhost:3000", "X-Title": "Hedgehog" } : undefined,
+    });
+    return new OpenAICompatibleProvider(client, model, openrouter ? `openrouter:${model}` : baseURL.includes("x.ai") ? "grok" : "openai-compatible");
   }
 
+  /** Models that don't accept the strict schema format fall back to plain JSON mode for the rest of the session. */
+  private schemaUnsupported = false;
+
   private async json<T>(system: string, user: string, schemaName: string, schema: object, parser: z.ZodType<T>): Promise<T> {
-    const res = await this.client.chat.completions.create({
-      model: this.model,
-      temperature: 0,
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      response_format: { type: "json_schema", json_schema: { name: schemaName, strict: true, schema: schema as Record<string, unknown> } },
-    });
+    const messages = (extra = "") => [
+      { role: "system" as const, content: system + extra },
+      { role: "user" as const, content: user },
+    ];
+    let res;
+    if (!this.schemaUnsupported) {
+      try {
+        res = await this.client.chat.completions.create({
+          model: this.model,
+          temperature: 0,
+          messages: messages(),
+          response_format: { type: "json_schema", json_schema: { name: schemaName, strict: true, schema: schema as Record<string, unknown> } },
+        });
+      } catch (e) {
+        if (!isFormatUnsupported(e)) throw e;
+        this.schemaUnsupported = true;
+      }
+    }
+    if (!res) {
+      res = await this.client.chat.completions.create({
+        model: this.model,
+        temperature: 0,
+        messages: messages(`\n\nRespond with only a JSON object (no prose, no code fences) matching this JSON schema:\n${JSON.stringify(schema)}`),
+        response_format: { type: "json_object" },
+      });
+    }
     const text = res.choices[0]?.message?.content;
     if (!text) throw new Error(`AI returned no content for ${schemaName}`);
-    return parser.parse(JSON.parse(text));
+    return parser.parse(JSON.parse(stripFences(text)));
   }
 
   async parseRisk(text: string, now: Date): Promise<ParsedRisk> {
@@ -164,6 +237,7 @@ export class OpenAICompatibleProvider implements AIProvider {
         kind: out.kind,
         underlying: { type: out.underlyingType, ref: out.underlyingRef },
         condition: out.condition,
+        headline: out.headline.trim().slice(0, 80) || undefined,
         exposureUsd: { low, expected, high },
         window: { start: out.windowStart, end: out.windowEnd },
         source: "conversation",
@@ -203,7 +277,8 @@ export class OpenAICompatibleProvider implements AIProvider {
         "You match a user's risk to prediction market contracts. Each contract pays $1 if its outcome resolves true.",
         "For each relevant contract return the outcome (yes/no) that PAYS OUT WHEN THE USER'S RISK HAPPENS.",
         "quality: exact = the contract resolves on the same event/condition as the risk; proxy = correlated but not identical; none = irrelevant (omit these).",
-        "Read the rules carefully and list concrete mismatches with the user's condition (overtime, margins, thresholds, timing, data source, cancellation).",
+        "Read the rules carefully. List only mismatches that could change whether the contract pays out when the risk happens (overtime, margins, thresholds, data source, ties, postponement or cancellation). Ignore small timing differences within the same game or day.",
+        "Write the rationale and mismatches to the business owner in second person (\"your promo\", \"you\"), in short plain sentences. Never say \"the user\".",
         "Only use symbols from the candidate list. Return at most 5, best first.",
       ].join(" "),
       JSON.stringify({ risk: { condition: profile.condition, underlying: profile.underlying, window: profile.window }, candidates: compact }),

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { getMids } from "@/lib/chain/hyperliquid";
+import { getSpots } from "@/lib/chain/prices";
 import { buildForecast, changeSince, probBelowSeries } from "@/lib/forecast/forecast";
 import { isHedgeable } from "@/lib/holdings";
 import { historyForSymbol } from "@/lib/odds/store";
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid holdings" }, { status: 400 });
 
   try {
-    const mids = await getMids();
+    const mids = await getSpots(parsed.data.holdings.map((h) => h.asset));
     const venue = getVenue();
     const since = Date.now() - 3 * 24 * 3600_000;
 
