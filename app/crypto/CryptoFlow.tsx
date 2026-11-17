@@ -3,12 +3,13 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { combineHoldings, isHedgeable, type Holding } from "@/lib/holdings";
+import { STORAGE_KEYS } from "@/lib/legal";
 import type { FAsset, FHorizon } from "./ForecastCard";
 import { PinnedMarkets } from "./PinnedMarkets";
 import { HedgeBuilder } from "./HedgeBuilder";
 import { HoldingsDialog, type Method } from "./HoldingsDialog";
 
-const STORAGE_KEY = "hedgehog.holdings.v1";
+const STORAGE_KEY = STORAGE_KEYS.holdings; // listed on the Cookies & Storage page
 /** Fired by the nav's "Edit assets" button. */
 export const EDIT_ASSETS_EVENT = "hedgehog:edit-assets";
 

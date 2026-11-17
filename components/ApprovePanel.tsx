@@ -104,7 +104,15 @@ export function ApprovePanel({
           </p>
           <label className="mt-3 flex items-start gap-2 text-sm text-text-2">
             <input type="checkbox" checked={understood} onChange={(e) => setUnderstood(e.target.checked)} className="mt-0.5" />
-            I understand this reduces but does not remove my losses, and I can lose the {usd(totalCost)} I pay.
+            I understand this reduces but does not remove my losses, and I can lose the {usd(totalCost)} I pay. I&apos;ve read the{" "}
+            <Link href="/legal/risk" target="_blank" className="text-accent underline underline-offset-2">
+              Risk Disclosure
+            </Link>{" "}
+            and agree to the{" "}
+            <Link href="/legal/terms" target="_blank" className="text-accent underline underline-offset-2">
+              Terms
+            </Link>
+            .
           </label>
           <div className="mt-4 flex gap-3">
             <button disabled={!understood || sending} onClick={approve} className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink disabled:opacity-50">

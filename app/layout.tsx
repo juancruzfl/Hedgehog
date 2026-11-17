@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SiteFooter } from "@/components/SiteFooter";
+import { StorageNotice } from "@/components/StorageNotice";
 import { Nav } from "./Nav";
 import "./globals.css";
 
@@ -30,6 +32,8 @@ export default function RootLayout({
       >
         <Nav />
         {children}
+        <SiteFooter />
+        <StorageNotice />
       </body>
     </html>
   );

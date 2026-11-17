@@ -187,10 +187,6 @@ export default async function Home() {
         </ul>
       </section>
 
-      <footer className="mt-12 border-t border-border pt-6 text-xs text-text-3">
-        Hedgehog is software, not an exchange or an advisor. Orders go to Gemini in your own account, and prices change. Check the current price,
-        fees and contract rules before you approve. A hedge reduces, but does not remove, losses, and you can lose what you pay for it.
-      </footer>
     </main>
   );
 }
