@@ -12,6 +12,7 @@ import type { ExposureRange, RiskProfile } from "@/lib/types";
 import { AgentSteps, FocusSteps, HowItWorksTip, initialSteps, type StepState } from "./AgentSteps";
 import { EventAvenueCard, PriceAvenueCard } from "./AvenueCard";
 import { EventResult, PriceResult, unitLabel, type SizeResponse } from "./results";
+import { NoMatch } from "./NoMatch";
 
 type Phase = "input" | "running" | "finishing" | "results";
 const FADE_MS = 700; // the steps fade out before the options fade in
@@ -52,7 +53,9 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
 
   const setStep = (e: StepEvent) => setSteps((prev) => prev.map((s) => (s.id === e.step ? { ...s, status: e.status, detail: e.detail ?? s.detail } : s)));
 
-  async function analyze() {
+  async function analyze(override?: string) {
+    const input = override ?? text;
+    if (override !== undefined) setText(override);
     setPhase("running");
     setSteps(initialSteps());
     setError(null);
@@ -64,7 +67,11 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
 
     let result: { profile: RiskProfile; followUps: string[]; analysis: Analysis; fallback?: boolean | "off" } | null = null;
     try {
-      const res = await fetch("/api/business/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+      const res = await fetch("/api/business/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: input }),
+      });
       if (!res.body) throw new Error("No response from the server.");
       const reader = res.body.getReader();
       let shown: Promise<unknown> = Promise.resolve();
@@ -281,7 +288,7 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
             <div className="flex flex-wrap items-center gap-3 border-t border-border px-2 pt-3">
               <span className="text-xs text-text-3">Rough numbers are fine. Leave out anything confidential. Enter to send, Shift+Enter for a new line.</span>
               <button
-                onClick={analyze}
+                onClick={() => analyze()}
                 disabled={text.trim().length < 10}
                 className="ml-auto rounded-xl bg-accent px-5 py-2.5 font-semibold text-accent-ink hover:brightness-110 disabled:opacity-40"
               >
@@ -386,16 +393,15 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
   return (
     <div className="hh-fade-in">
       {analysis.type === "none" ? (
-        <div className="space-y-6 pt-10">
-          {header}
-          <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
-            <h2 className="text-xl font-bold">No good match on Gemini right now</h2>
-            <p className="mt-1 text-text-2">{analysis.reason}</p>
-            <p className="mt-2 text-sm text-text-2">
-              Gemini currently lists sports, daily high temperatures in about 50 US cities, oil, natural gas, metals, and major crypto prices.
-            </p>
-          </section>
-        </div>
+        <NoMatch
+          headline={profile.headline ?? profile.condition}
+          reason={analysis.reason}
+          examples={examples}
+          onEdit={editRisk}
+          onExample={(t) => void analyze(t)}
+          steps={steps}
+          followUps={followUps}
+        />
       ) : analysis.type === "event" ? (
         <PinnedStage
           header={header}
@@ -439,29 +445,31 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
       )}
 
       {/* How it got here, plus anything that would sharpen the answer */}
-      <div className="mt-6 grid items-start gap-4 lg:grid-cols-2">
-        <details className="rounded-2xl border border-border bg-surface px-5 py-4">
-          <summary className="cursor-pointer text-sm font-semibold">How Hedgehog found this</summary>
-          <div className="mt-4">
-            <AgentSteps steps={steps} />
-          </div>
-        </details>
-        {(followUps.length > 0 || profile.notes) && (
-          <div className="rounded-2xl border border-border bg-surface px-5 py-4 text-sm">
-            {profile.notes && <p className="text-text-2">What we assumed: {profile.notes}</p>}
-            {followUps.length > 0 && (
-              <>
-                <p className="mt-2 font-semibold">To make this more accurate, add to your description:</p>
-                <ul className="mt-1 list-disc pl-5 text-text-2">
-                  {followUps.map((q) => (
-                    <li key={q}>{q}</li>
-                  ))}
-                </ul>
-              </>
-            )}
-          </div>
-        )}
-      </div>
+      {analysis.type !== "none" && (
+        <div className="mt-6 grid items-start gap-4 lg:grid-cols-2">
+          <details className="rounded-2xl border border-border bg-surface px-5 py-4">
+            <summary className="cursor-pointer text-sm font-semibold">How Hedgehog found this</summary>
+            <div className="mt-4">
+              <AgentSteps steps={steps} />
+            </div>
+          </details>
+          {(followUps.length > 0 || profile.notes) && (
+            <div className="rounded-2xl border border-border bg-surface px-5 py-4 text-sm">
+              {profile.notes && <p className="text-text-2">What we assumed: {profile.notes}</p>}
+              {followUps.length > 0 && (
+                <>
+                  <p className="mt-2 font-semibold">To make this more accurate, add to your description:</p>
+                  <ul className="mt-1 list-disc pl-5 text-text-2">
+                    {followUps.map((q) => (
+                      <li key={q}>{q}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Fine-tune and approve the chosen option */}
       {/* Fine-tuning opens as a popup over the options. */}
