@@ -1,13 +1,47 @@
-import type { Position } from "@/lib/types";
+import type { Contract, Market, Position } from "@/lib/types";
 import type { VenueAdapter } from "@/lib/venues/types";
-import { listHedges } from "./store";
+import { listHedges, type HedgeRecord } from "./store";
 
-// Paper positions: filled paper orders, marked to the live production bid.
-export async function paperPositions(venue: VenueAdapter): Promise<Position[]> {
-  const fills = listHedges()
-    .filter((h) => h.mode === "paper")
-    .flatMap((h) => h.orders.filter((o) => o.status === "filled"));
+// Paper portfolio: filled paper orders, marked to the live production bid while open,
+// and settled from Gemini's own resolution once the market resolves.
 
+export interface HedgeOutcome {
+  settled: boolean; // every leg has resolved
+  payout: number; // $ paid by resolved legs so far
+  net: number | null; // payout - cost, once fully settled
+}
+
+export interface PaperPortfolio {
+  open: Position[];
+  settled: Position[];
+  outcomes: Record<string, HedgeOutcome>;
+}
+
+const legPayout = (c: Contract | undefined, outcome: string, qty: number) =>
+  c?.resolutionSide ? (c.resolutionSide === outcome ? qty : 0) : null;
+
+export async function paperPortfolio(venue: VenueAdapter, hedges: HedgeRecord[] = listHedges()): Promise<PaperPortfolio> {
+  const paper = hedges.filter((h) => h.mode === "paper");
+  const fills = paper.flatMap((h) => h.orders.filter((o) => o.status === "filled"));
+
+  // One lookup per market; getMarket returns settled markets too.
+  const marketIds = [...new Set(fills.map((o) => o.marketId))];
+  const markets = new Map<string, Market | null>(
+    await Promise.all(marketIds.map(async (id) => [id, await venue.getMarket(id).catch(() => null)] as const)),
+  );
+  const contractFor = (marketId: string, symbol: string) => markets.get(marketId)?.contracts.find((c) => c.symbol === symbol);
+
+  // Per-hedge outcome.
+  const outcomes: Record<string, HedgeOutcome> = {};
+  for (const h of paper) {
+    const legs = h.orders.filter((o) => o.status === "filled");
+    const payouts = legs.map((o) => legPayout(contractFor(o.marketId, o.symbol), o.outcome, o.quantity));
+    const settled = legs.length > 0 && payouts.every((p) => p !== null);
+    const payout = payouts.reduce<number>((s, p) => s + (p ?? 0), 0);
+    outcomes[h.id] = { settled, payout, net: settled ? payout - h.totalCost : null };
+  }
+
+  // Positions grouped by contract + side.
   const grouped = new Map<string, { marketId: string; symbol: string; outcome: "yes" | "no"; qty: number; cost: number }>();
   for (const o of fills) {
     const key = `${o.symbol}:${o.outcome}`;
@@ -17,18 +51,15 @@ export async function paperPositions(venue: VenueAdapter): Promise<Position[]> {
     grouped.set(key, g);
   }
 
-  const markets = new Map(
-    await Promise.all(
-      [...new Set([...grouped.values()].map((g) => g.marketId))].map(async (id) => [id, await venue.getMarket(id)] as const),
-    ),
-  );
-
-  return [...grouped.values()].map((g) => {
+  const open: Position[] = [];
+  const settled: Position[] = [];
+  for (const g of grouped.values()) {
     const m = markets.get(g.marketId);
-    const c = m?.contracts.find((x) => x.symbol === g.symbol);
+    const c = contractFor(g.marketId, g.symbol);
+    const payout = legPayout(c, g.outcome, g.qty);
     const bid = c ? (g.outcome === "yes" ? c.quote.yesBid : c.quote.noBid) : null;
-    const marketValue = bid === null ? null : g.qty * bid;
-    return {
+    const marketValue = payout ?? (bid === null ? null : g.qty * bid);
+    const pos: Position = {
       venue: `${venue.name} (paper)`,
       symbol: g.symbol,
       outcome: g.outcome,
@@ -36,9 +67,12 @@ export async function paperPositions(venue: VenueAdapter): Promise<Position[]> {
       avgPrice: g.cost / g.qty,
       marketValue,
       unrealizedPnl: marketValue === null ? null : marketValue - g.cost,
-      resolutionSide: null,
-      marketTitle: m ? `${m.title}: ${c?.label ?? g.symbol}` : g.symbol,
+      resolutionSide: c?.resolutionSide ?? null,
+      marketTitle: m ? `${m.title.replace(/\?$/, "")}: ${c?.label ?? g.symbol}` : g.symbol,
       expiry: c?.expiry ?? m?.expiry,
+      payout,
     };
-  });
+    (payout === null ? open : settled).push(pos);
+  }
+  return { open, settled, outcomes };
 }

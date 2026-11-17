@@ -25,7 +25,7 @@ const axisTick = { fill: C.text3, fontSize: 11 };
 
 function TooltipBox({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-border bg-surface px-3 py-2 text-xs shadow-sm" style={{ color: "var(--text)" }}>
+    <div className="rounded-lg border border-border bg-surface px-3 py-2 text-xs" style={{ color: "var(--text)" }}>
       {children}
     </div>
   );
@@ -37,7 +37,8 @@ export function OddsSparkline({ data }: { data: { ts: number; probBelow: number 
     <div className="h-12 w-32">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
-          <YAxis hide domain={[0, "dataMax"]} />
+          {/* Floor the scale at 10 pts so a 1-pt wiggle on a 6% market doesn't look like a spike. */}
+          <YAxis hide domain={[0, (max: number) => Math.max(max * 1.3, 0.1)]} />
           <XAxis hide dataKey="ts" type="number" domain={["dataMin", "dataMax"]} />
           <Tooltip
             cursor={{ stroke: C.text3, strokeWidth: 1 }}
@@ -64,7 +65,17 @@ export interface CurvePoint {
 }
 
 /** P&L at expiry vs settlement price: hedged (accent) vs no hedge (neutral, dashed). */
-export function PayoffChart({ data, spot, asset }: { data: CurvePoint[]; spot: number; asset: string }) {
+export function PayoffChart({
+  data,
+  spot,
+  asset,
+  caption = "Your gain or loss on this holding at expiry, including what the hedge costs. Hover to compare any price.",
+}: {
+  data: CurvePoint[];
+  spot: number;
+  asset: string;
+  caption?: string;
+}) {
   return (
     <figure>
       <div className="mb-2 flex flex-wrap items-center gap-4 text-xs text-text-2" aria-hidden>
@@ -84,7 +95,7 @@ export function PayoffChart({ data, spot, asset }: { data: CurvePoint[]; spot: n
               type="number"
               domain={["dataMin", "dataMax"]}
               tick={axisTick}
-              tickFormatter={(v) => usd(v, v >= 1000 ? 0 : 0)}
+              tickFormatter={(v) => usd(v, v >= 100 ? 0 : 2)}
               stroke={C.grid}
               label={{ value: `${asset} price at expiry`, position: "insideBottom", offset: -12, fill: C.text3, fontSize: 11 }}
             />
@@ -110,9 +121,106 @@ export function PayoffChart({ data, spot, asset }: { data: CurvePoint[]; spot: n
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <figcaption className="mt-1 text-xs text-text-3">
-        Your gain or loss on this holding at expiry, including what the hedge costs. Hover to compare any price.
-      </figcaption>
+      <figcaption className="mt-1 text-xs text-text-3">{caption}</figcaption>
+    </figure>
+  );
+}
+
+export interface OddsSeries {
+  key: string;
+  label: string; // e.g. "Below $65 (−10%)"
+  data: { ts: number; probBelow: number }[];
+}
+
+const SERIES = ["var(--series-1)", "var(--series-2)", "var(--series-3)"];
+
+/** How the market's odds moved over time, one line per price level (max 3, fixed color order). */
+export function OddsHistoryChart({ series, title }: { series: OddsSeries[]; title: string }) {
+  const shown = series.slice(0, 3);
+  // Collector snapshots share timestamps across contracts, so rows merge cleanly by ts.
+  const rows = new Map<number, Record<string, number>>();
+  shown.forEach((s, i) => {
+    for (const p of s.data) {
+      const row = rows.get(p.ts) ?? { ts: p.ts };
+      row[`s${i}`] = p.probBelow;
+      rows.set(p.ts, row);
+    }
+  });
+  const data = [...rows.values()].sort((a, b) => a.ts - b.ts);
+  const last = data.length - 1;
+  // Clean y ticks: pick a step that gives at most ~5 ticks.
+  const maxVal = Math.max(0.01, ...data.flatMap((r) => shown.map((_, i) => r[`s${i}`] ?? 0)));
+  const step = [0.02, 0.05, 0.1, 0.2, 0.25].find((st) => Math.ceil((maxVal + 0.01) / st) <= 5) ?? 0.25;
+  const top = Math.min(1, Math.ceil((maxVal + 0.01) / step) * step);
+  const yTicks = Array.from({ length: Math.round(top / step) + 1 }, (_, i) => +(i * step).toFixed(2));
+  const spanHours = data.length > 1 ? (data[last].ts - data[0].ts) / 3600_000 : 0;
+  const tickFmt = (ts: number) =>
+    new Date(ts).toLocaleString("en-US", spanHours > 36 ? { month: "short", day: "numeric" } : { hour: "numeric", minute: "2-digit" });
+
+  return (
+    <figure>
+      <figcaption className="mb-2 text-sm font-medium">{title}</figcaption>
+      <div className="mb-2 flex flex-wrap gap-4 text-xs text-text-2">
+        {shown.map((s, i) => (
+          <span key={s.key} className="flex items-center gap-1.5">
+            <span className="inline-block h-0.5 w-5 rounded" style={{ background: SERIES[i] }} /> {s.label}
+          </span>
+        ))}
+      </div>
+      <div className="h-56 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data} margin={{ top: 8, right: 56, bottom: 4, left: 0 }}>
+            <CartesianGrid stroke={C.grid} vertical={false} />
+            <XAxis dataKey="ts" type="number" scale="time" domain={["dataMin", "dataMax"]} tick={axisTick} tickFormatter={tickFmt} stroke={C.grid} minTickGap={40} />
+            <YAxis tick={axisTick} tickFormatter={(v) => pct(v)} stroke={C.grid} width={44} domain={[0, top]} ticks={yTicks} />
+            <Tooltip
+              cursor={{ stroke: C.text3, strokeWidth: 1 }}
+              content={({ active, payload }) => {
+                const row = payload?.[0]?.payload as Record<string, number> | undefined;
+                if (!active || !row) return null;
+                return (
+                  <TooltipBox>
+                    <div className="mb-1 text-text-3">{dateTime(row.ts)}</div>
+                    {shown.map((s, i) =>
+                      row[`s${i}`] === undefined ? null : (
+                        <div key={s.key} className="flex items-center gap-2">
+                          <span className="inline-block h-2 w-2 rounded-full" style={{ background: SERIES[i] }} />
+                          {s.label}: <span className="font-medium">{pct(row[`s${i}`], 1)}</span>
+                        </div>
+                      ),
+                    )}
+                  </TooltipBox>
+                );
+              }}
+            />
+            {shown.map((s, i) => (
+              <Line
+                key={s.key}
+                type="monotone"
+                dataKey={`s${i}`}
+                stroke={SERIES[i]}
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface)" }}
+                connectNulls
+                isAnimationActive={false}
+                label={(raw: unknown) => {
+                  const p = raw as { index?: number; x?: number | string; y?: number | string; value?: number | string };
+                  if (p.index !== last || p.value === undefined) return <g key={`lbl-${s.key}-${p.index}`} />;
+                  return (
+                    <text key={`lbl-${s.key}`} x={Number(p.x) + 6} y={Number(p.y)} dy={4} fontSize={11} fill="var(--text-2)">
+                      {pct(Number(p.value))}
+                    </text>
+                  );
+                }}
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+      <p className="mt-1 text-xs text-text-3">
+        Market-implied chance from Gemini prediction markets, recorded every 5 minutes by Hedgehog.
+      </p>
     </figure>
   );
 }

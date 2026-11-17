@@ -53,6 +53,7 @@ describe("OpenAICompatibleProvider", () => {
         exposureLow: 3600,
         exposureExpected: 3000,
         exposureHigh: 2400,
+        priceUnits: 0,
         windowStart: "2026-11-22T00:00:00Z",
         windowEnd: "2026-11-23T00:00:00Z",
         notes: "",

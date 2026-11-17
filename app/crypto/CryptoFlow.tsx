@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { combineHoldings, isHedgeable, type Holding } from "@/lib/holdings";
 import { ForecastCard, type FAsset, type FHorizon } from "./ForecastCard";
@@ -17,14 +18,51 @@ function loadHoldings(): Holding[] {
 }
 
 export function CryptoFlow() {
+  const params = useSearchParams();
+  const initialAsset = params.get("asset")?.toUpperCase() ?? null;
+  const [importNote, setImportNote] = useState<string | null>(null);
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [forecasts, setForecasts] = useState<FAsset[] | null>(null);
+  const [asOf, setAsOf] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [building, setBuilding] = useState<{ asset: string; quantity: number; marketId: string } | null>(null);
   const builderRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => setHoldings(loadHoldings()), []);
+  // Load saved holdings, then apply anything passed from the landing page:
+  // ?asset=SOL&qty=20 adds/updates a typed-in holding; ?wallet=<address> reads a Solana wallet.
+  useEffect(() => {
+    let h = loadHoldings();
+    const qty = Number(params.get("qty"));
+    if (initialAsset && isHedgeable(initialAsset) && qty > 0) {
+      h = [...h.filter((x) => !(x.source === "manual" && x.asset === initialAsset)), { asset: initialAsset, quantity: qty, source: "manual", detail: `${initialAsset} entered by you` }];
+    }
+    setHoldings(h);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(h));
+    } catch {}
+
+    const wallet = params.get("wallet");
+    if (wallet) {
+      setImportNote("Reading your Solana wallet…");
+      fetch(`/api/holdings/solana?address=${encodeURIComponent(wallet)}`)
+        .then(async (r) => {
+          const body = await r.json();
+          if (!r.ok) throw new Error(body.error);
+          const found = (body.holdings as Holding[]).filter((x) => isHedgeable(x.asset));
+          setHoldings((prev) => {
+            const next = [...prev.filter((x) => x.source !== "solana"), ...found];
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+            } catch {}
+            return next;
+          });
+          setImportNote(found.length ? null : "No SOL, BTC or ETH found in that wallet.");
+        })
+        .catch((e) => setImportNote(e.message));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const update = (h: Holding[]) => {
     setHoldings(h);
     try {
@@ -53,6 +91,7 @@ export function CryptoFlow() {
         const body = await r.json();
         if (!r.ok) throw new Error(body.error);
         setForecasts(body.forecasts);
+        setAsOf(new Date(body.asOf).getTime());
       })
       .catch((e) => e.name !== "AbortError" && setError(e.message))
       .finally(() => setLoading(false));
@@ -67,7 +106,8 @@ export function CryptoFlow() {
 
   return (
     <div className="space-y-6">
-      <HoldingsPanel holdings={holdings} onChange={update} />
+      {importNote && <p className="rounded-lg border border-border bg-surface px-4 py-3 text-sm text-text-2">{importNote}</p>}
+      <HoldingsPanel holdings={holdings} onChange={update} initialAsset={initialAsset} />
 
       {combined.length > 0 && (
         <section className="space-y-4">
@@ -76,7 +116,7 @@ export function CryptoFlow() {
             {loading && <span className="text-sm text-text-3">Updating…</span>}
           </div>
           {error && <p className="text-sm text-bad">{error}</p>}
-          {forecasts?.map((f) => <ForecastCard key={f.asset} f={f} onProtect={(h) => protect(f, h)} />)}
+          {forecasts?.map((f) => <ForecastCard key={f.asset} f={f} asOf={asOf} onProtect={(h) => protect(f, h)} />)}
         </section>
       )}
 
