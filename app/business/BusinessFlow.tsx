@@ -13,6 +13,7 @@ import { AgentSteps, FocusSteps, HowItWorksTip, initialSteps, type StepState } f
 import { EventAvenueCard, PriceAvenueCard } from "./AvenueCard";
 import { EventResult, PriceResult, unitLabel, type SizeResponse } from "./results";
 import { NoMatch } from "./NoMatch";
+import { suggestRewrites } from "@/lib/business/rewrites";
 
 type Phase = "input" | "running" | "finishing" | "results";
 const FADE_MS = 700; // the steps fade out before the options fade in
@@ -209,18 +210,23 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
     setHedgeRatio(1);
   }
 
-  function editRisk() {
+  /** Back to the chat box. With `next`, it replaces the text and selects the first [blank]. */
+  function editRisk(next?: string) {
+    if (next !== undefined) setText(next);
     setPhase("input");
     setAnalysis(null);
     setChosen(null);
     setSized(null);
     window.scrollTo({ top: 0 });
-    // Put the cursor at the end of what they typed, ready to change it.
     setTimeout(() => {
       const t = riskBox.current;
       if (!t) return;
       t.focus();
-      t.setSelectionRange(t.value.length, t.value.length);
+      const a = t.value.indexOf("[");
+      const b = a >= 0 ? t.value.indexOf("]", a) : -1;
+      // Select the first blank so typing fills it in; otherwise put the cursor at the end.
+      if (a >= 0 && b > a) t.setSelectionRange(a, b + 1);
+      else t.setSelectionRange(t.value.length, t.value.length);
     }, 0);
   }
 
@@ -325,7 +331,7 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
         <p className="text-sm font-semibold text-accent">Your risk</p>
         {/* A clear way back to the chat box, with what they typed still in it */}
         <button
-          onClick={editRisk}
+          onClick={() => editRisk()}
           className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-border bg-surface px-3.5 py-2 text-sm font-semibold text-text shadow-sm hover:border-accent hover:text-accent"
         >
           <svg
@@ -397,7 +403,9 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
           headline={profile.headline ?? profile.condition}
           reason={analysis.reason}
           examples={examples}
-          onEdit={editRisk}
+          onEdit={() => editRisk()}
+          rewrites={suggestRewrites(text, profile)}
+          onRewrite={(t) => editRisk(t)}
           onExample={(t) => void analyze(t)}
           steps={steps}
           followUps={followUps}

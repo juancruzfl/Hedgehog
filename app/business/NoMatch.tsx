@@ -1,6 +1,24 @@
 "use client";
 
+import type { Rewrite } from "@/lib/business/rewrites";
 import { AgentSteps, type StepState } from "./AgentSteps";
+
+/** Shows a suggestion with its [blanks] highlighted. */
+function WithBlanks({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(/(\[[^\]]+\])/).map((part, i) =>
+        part.startsWith("[") ? (
+          <span key={i} className="rounded bg-accent-soft px-1 font-semibold text-accent">
+            {part.slice(1, -1)}
+          </span>
+        ) : (
+          part
+        ),
+      )}
+    </>
+  );
+}
 
 /** What Gemini lists today, in plain words, so the user knows what *can* be hedged. */
 const AVAILABLE: { title: string; body: string; icon: React.ReactNode }[] = [
@@ -56,6 +74,8 @@ export function NoMatch({
   examples,
   onEdit,
   onExample,
+  rewrites,
+  onRewrite,
   steps,
   followUps,
 }: {
@@ -64,6 +84,8 @@ export function NoMatch({
   examples: { label: string; text: string }[];
   onEdit: () => void;
   onExample: (text: string) => void;
+  rewrites: Rewrite[];
+  onRewrite: (text: string) => void;
   steps: StepState[];
   followUps: string[];
 }) {
@@ -86,11 +108,48 @@ export function NoMatch({
           </div>
         </div>
 
+        {rewrites.length > 0 && (
+          <div className="mt-6">
+            <p className="text-sm font-semibold">Try rewording it like one of these</p>
+            <p className="text-sm text-text-3">Pick one, fill in the highlighted parts, and send it again.</p>
+            <ul className="mt-3 space-y-2">
+              {rewrites.map((r) => (
+                <li key={r.id}>
+                  <button
+                    onClick={() => onRewrite(r.text)}
+                    className="group w-full rounded-2xl border border-border bg-background px-4 py-3 text-left hover:border-accent"
+                  >
+                    <span className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-text-3">{r.label}</span>
+                      <span className="text-sm font-semibold text-accent opacity-70 group-hover:opacity-100">Use this →</span>
+                    </span>
+                    <span className="mt-1 block text-[15px] leading-relaxed text-text">
+                      &ldquo;
+                      <WithBlanks text={r.text} />
+                      &rdquo;
+                    </span>
+                    <span className="mt-1 block text-xs text-text-3">{r.why}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <p className="mt-6 text-sm font-semibold">What you can hedge on Gemini today</p>
         <ul className="mt-3 grid gap-2 sm:grid-cols-2">
           {AVAILABLE.map((a) => (
             <li key={a.title} className="flex gap-3 rounded-2xl bg-surface-2 px-4 py-3 sm:[&:last-child:nth-child(odd)]:col-span-2">
-              <svg viewBox="0 0 24 24" className="mt-0.5 h-5 w-5 shrink-0 text-accent" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <svg
+                viewBox="0 0 24 24"
+                className="mt-0.5 h-5 w-5 shrink-0 text-accent"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
                 {a.icon}
               </svg>
               <div>
