@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { CryptoFlow } from "./CryptoFlow";
 
 export const metadata = { title: "Crypto · Hedgehog" };
@@ -10,7 +11,9 @@ export default function CryptoPage() {
         Live odds from Gemini prediction markets show how likely your crypto is to fall, and what it costs to cushion the fall.
       </p>
       <div className="mt-8">
-        <CryptoFlow />
+        <Suspense>
+          <CryptoFlow />
+        </Suspense>
       </div>
     </main>
   );

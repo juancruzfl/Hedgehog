@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { BusinessFlow } from "./BusinessFlow";
 
 export const metadata = { title: "Business · Hedgehog" };
@@ -10,7 +11,9 @@ export default function BusinessPage() {
         Promos, fuel, weather, metal prices: tell Hedgehog what worries you, and it finds Gemini prediction markets that pay out when it happens.
       </p>
       <div className="mt-8">
-        <BusinessFlow />
+        <Suspense>
+          <BusinessFlow />
+        </Suspense>
       </div>
     </main>
   );

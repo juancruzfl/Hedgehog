@@ -14,10 +14,20 @@ declare global {
 
 const SOURCE_LABEL: Record<Holding["source"], string> = { solana: "Solana wallet", gemini: "Gemini", manual: "Entered by you" };
 
-export function HoldingsPanel({ holdings, onChange }: { holdings: Holding[]; onChange: (h: Holding[]) => void }) {
-  const [tab, setTab] = useState<Tab>("solana");
+export function HoldingsPanel({
+  holdings,
+  onChange,
+  initialAsset = null,
+}: {
+  holdings: Holding[];
+  onChange: (h: Holding[]) => void;
+  initialAsset?: string | null;
+}) {
+  // Arriving from a board card ("Protect my SOL") opens manual entry with that coin picked.
+  const fromCard = initialAsset && isHedgeable(initialAsset) ? initialAsset : null;
+  const [tab, setTab] = useState<Tab>(fromCard ? "manual" : "solana");
   const [address, setAddress] = useState("");
-  const [asset, setAsset] = useState<string>("SOL");
+  const [asset, setAsset] = useState<string>(fromCard ?? "SOL");
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ kind: "error" | "info"; text: string } | null>(null);

@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ApprovePanel } from "@/components/ApprovePanel";
 import { PayoffChart, type CurvePoint } from "@/components/charts";
@@ -42,7 +43,8 @@ function QualityBadge({ quality }: { quality: EventMatch["quality"] }) {
 }
 
 export function BusinessFlow() {
-  const [text, setText] = useState("");
+  const params = useSearchParams();
+  const [text, setText] = useState(() => params.get("q") ?? "");
   const [analyzing, setAnalyzing] = useState(false);
   const [step, setStep] = useState(0);
   const [error, setError] = useState<string | null>(null);

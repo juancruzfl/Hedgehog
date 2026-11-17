@@ -25,6 +25,7 @@ export class GeminiAdapter implements VenueAdapter {
       status: "active",
       category: q.category,
       search: q.search,
+      sport: q.sport,
       limit: q.limit ?? 100,
       offset: q.offset,
     });

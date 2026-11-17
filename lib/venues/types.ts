@@ -3,6 +3,8 @@ import type { Market, Order, OrderRequest, Position } from "@/lib/types";
 export interface ListMarketsQuery {
   category?: string[];
   search?: string;
+  /** Venue sport filter, e.g. "american_football". */
+  sport?: string[];
   limit?: number;
   offset?: number;
 }

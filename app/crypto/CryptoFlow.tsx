@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { combineHoldings, isHedgeable, type Holding } from "@/lib/holdings";
 import { ForecastCard, type FAsset, type FHorizon } from "./ForecastCard";
@@ -17,6 +18,7 @@ function loadHoldings(): Holding[] {
 }
 
 export function CryptoFlow() {
+  const initialAsset = useSearchParams().get("asset")?.toUpperCase() ?? null;
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [forecasts, setForecasts] = useState<FAsset[] | null>(null);
   const [asOf, setAsOf] = useState(0);
@@ -69,7 +71,7 @@ export function CryptoFlow() {
 
   return (
     <div className="space-y-6">
-      <HoldingsPanel holdings={holdings} onChange={update} />
+      <HoldingsPanel holdings={holdings} onChange={update} initialAsset={initialAsset} />
 
       {combined.length > 0 && (
         <section className="space-y-4">

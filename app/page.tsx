@@ -1,103 +1,72 @@
 import Link from "next/link";
-import { getMids } from "@/lib/chain/hyperliquid";
-import { buildForecast } from "@/lib/forecast/forecast";
-import { pct, shortDate, usd } from "@/lib/format";
+import { buildBoard } from "@/lib/landing/board";
 import { getVenue } from "@/lib/venues";
+import { MarketExplorer } from "./MarketExplorer";
+import { RiskBoard } from "./RiskBoard";
 
 export const revalidate = 60;
 
-/** A live example from Gemini: the market's odds of a ~10% drop, about a week out. */
-async function liveExample() {
-  try {
-    const [mids, markets] = await Promise.all([getMids(), getVenue().listMarkets({ category: ["Crypto"], search: "SOL", limit: 100 })]);
-    const f = buildForecast({ asset: "SOL", spot: mids.SOL, quantity: 1, markets, drops: [0.1] });
-    const h = f.horizons[Math.min(1, f.horizons.length - 1)];
-    const p = h?.points[0];
-    return p ? { asset: "SOL", spot: f.spot, strike: p.strike, prob: p.probBelow, expiry: h.expiry } : null;
-  } catch {
-    return null;
-  }
-}
-
 const steps = [
-  { n: "1", title: "Tell us what could hurt", body: "Your crypto, a promo, fuel costs, the weather. In your own words, or read straight from your wallet." },
-  { n: "2", title: "See the real odds", body: "Hedgehog finds Gemini prediction markets on the same event and shows what the crowd thinks will happen." },
-  { n: "3", title: "Decide, then approve", body: "See exactly what it costs and what it pays. Nothing happens until you approve it." },
+  { n: "01", title: "Tell us what could hurt", body: "Read your wallet, or describe a promo, fuel bill or cold weekend in plain words." },
+  { n: "02", title: "See the real odds", body: "Hedgehog finds the Gemini prediction market on that exact event and shows the crowd's odds." },
+  { n: "03", title: "Approve, or don't", body: "See the cost, the payout and what isn't covered. Nothing happens until you approve." },
 ];
 
 export default async function Home() {
-  const ex = await liveExample();
+  const cards = await buildBoard(getVenue()).catch(() => []);
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-14">
-      <section>
-        <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
-          Know the odds of a bad day.
-          <br />
-          <span className="text-text-2">Shrink the cost if you want.</span>
-        </h1>
-        <p className="mt-4 max-w-2xl text-lg text-text-2">
-          Hedgehog turns live prediction-market odds into plain answers: how likely is the thing you&apos;re worried about, and what would it cost to
-          soften the blow?
+    <main className="mx-auto max-w-6xl px-4 pb-16">
+      <section className="py-14 sm:py-20">
+        <p className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-text-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-accent" /> Powered by Gemini prediction markets
         </p>
+        <h1 className="mt-5 max-w-4xl text-5xl font-extrabold leading-[1.02] tracking-tight sm:text-7xl">
+          Know the odds.
+          <br />
+          <span className="text-accent">Cap the downside.</span>
+        </h1>
+        <p className="mt-6 max-w-2xl text-lg text-text-2">
+          Hedgehog turns live market odds into plain answers: how likely is the bad thing, and what would it cost to soften it? For your crypto,
+          and for your business.
+        </p>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link href="/crypto" className="rounded-xl bg-accent px-5 py-3 font-semibold text-accent-ink hover:brightness-110">
+            Check my crypto
+          </Link>
+          <Link href="/business" className="rounded-xl border border-border bg-surface px-5 py-3 font-semibold hover:border-text-3">
+            Reduce a business risk
+          </Link>
+        </div>
+      </section>
 
-        {ex && (
-          <div className="mt-8 inline-flex flex-col gap-1 rounded-2xl border border-border bg-surface px-5 py-4">
-            <span className="text-xs font-medium uppercase tracking-wide text-text-3">Live from Gemini right now</span>
-            <span className="text-xl font-semibold tabular-nums">
-              {pct(ex.prob)} chance {ex.asset} drops below {usd(ex.strike)} by {shortDate(ex.expiry)}
-            </span>
-            <span className="text-sm text-text-2 tabular-nums">It&apos;s {usd(ex.spot)} today.</span>
+      <MarketExplorer cards={cards} />
+
+      <div className="mt-16">
+        <RiskBoard cards={cards} />
+      </div>
+
+      <section className="mt-20 grid gap-8 border-t border-border pt-10 sm:grid-cols-3">
+        {steps.map((s) => (
+          <div key={s.n}>
+            <span className="font-mono text-sm font-bold text-accent">{s.n}</span>
+            <h3 className="mt-2 text-lg font-bold">{s.title}</h3>
+            <p className="mt-1 text-sm text-text-2">{s.body}</p>
           </div>
-        )}
+        ))}
       </section>
 
-      <section className="mt-12 grid gap-4 sm:grid-cols-2">
-        <Link href="/crypto" className="group rounded-2xl border border-border bg-surface p-6 transition hover:border-accent">
-          <p className="text-xs font-medium uppercase tracking-wide text-text-3">For crypto holders</p>
-          <h2 className="mt-2 text-xl font-semibold">See your downside, daily</h2>
-          <p className="mt-2 text-sm text-text-2">
-            Paste a wallet address or type what you hold. Get a daily forecast of how likely a drop is, and cushion it in a few taps.
-          </p>
-          <p className="mt-4 text-sm font-medium text-accent">Check my crypto →</p>
-        </Link>
-        <Link href="/business" className="group rounded-2xl border border-border bg-surface p-6 transition hover:border-accent">
-          <p className="text-xs font-medium uppercase tracking-wide text-text-3">For small businesses</p>
-          <h2 className="mt-2 text-xl font-semibold">Turn surprise costs into known ones</h2>
-          <p className="mt-2 text-sm text-text-2">
-            &ldquo;Half-price wings if the home team wins.&rdquo; &ldquo;Diesel keeps climbing.&rdquo; Describe it, and Hedgehog finds a market that pays out when it
-            happens.
-          </p>
-          <p className="mt-4 text-sm font-medium text-accent">Reduce a business risk →</p>
-        </Link>
-      </section>
-
-      <section className="mt-14">
-        <h2 className="text-lg font-semibold">How it works</h2>
-        <ol className="mt-4 grid gap-6 sm:grid-cols-3">
-          {steps.map((s) => (
-            <li key={s.n}>
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-ink">{s.n}</span>
-              <h3 className="mt-3 font-medium">{s.title}</h3>
-              <p className="mt-1 text-sm text-text-2">{s.body}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <section className="mt-14 grid gap-4 rounded-2xl border border-border bg-surface p-6 text-sm sm:grid-cols-3">
-        <div>
-          <p className="font-medium">No seed phrases, no signing</p>
-          <p className="mt-1 text-text-2">Wallets are read-only. Hedgehog never moves your crypto.</p>
-        </div>
-        <div>
-          <p className="font-medium">Regulated markets</p>
-          <p className="mt-1 text-text-2">Hedges are placed on Gemini&apos;s CFTC-regulated prediction markets, in dollars.</p>
-        </div>
-        <div>
-          <p className="font-medium">You approve everything</p>
-          <p className="mt-1 text-text-2">Every order is shown in full, including what it doesn&apos;t cover, before you say yes.</p>
-        </div>
+      <section className="mt-12 grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-3">
+        {[
+          ["No seed phrases", "Wallets are read-only. Hedgehog never moves your crypto."],
+          ["Regulated markets", "Hedges use Gemini's CFTC-regulated prediction markets, in dollars."],
+          ["You approve everything", "Every order is shown in full, including what it doesn't cover."],
+        ].map(([t, b]) => (
+          <div key={t} className="bg-surface p-5 text-sm">
+            <p className="font-semibold">{t}</p>
+            <p className="mt-1 text-text-2">{b}</p>
+          </div>
+        ))}
       </section>
 
       <p className="mt-10 text-xs text-text-3">

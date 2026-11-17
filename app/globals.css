@@ -1,60 +1,52 @@
 @import "tailwindcss";
 
-/* Design tokens. Light + dark are selected values, not an automatic flip. */
+/*
+ * Hedgehog theme: dark, dense market-board layout with bold, high-contrast type
+ * and a cyan accent. One selected dark palette (the app is dark-only).
+ */
 :root {
-  --background: #fcfcfb;
-  --surface: #ffffff;
-  --border: #e6e5e0;
-  --text: #0b0b0b;
-  --text-2: #52514e;
-  --text-3: #8a8983;
-  --accent: #2a78d6;        /* series 1 / primary action */
-  --accent-ink: #ffffff;
-  --neutral-series: #8a8983; /* "unhedged" baseline line */
-  --grid: #ecebe6;
-  --good: #008300;
-  --warn: #b26b00;
-  --bad: #c43a39;
-  --warn-bg: #fff6e5;
-  --series-1: #2a78d6;
-  --series-2: #eb6834;
-  --series-3: #1baf7a;
-}
-@media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme="light"])) {
-    --background: #121211;
-    --surface: #1a1a19;
-    --border: #2e2d2b;
-    --text: #f0efec;
-    --text-2: #c3c2b7;
-    --text-3: #8f8e86;
-    --accent: #3987e5;
-    --accent-ink: #ffffff;
-    --neutral-series: #8f8e86;
-    --grid: #2a2928;
-    --good: #0ca30c;
-    --warn: #e0a030;
-    --bad: #e66767;
-    --warn-bg: #2b2210;
-    --series-1: #3987e5;
-    --series-2: #d95926;
-    --series-3: #199e70;
-  }
+  color-scheme: dark;
+  --background: #0b0f15;
+  --surface: #121821;
+  --surface-2: #19212c;
+  --border: #232d3a;
+  --text: #edf2f8;
+  --text-2: #9fabba;
+  --text-3: #6b7787;
+  --accent: #2fd0ef;       /* cyan: primary action, hedged line */
+  --accent-ink: #04131a;   /* text on accent */
+  --accent-soft: rgba(47, 208, 239, 0.12);
+  --neutral-series: #7c8796;
+  --grid: #1e2732;
+  --good: #3fcf8e;
+  --good-soft: rgba(63, 207, 142, 0.12);
+  --warn: #f2b84b;
+  --warn-bg: rgba(242, 184, 75, 0.12);
+  --bad: #f2645a;
+  --bad-soft: rgba(242, 100, 90, 0.12);
+  /* categorical chart slots (validated for this surface) */
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-border: var(--border);
   --color-text: var(--text);
   --color-text-2: var(--text-2);
   --color-text-3: var(--text-3);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
   --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
   --color-warn: var(--warn);
-  --color-bad: var(--bad);
   --color-warn-bg: var(--warn-bg);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -63,4 +55,8 @@ body {
   background: var(--background);
   color: var(--text);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+input, select, textarea {
+  color: var(--text);
 }
