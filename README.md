@@ -66,6 +66,7 @@ The crypto flow reads a wallet **read-only** over Solana JSON-RPC (`getBalance`,
 
 - `lib/engine/sizer.ts`: all money math (event hedges, downside/upside strike ladders, payoff curves). Pure and unit-tested.
 - `lib/ai/`: `AIProvider` interface; one OpenAI-compatible implementation (xAI Grok by default). **The AI interprets; it never sizes or places orders**, and it can only pick from real candidate contracts.
+- `lib/business/fallback.ts`: if the AI is unavailable, a basic matcher still handles game-day promos (team found in live NFL markets, cost from "500 orders at $6") and fuel/metal costs (gallons converted to barrels), and the page says it was used.
 - `lib/venues/`: venue-agnostic types; `gemini/` client, normalizer and adapter.
 - `lib/hedges/`: approval, re-validation, paper execution and settlement.
 - `lib/holdings/`, `lib/chain/`: Solana wallet reading, Gemini balances, live prices.
@@ -92,8 +93,9 @@ npm run dev                    # http://localhost:3000
 | `AI_API_KEY`, `AI_BASE_URL`, `AI_MODEL` | Any OpenAI-compatible provider; `npm run ai:check` lists your models |
 
 ```bash
-npm test          # 37 unit tests: sizer, forecast, normalizer, AI guardrails, business analysis, execution, settlement
+npm test             # 48 unit tests: sizer, forecast, normalizer, AI guardrails, fallback matcher, execution, settlement
 npm run typecheck
+npm run demo:check   # pre-demo readiness: collector, market data, next game, AI, Gemini key, settled hedges
 ```
 
 ## Honest limits

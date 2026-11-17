@@ -1,8 +1,9 @@
 # Demo script (about 3 minutes)
 
 **Before you start**
+- Run `npm run demo:check` and fix anything marked ✗.
 - `npm run collect` has been running (odds history), and `npm run dev` is up.
-- `.env.local` has working AI credits (`npm run ai:check` returns a parse).
+- `.env.local` has working AI credits and `AI_MODEL` set (`npm run ai:check` returns a parse). If the AI is down, the business page falls back to its basic matcher for the game-day and fuel examples and says so.
 - The **Game-day promo** example automatically uses the next upcoming NFL game. Check that it names a game that hasn't kicked off.
 - Approve one or two small paper hedges on short-dated markets a day ahead, so **My hedges** has settled results to show.
 - Clear the browser's site data so the crypto page starts empty. Have a Solana address ready to paste.

@@ -33,6 +33,7 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<RiskProfile | null>(null);
   const [followUps, setFollowUps] = useState<string[]>([]);
+  const [usedFallback, setUsedFallback] = useState(false);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [choice, setChoice] = useState(0);
 
@@ -55,6 +56,7 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
     setStep(0);
     setError(null);
     setAnalysis(null);
+    setUsedFallback(false);
     setSized(null);
     setChoice(0);
     try {
@@ -63,6 +65,7 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
       if (!res.ok) throw new Error(body.error);
       setProfile(body.profile);
       setFollowUps(body.followUps);
+      setUsedFallback(Boolean(body.fallback));
       setAnalysis(body.analysis);
     } catch (e) {
       setError((e as Error).message);
@@ -155,6 +158,11 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
       {profile && analysis && (
         <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
           <StepHeading n={2} title="Here's what we understood" sub="Fix anything that's off. The numbers below update as you type." />
+          {usedFallback && (
+            <p className="mt-3 rounded-xl bg-warn-bg px-4 py-3 text-sm">
+              Our AI assistant is unavailable right now, so Hedgehog used its basic matcher. Double-check the details below.
+            </p>
+          )}
           <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-3">
             <div className="rounded-xl bg-surface-2 px-4 py-3">
               <dt className="text-text-3">The risk</dt>

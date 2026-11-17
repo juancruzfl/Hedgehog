@@ -21,6 +21,15 @@ export interface GeminiClientConfig {
   nonceMode?: "time" | "incremental";
 }
 
+/** JSON.parse, but large integer ids (order ids) are kept as exact strings. */
+export function parseKeepingIds(text: string): unknown {
+  try {
+    return JSON.parse(text.replace(/"(orderId|id)"\s*:\s*(\d{16,})/g, '"$1":"$2"'));
+  } catch {
+    return null;
+  }
+}
+
 export class GeminiApiError extends Error {
   constructor(
     public status: number,
@@ -79,12 +88,22 @@ export class GeminiClient {
     fields: Record<string, unknown> = {},
     query: Record<string, string | number | undefined> = {},
   ): Promise<T> {
-    const run = this.queue.then(() => this.signedPost<T>(path, fields, query));
+    return this.enqueue(() => this.signed<T>("POST", path, fields, query));
+  }
+
+  /** Authenticated GET (e.g. /v1/prediction-markets/terms/status), same signing scheme. */
+  privateGet<T>(path: string, query: Record<string, string | number | undefined> = {}): Promise<T> {
+    return this.enqueue(() => this.signed<T>("GET", path, {}, query));
+  }
+
+  private enqueue<T>(fn: () => Promise<T>): Promise<T> {
+    const run = this.queue.then(() => this.retryOnNonce(fn));
     this.queue = run.catch(() => undefined);
     return run;
   }
 
-  private async signedPost<T>(
+  private async signed<T>(
+    method: "GET" | "POST",
     path: string,
     fields: Record<string, unknown>,
     query: Record<string, string | number | undefined>,
@@ -93,17 +112,19 @@ export class GeminiClient {
       throw new Error("Gemini API key/secret not configured (GEMINI_API_KEY, GEMINI_API_SECRET)");
     }
     const payload = { request: path, nonce: this.nextNonce(), ...fields };
-    const b64 = Buffer.from(JSON.stringify(payload)).toString("base64");
+    // Order ids exceed JS's safe integer range, so callers pass them as strings and
+    // they are written back into the JSON as bare numbers, digit for digit.
+    const json = JSON.stringify(payload).replace(/"(orderId)":"(\d+)"/g, '"$1":$2');
+    const b64 = Buffer.from(json).toString("base64");
     const signature = createHmac("sha384", this.cfg.apiSecret!).update(b64).digest("hex");
 
     const url = new URL(path, BASES[this.cfg.tradingEnv ?? "sandbox"]);
     for (const [k, v] of Object.entries(query)) if (v !== undefined) url.searchParams.set(k, String(v));
 
     const res = await fetch(url, {
-      method: "POST",
+      method,
       headers: {
-        "Content-Type": "text/plain",
-        "Content-Length": "0",
+        ...(method === "POST" ? { "Content-Type": "text/plain", "Content-Length": "0" } : {}),
         "X-GEMINI-APIKEY": this.cfg.apiKey!,
         "X-GEMINI-PAYLOAD": b64,
         "X-GEMINI-SIGNATURE": signature,
@@ -111,9 +132,26 @@ export class GeminiClient {
       },
       cache: "no-store",
     });
-    const body = await res.json().catch(() => null);
+    const body = parseKeepingIds(await res.text());
     if (!res.ok) throw new GeminiApiError(res.status, body, path);
     return body as T;
+  }
+
+  /**
+   * Another process using the same key (dev server, demo:check) may have used a nonce
+   * at or above ours. Gemini rejects that with InvalidNonce before doing anything, so
+   * it is safe to retry with a higher nonce a couple of times.
+   */
+  private async retryOnNonce<T>(fn: () => Promise<T>, attempts = 6): Promise<T> {
+    for (let i = 0; ; i++) {
+      try {
+        return await fn();
+      } catch (e) {
+        const reason = e instanceof GeminiApiError ? (e.body as { reason?: string } | null)?.reason : undefined;
+        if (reason !== "InvalidNonce" || i >= attempts - 1) throw e;
+        await new Promise((r) => setTimeout(r, 1100));
+      }
+    }
   }
 
   private nextNonce(): number {
