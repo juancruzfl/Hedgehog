@@ -93,3 +93,28 @@ input, select, textarea {
 .legal table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 .legal th, .legal td { border: 1px solid var(--border); padding: 0.5rem 0.65rem; text-align: left; vertical-align: top; }
 .legal th { background: var(--surface-2); color: var(--text); font-weight: 600; }
+
+/* Hedge popup: slides up on phones, fades and lifts on desktop */
+@keyframes hh-sheet-up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes hh-fade { from { opacity: 0; } to { opacity: 1; } }
+.hh-sheet[open] { animation: hh-sheet-up 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.hh-sheet[open]::backdrop { animation: hh-fade 200ms ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .hh-sheet[open], .hh-sheet[open]::backdrop { animation: none; }
+}
+
+/* Every popup dims and blurs the page behind it */
+dialog::backdrop {
+  background: rgb(21 24 29 / 0.28);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+/* Crypto page title/subtitle change with the card on screen */
+@keyframes hh-swap-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.hh-swap-in { animation: hh-swap-in 260ms ease-out both; }
+@media (prefers-reduced-motion: reduce) { .hh-swap-in { animation: none; } }
+
+/* Business page: steps and options fade in */
+.hh-fade-in { animation: hh-fade 500ms ease-out both; }
+@media (prefers-reduced-motion: reduce) { .hh-fade-in { animation: none; } }

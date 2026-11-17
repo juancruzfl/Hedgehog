@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { ApprovePanel } from "@/components/ApprovePanel";
 import { CoinIcon } from "@/components/CoinIcon";
+import { Sheet } from "@/components/Sheet";
 import { PayoffChart, type CurvePoint } from "@/components/charts";
-import { Segmented, Stat, StepHeading } from "@/components/ui";
+import { Segmented, Stat } from "@/components/ui";
 import type { LadderResult } from "@/lib/engine/sizer";
 import { pct, qty, shortDate, timeUntil, usd } from "@/lib/format";
 import type { RiskProfile } from "@/lib/types";
@@ -82,16 +83,12 @@ export function HedgeBuilder({ asset, quantity, marketId, onClose }: { asset: st
   const expiries = [...(preview?.expiries ?? [])].sort((a, b) => a.expiry.localeCompare(b.expiry));
 
   return (
-    <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
-      <div className="flex items-start gap-3">
-        <CoinIcon asset={asset} />
-        <div className="mr-auto">
-          <StepHeading title={`Soften a drop in your ${asset}`} sub="Choose how big a cushion you want. You'll see the full cost before anything happens." />
-        </div>
-        <button onClick={onClose} className="rounded-lg px-2 py-1 text-text-3 hover:bg-surface-2 hover:text-text" aria-label="Close">
-          ✕
-        </button>
-      </div>
+    <Sheet
+      onClose={onClose}
+      icon={<CoinIcon asset={asset} />}
+      title={`Soften a drop in your ${asset}`}
+      sub="Choose how big a cushion you want. You'll see the full cost before anything happens."
+    >
 
       {/* Choices */}
       <div className="mt-6 space-y-5">
@@ -242,6 +239,6 @@ export function HedgeBuilder({ asset, quantity, marketId, onClose }: { asset: st
           )}
         </div>
       )}
-    </section>
+    </Sheet>
   );
 }

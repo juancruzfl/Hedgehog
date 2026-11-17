@@ -32,7 +32,18 @@ function horizonOption(h: FHorizon, j: number) {
   return { value: j, label: `By ${shortDate(h.expiry)}`, sub: until.replace(/^in /, "in ") };
 }
 
-export function ForecastCard({ f, asOf, onProtect }: { f: FAsset; asOf: number; onProtect: (horizon: FHorizon) => void }) {
+export function ForecastCard({
+  f,
+  asOf,
+  onProtect,
+  showHolding = true,
+}: {
+  f: FAsset;
+  asOf: number;
+  onProtect: (horizon: FHorizon) => void;
+  /** Off when the page header already names the coin and amount. */
+  showHolding?: boolean;
+}) {
   // Default to the middle horizon (about a week out): the most useful planning window.
   const [hi, setHi] = useState(Math.min(1, f.horizons.length - 1));
   // Each card flips on its own; flipping one never changes another.
@@ -76,17 +87,19 @@ export function ForecastCard({ f, asOf, onProtect }: { f: FAsset; asOf: number; 
         style={{ transform: flipped ? "rotateY(180deg)" : "none" }}
       >
         <article className={`${face} flex flex-1 flex-col`} inert={flipped} aria-hidden={flipped}>
-          <header className="flex flex-wrap items-center gap-3">
-            <CoinIcon asset={f.asset} />
-            <div className="mr-auto">
-              <p className="font-semibold">{f.asset}</p>
-              <p className="text-sm text-text-2 tabular-nums">
-                {qty(f.quantity)} {f.asset} · {usd(f.valueUsd)} at {usd(f.spot)} each
-              </p>
-            </div>
-          </header>
+          {showHolding && (
+            <header className="mb-4 flex flex-wrap items-center gap-3">
+              <CoinIcon asset={f.asset} />
+              <div className="mr-auto">
+                <p className="font-semibold">{f.asset}</p>
+                <p className="text-sm text-text-2 tabular-nums">
+                  {qty(f.quantity)} {f.asset} · {usd(f.valueUsd)} at {usd(f.spot)} each
+                </p>
+              </div>
+            </header>
+          )}
 
-          <div className="mt-4">
+          <div>
             <Segmented label="Time frame" options={f.horizons.map(horizonOption)} value={hi} onChange={setHi} />
           </div>
 

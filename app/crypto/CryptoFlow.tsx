@@ -1,9 +1,11 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { combineHoldings, isHedgeable, type Holding } from "@/lib/holdings";
 import { STORAGE_KEYS } from "@/lib/legal";
+import { CoinIcon } from "@/components/CoinIcon";
+import { qty, usd } from "@/lib/format";
 import type { FAsset, FHorizon } from "./ForecastCard";
 import { PinnedMarkets } from "./PinnedMarkets";
 import { HedgeBuilder } from "./HedgeBuilder";
@@ -40,7 +42,6 @@ export function CryptoFlow() {
   const [error, setError] = useState<string | null>(null);
   // Only the coin and date are remembered; the amount always comes from current holdings.
   const [building, setBuilding] = useState<{ asset: string; marketId: string } | null>(null);
-  const builderRef = useRef<HTMLDivElement>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   // Arriving from a landing card ("SOL holder") with a coin but no amount opens manual entry for it.
   const [dialogMethod] = useState<Method | null>(initialAsset && !params.get("qty") ? "manual" : null);
@@ -127,15 +128,35 @@ export function CryptoFlow() {
 
   function protect(f: FAsset, h: FHorizon) {
     setBuilding({ asset: f.asset, marketId: h.marketId });
-    setTimeout(() => builderRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   }
 
-  const header = (
+  // Follows the card on screen: names the coin and what that holding is worth.
+  // With no single card in view (stacked on phones), it stays general.
+  const header = (f: FAsset | null = null) => (
     <div>
-      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl [@media(max-height:800px)]:text-3xl">How likely is your crypto to drop?</h1>
+      <h1 className="flex flex-wrap items-center text-3xl font-bold tracking-tight sm:text-4xl [@media(max-height:800px)]:text-3xl">
+        {f ? (
+          <span key={f.asset} className="hh-swap-in inline-flex flex-wrap items-center gap-x-2.5">
+            How likely is your
+            <span className="inline-flex items-center gap-2">
+              <CoinIcon asset={f.asset} />
+              {f.asset}
+            </span>
+            to drop?
+          </span>
+        ) : (
+          "How likely is your crypto to drop?"
+        )}
+      </h1>
       {/* One short line so it always fits above the pinned market card */}
-      <p className="mt-1.5 text-text-2 [@media(max-height:800px)]:mt-1 [@media(max-height:800px)]:text-sm">
-        Live odds from Gemini prediction markets. Cushion a fall only if you want to.
+      <p key={f?.asset ?? "all"} className="hh-swap-in mt-1.5 text-text-2 tabular-nums [@media(max-height:800px)]:mt-1 [@media(max-height:800px)]:text-sm">
+        {f ? (
+          <>
+            Your {qty(f.quantity)} {f.asset} is worth <b className="font-semibold text-text">{usd(f.valueUsd)}</b> at {usd(f.spot)} each.
+          </>
+        ) : (
+          "Live odds from Gemini prediction markets. Cushion a fall only if you want to."
+        )}
       </p>
       {importNote && <p className="mt-3 rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text-2">{importNote}</p>}
       {error && <p className="mt-3 text-sm text-bad">{error}</p>}
@@ -158,7 +179,7 @@ export function CryptoFlow() {
         <PinnedMarkets header={header} updating={loading} forecasts={forecasts} asOf={asOf} onProtect={protect} />
       ) : (
         <div className="space-y-8 pt-10">
-          {header}
+          {header()}
           {combined.length === 0 ? (
             <section className="flex flex-col items-center rounded-2xl border border-dashed border-border px-5 py-12 text-center">
               <p className="text-lg font-semibold">Start by telling us what you hold</p>
@@ -173,8 +194,8 @@ export function CryptoFlow() {
         </div>
       )}
 
-      <div ref={builderRef} className="scroll-mt-20">
-        {building &&
+      {/* The builder opens as a popup over the market cards. */}
+      {building &&
           (() => {
             const held = combined.find((c) => c.asset === building.asset)?.quantity ?? 0;
             // If the coin was removed, there's nothing to hedge.
@@ -182,7 +203,6 @@ export function CryptoFlow() {
               <HedgeBuilder key={`${building.asset}-${building.marketId}`} {...building} quantity={held} onClose={() => setBuilding(null)} />
             ) : null;
           })()}
-      </div>
     </div>
   );
 }

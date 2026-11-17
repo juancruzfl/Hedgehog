@@ -1,7 +1,7 @@
 // Odds snapshot collector, shared by `npm run collect` and the hosted server
 // (instrumentation.ts starts it in-process when ENABLE_COLLECTOR=1).
 
-import { insertSnapshot, type OddsRow } from "./store";
+import { insertSnapshot, unwatchMarket, watchedMarketIds, type OddsRow } from "./store";
 import { GeminiClient } from "@/lib/venues/gemini/client";
 import { toMarkets, type GeminiEvent } from "@/lib/venues/gemini/normalize";
 import type { Market } from "@/lib/types";
@@ -23,9 +23,52 @@ async function fetchAll(category: string): Promise<Market[]> {
   return out;
 }
 
+/** Markets someone looked at that aren't in the collected categories (e.g. a game). */
+async function fetchWatched(ids: string[]): Promise<Market[]> {
+  const out: Market[] = [];
+  for (const id of ids) {
+    try {
+      const ev = await client().publicGet<GeminiEvent>(`/v1/prediction-markets/events/${encodeURIComponent(id)}`);
+      const m = toMarkets(ev)[0];
+      // Settled or gone: stop watching it.
+      if (!m || m.contracts.every((c) => Date.parse(c.expiry) < Date.now())) unwatchMarket(id);
+      else out.push(m);
+    } catch (e) {
+      console.error(`[collect] watched ${id} failed:`, (e as Error).message);
+    }
+  }
+  return out;
+}
+
+const toRows = (ts: number, markets: Market[]): OddsRow[] =>
+  markets.flatMap((m) =>
+    m.contracts
+      .filter((c) => !(c.quote.yesBid === null && c.quote.yesAsk === null && c.quote.last === null))
+      .map((c) => ({
+        ts,
+        symbol: c.symbol,
+        marketId: m.id,
+        marketTitle: m.title,
+        category: m.category,
+        label: c.label,
+        strikeType: c.strike?.type ?? null,
+        strikeValue: c.strike?.value ?? null,
+        expiry: c.expiry,
+        yesBid: c.quote.yesBid,
+        yesAsk: c.quote.yesAsk,
+        last: c.quote.last,
+      })),
+  );
+
+/** Record specific markets right now (used when they're first watched). */
+export async function snapshotMarkets(ids: string[]): Promise<void> {
+  insertSnapshot(toRows(Date.now(), await fetchWatched(ids)));
+}
+
 export async function snapshot(): Promise<void> {
   const ts = Date.now();
   const rows: OddsRow[] = [];
+  const seen = new Set<string>();
   for (const cat of categories()) {
     let markets: Market[];
     try {
@@ -34,26 +77,10 @@ export async function snapshot(): Promise<void> {
       console.error(`[collect] ${cat} failed:`, (e as Error).message);
       continue;
     }
-    for (const m of markets) {
-      for (const c of m.contracts) {
-        if (c.quote.yesBid === null && c.quote.yesAsk === null && c.quote.last === null) continue;
-        rows.push({
-          ts,
-          symbol: c.symbol,
-          marketId: m.id,
-          marketTitle: m.title,
-          category: m.category,
-          label: c.label,
-          strikeType: c.strike?.type ?? null,
-          strikeValue: c.strike?.value ?? null,
-          expiry: c.expiry,
-          yesBid: c.quote.yesBid,
-          yesAsk: c.quote.yesAsk,
-          last: c.quote.last,
-        });
-      }
-    }
+    markets.forEach((m) => seen.add(m.id));
+    rows.push(...toRows(ts, markets));
   }
+  rows.push(...toRows(ts, await fetchWatched(watchedMarketIds().filter((id) => !seen.has(id)))));
   insertSnapshot(rows);
   console.log(`[collect] ${new Date(ts).toISOString()} stored ${rows.length} contract quotes`);
 }

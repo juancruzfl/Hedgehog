@@ -54,9 +54,11 @@ export function PinnedStage({
   renderCard,
   status,
 }: {
-  header: React.ReactNode;
+  /** A node, or a function of the card on screen (null when cards are stacked, not swapped). */
+  header: React.ReactNode | ((current: number | null) => React.ReactNode);
   items: StageItem[];
-  renderCard: (index: number) => React.ReactNode;
+  /** `pinned` is true when the card is shown alone in the swap-in-place view. */
+  renderCard: (index: number, pinned: boolean) => React.ReactNode;
   /** Replaces the "1 of 3" hint, e.g. "Updating odds…". */
   status?: string | null;
 }) {
@@ -137,6 +139,7 @@ export function PinnedStage({
 
     // The stage is "engaged" while it's pinned and fills the screen.
     const engaged = () => {
+      if (document.querySelector("dialog[open]")) return false; // a popup owns scrolling and keys
       const r = wrap.current?.getBoundingClientRect();
       return !!r && r.top <= nav + 2 && r.bottom >= window.innerHeight - 2;
     };
@@ -209,10 +212,10 @@ export function PinnedStage({
   if (!pinned) {
     return (
       <div className="space-y-8 pt-10">
-        {header}
+        {typeof header === "function" ? header(n === 1 ? 0 : null) : header}
         <div className="space-y-4">
           {items.map((it, i) => (
-            <div key={it.key}>{renderCard(i)}</div>
+            <div key={it.key}>{renderCard(i, false)}</div>
           ))}
         </div>
       </div>
@@ -227,7 +230,7 @@ export function PinnedStage({
       ))}
 
       <div className="sticky flex flex-col" style={{ top: nav, height: `calc(100vh - ${nav}px)` }}>
-        <div className="shrink-0 pb-4 pt-6 [@media(max-height:800px)]:pb-3 [@media(max-height:800px)]:pt-4">{header}</div>
+        <div className="shrink-0 pb-4 pt-6 [@media(max-height:800px)]:pb-3 [@media(max-height:800px)]:pt-4">{typeof header === "function" ? header(current) : header}</div>
 
         <div ref={stage} className="relative grid min-h-0 flex-1 items-start">
           {items.map((it, i) => {
@@ -251,7 +254,7 @@ export function PinnedStage({
                   className="flex flex-col *:flex-1"
                   style={{ minHeight: uniformH ?? undefined }}
                 >
-                  {renderCard(i)}
+                  {renderCard(i, true)}
                 </div>
               </div>
             );
