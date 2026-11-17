@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ApprovePanel } from "@/components/ApprovePanel";
+import { CoinIcon } from "@/components/CoinIcon";
 import { PayoffChart, type CurvePoint } from "@/components/charts";
 import { Segmented, Stat, StepHeading } from "@/components/ui";
 import type { LadderResult } from "@/lib/engine/sizer";
@@ -82,8 +83,11 @@ export function HedgeBuilder({ asset, quantity, marketId, onClose }: { asset: st
 
   return (
     <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
-      <div className="flex items-start justify-between gap-4">
-        <StepHeading title={`Soften a drop in your ${asset}`} sub="Choose how big a cushion you want. You'll see the full cost before anything happens." />
+      <div className="flex items-start gap-3">
+        <CoinIcon asset={asset} />
+        <div className="mr-auto">
+          <StepHeading title={`Soften a drop in your ${asset}`} sub="Choose how big a cushion you want. You'll see the full cost before anything happens." />
+        </div>
         <button onClick={onClose} className="rounded-lg px-2 py-1 text-text-3 hover:bg-surface-2 hover:text-text" aria-label="Close">
           ✕
         </button>

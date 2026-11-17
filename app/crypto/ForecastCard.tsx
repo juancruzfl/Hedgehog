@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CoinIcon } from "@/components/CoinIcon";
 import { OddsHistoryChart } from "@/components/charts";
 import { Segmented, oddsInWords } from "@/components/ui";
 import type { AssetForecast, ForecastHorizon, ForecastPoint } from "@/lib/forecast/forecast";
@@ -53,7 +54,7 @@ export function ForecastCard({ f, asOf, onProtect }: { f: FAsset; asOf: number; 
   return (
     <article className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
       <header className="flex flex-wrap items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-2 text-xs font-bold">{f.asset}</span>
+        <CoinIcon asset={f.asset} />
         <div className="mr-auto">
           <p className="font-semibold">{f.asset}</p>
           <p className="text-sm text-text-2 tabular-nums">

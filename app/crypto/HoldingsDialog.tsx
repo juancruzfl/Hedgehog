@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { CoinIcon } from "@/components/CoinIcon";
 import { qty, usd } from "@/lib/format";
 import { HEDGEABLE_ASSETS, isHedgeable, type Holding } from "@/lib/holdings";
 
@@ -297,7 +298,12 @@ export function HoldingsDialog({
               <tbody className="divide-y divide-border">
                 {holdings.map((h, i) => (
                   <tr key={`${h.source}-${h.asset}-${i}`}>
-                    <td className="py-2.5 font-semibold">{h.asset}</td>
+                    <td className="py-2.5 font-semibold">
+                      <span className="flex items-center gap-2">
+                        <CoinIcon asset={h.asset} size="sm" />
+                        {h.asset}
+                      </span>
+                    </td>
                     <td className="py-2.5 text-right">{qty(h.quantity)}</td>
                     <td className="py-2.5 text-right text-text-2">{prices[h.asset] ? usd(h.quantity * prices[h.asset]) : "—"}</td>
                     <td className="hidden py-2.5 pl-4 text-text-2 sm:table-cell">{SOURCE_LABEL[h.source]}</td>

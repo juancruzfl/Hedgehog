@@ -3,8 +3,8 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { combineHoldings, isHedgeable, type Holding } from "@/lib/holdings";
-import { ForecastCard, type FAsset, type FHorizon } from "./ForecastCard";
-import { useScrollFocus } from "./useScrollFocus";
+import type { FAsset, FHorizon } from "./ForecastCard";
+import { PinnedMarkets } from "./PinnedMarkets";
 import { HedgeBuilder } from "./HedgeBuilder";
 import { HoldingsDialog, type Method } from "./HoldingsDialog";
 
@@ -118,9 +118,6 @@ export function CryptoFlow() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
-  // The market card nearest the middle of the screen is "in focus"; others dim.
-  const { active, register } = useScrollFocus(forecasts?.map((f) => f.asset) ?? []);
-
   function protect(f: FAsset, h: FHorizon) {
     setBuilding({ asset: f.asset, marketId: h.marketId });
     setTimeout(() => builderRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
@@ -154,21 +151,7 @@ export function CryptoFlow() {
             {loading && forecasts && <p className="text-right text-sm text-text-3">Updating odds…</p>}
             {error && <p className="text-sm text-bad">{error}</p>}
             {!forecasts && !error && <div className="h-48 animate-pulse rounded-2xl border border-border bg-surface" aria-label="Loading odds" />}
-            {forecasts?.map((f) => {
-              const focused = active === null || active === f.asset || forecasts.length === 1;
-              return (
-                <div
-                  key={f.asset}
-                  ref={register(f.asset)}
-                  data-focused={focused}
-                  className={`snap-center rounded-2xl transition duration-300 ease-out motion-reduce:transition-none ${
-                    focused ? "scale-100 opacity-100 ring-2 ring-accent" : "scale-[0.97] opacity-45"
-                  }`}
-                >
-                  <ForecastCard f={f} asOf={asOf} onProtect={(h) => protect(f, h)} />
-                </div>
-              );
-            })}
+            {forecasts && <PinnedMarkets forecasts={forecasts} asOf={asOf} onProtect={protect} />}
           </section>
         </>
       )}
