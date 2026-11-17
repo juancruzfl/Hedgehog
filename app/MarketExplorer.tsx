@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { OddsAreaChart } from "@/components/charts";
+import { usd } from "@/lib/format";
 import type { BoardCard } from "@/lib/landing/board";
 
 const FEATURED_ORDER = ["OIL", "SOL", "NFL", "AU", "BTC"];
@@ -17,15 +18,36 @@ function pickFeatured(cards: BoardCard[]): BoardCard[] {
   return out;
 }
 
-function Change({ history }: { history: { ts: number; p: number }[] }) {
-  if (history.length < 3) return null;
-  const d = history[history.length - 1].p - history[0].p;
-  if (Math.abs(d) < 0.005) return <span className="text-sm text-text-3">unchanged since {new Date(history[0].ts).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>;
+/** "about 1 in 5" / "a coin flip" / "likely": odds people can picture. */
+function inWords(p: number): string {
+  if (p >= 0.45 && p <= 0.55) return "about a coin flip";
+  if (p > 0.55) return p > 0.8 ? "very likely" : "more likely than not";
+  if (p < 0.03) return "very unlikely";
+  return `about 1 in ${Math.round(1 / p)}`;
+}
+
+/** The question already says "by <date>", so keep only the extra context, in words. */
+function context(subtitle: string): string {
+  const rest = subtitle.replace(/^by [^·]+·\s*/, "");
+  return rest.replace(/^market expects ~/, "Market expects about ").replace(/ now$/, " today").replace(/^\$/, "It's $");
+}
+
+function StepLabel({ n, children }: { n: number; children: React.ReactNode }) {
   return (
-    <span className={`text-sm font-semibold ${d > 0 ? "text-bad" : "text-good"}`}>
-      {d > 0 ? "▲" : "▼"} {Math.abs(d * 100).toFixed(1)} pts
-      <span className="font-normal text-text-3"> since {new Date(history[0].ts).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric" })}</span>
-    </span>
+    <p className="flex items-center gap-2 text-sm font-semibold text-text-2">
+      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-ink">{n}</span>
+      {children}
+    </p>
+  );
+}
+
+function Stat({ label, value, note }: { label: string; value: string; note: string }) {
+  return (
+    <div className="rounded-xl bg-surface-2 px-3 py-3 sm:px-4">
+      <p className="text-[11px] text-text-2 sm:text-xs">{label}</p>
+      <p className="mt-0.5 text-xl font-bold tabular-nums sm:text-2xl">{value}</p>
+      <p className="text-[11px] leading-snug text-text-3 sm:text-xs">{note}</p>
+    </div>
   );
 }
 
@@ -34,11 +56,12 @@ export function MarketExplorer({ cards }: { cards: BoardCard[] }) {
   const [i, setI] = useState(0);
   const m = featured[i];
   if (!m) return null;
+  const pct = Math.round(m.prob * 100);
 
   return (
     <section aria-labelledby="explorer-title">
       <p className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-text-2">
-        <span className="h-1.5 w-1.5 rounded-full bg-accent" /> Powered by Gemini prediction markets
+        <span className="h-1.5 w-1.5 rounded-full bg-accent" /> Live odds from Gemini prediction markets
       </p>
       <h1 id="explorer-title" className="mt-5 max-w-4xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
         One market.
@@ -46,92 +69,101 @@ export function MarketExplorer({ cards }: { cards: BoardCard[] }) {
         <span className="text-accent">Many real-world risks.</span>
       </h1>
       <p className="mt-4 max-w-2xl text-lg text-text-2">
-        A prediction market pays $1 when an event happens. Anyone who gets hurt by that event can use it to soften the blow. Hedgehog finds the
-        market for your risk and shows you what it costs.
+        A prediction market pays out if something happens. If that same thing would cost you money, the payout softens the hit. Pick a market
+        below to see who it can protect.
       </p>
 
-      <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm font-semibold uppercase tracking-wide text-text-3">Pick a live market</p>
-        <div role="tablist" aria-label="Featured market" className="flex gap-1 rounded-xl border border-border bg-surface p-1">
+      {/* Step 1: pick a market */}
+      <div className="mt-10">
+        <StepLabel n={1}>Pick a live market</StepLabel>
+        <div role="tablist" aria-label="Live markets" className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {featured.map((c, j) => (
             <button
               key={c.id}
               role="tab"
               aria-selected={i === j}
               onClick={() => setI(j)}
-              className={`rounded-lg px-3 py-1.5 text-sm ${i === j ? "bg-surface-2 font-semibold text-text" : "text-text-2 hover:text-text"}`}
+              className={`rounded-xl border px-4 py-3 text-left transition ${
+                i === j ? "border-accent bg-accent-soft" : "border-border bg-surface hover:border-text-3"
+              }`}
             >
-              {c.badge === "AU" ? "Gold" : c.badge === "OIL" ? "Oil" : c.badge === "NFL" ? "NFL game" : c.badge}
+              <span className="block text-sm font-semibold">{c.tabLabel}</span>
+              <span className="mt-0.5 block text-xs text-text-2 tabular-nums">{Math.round(c.prob * 100)}% chance</span>
             </button>
           ))}
         </div>
       </div>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-5">
-        {/* The market */}
-        <article className="min-w-0 rounded-2xl border border-border bg-surface p-5 lg:col-span-3">
-          <div className="flex items-center gap-2 text-xs text-text-3">
-            <span className="rounded-md bg-surface-2 px-2 py-0.5 font-bold text-text-2">{m.badge}</span>
-            <span className="min-w-0 truncate">Gemini market · {m.marketName}</span>
-          </div>
-          <h3 className="mt-3 text-2xl font-bold leading-tight">{m.title}</h3>
-          <p className="mt-0.5 text-sm text-text-2">{m.subtitle}</p>
+      <div className="mt-6 grid gap-4 lg:grid-cols-5">
+        {/* The market, in plain English */}
+        <article className="min-w-0 rounded-2xl border border-border bg-surface p-5 sm:p-6 lg:col-span-3">
+          <h2 className="text-2xl font-bold leading-tight sm:text-[28px]">{m.question}</h2>
+          <p className="mt-1 text-sm text-text-2">{context(m.subtitle)}</p>
 
-          <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span className="text-5xl font-extrabold tabular-nums tracking-tight text-accent">{Math.round(m.prob * 100)}%</span>
-            <span className="text-text-2">chance</span>
-            <Change history={m.history} />
+          <div className="mt-5 grid grid-cols-3 gap-2">
+            <Stat label="Chance it happens" value={`${pct}%`} note={inWords(m.prob)} />
+            <Stat label="Costs today" value={m.cost !== null ? `${Math.round(m.cost * 100)}¢` : "—"} note="for each $1 of payout" />
+            <Stat label="Pays if it happens" value="$1" note="per contract, from Gemini" />
           </div>
 
-          <div className="mt-4">
-            {m.history.length >= 3 ? (
-              <OddsAreaChart data={m.history} />
-            ) : m.other ? (
-              <div className="py-6">
-                <div className="flex h-3 overflow-hidden rounded-full bg-surface-2" aria-hidden>
-                  <div className="bg-accent" style={{ width: `${m.prob * 100}%` }} />
-                  <div className="mx-0.5" />
-                  <div className="flex-1 bg-text-3" />
-                </div>
-                <div className="mt-2 flex justify-between text-sm tabular-nums">
-                  <span><b>{Math.round(m.prob * 100)}%</b> <span className="text-text-2">{m.title.split(" beats")[0]} wins</span></span>
-                  <span><span className="text-text-2">{m.other.label}</span> <b>{Math.round(m.other.prob * 100)}%</b></span>
-                </div>
+          {m.history.length >= 3 ? (
+            <div className="mt-5">
+              <p className="text-sm font-medium">How the odds have moved</p>
+              <div className="mt-2">
+                <OddsAreaChart data={m.history} height={250} />
               </div>
-            ) : (
-              <p className="py-10 text-center text-sm text-text-3">Odds history is still being collected.</p>
-            )}
-          </div>
+            </div>
+          ) : m.other ? (
+            <div className="mt-6">
+              <p className="text-sm font-medium">What the market expects</p>
+              <div className="mt-2 flex h-3 overflow-hidden rounded-full" aria-hidden>
+                <div className="bg-accent" style={{ width: `${m.prob * 100}%` }} />
+                <div className="w-0.5 bg-surface" />
+                <div className="flex-1 bg-surface-2" />
+              </div>
+              <div className="mt-2 flex justify-between text-sm tabular-nums">
+                <span>
+                  <b>{pct}%</b> <span className="text-text-2">{m.title.split(" beats")[0]} wins</span>
+                </span>
+                <span>
+                  <span className="text-text-2">{m.other.label}</span> <b>{Math.round(m.other.prob * 100)}%</b>
+                </span>
+              </div>
+            </div>
+          ) : null}
 
-          <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-4 text-sm">
-            <span className="rounded-lg bg-good-soft px-3 py-1.5 font-semibold text-good">Pays $1 if it happens</span>
-            {m.cost !== null && (
-              <span className="rounded-lg bg-surface-2 px-3 py-1.5 tabular-nums text-text-2">
-                costs <b className="text-text">{Math.round(m.cost * 100)}¢</b> today
-              </span>
-            )}
-            <span className="text-xs text-text-3">Live odds from Gemini prediction markets</span>
-          </div>
+          <p className="mt-5 border-t border-border pt-3 text-xs text-text-3">
+            Source: Gemini prediction market &ldquo;{m.marketName}&rdquo;. Prices update every minute.
+          </p>
         </article>
 
-        {/* Who can use it */}
-        <aside className="min-w-0 rounded-2xl border border-border bg-surface p-5 lg:col-span-2">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-text-3">Risks this market can offset</h3>
-          <ul className="mt-3 divide-y divide-border">
-            {m.uses.map((u) => (
-              <li key={u.who}>
-                <Link href={u.href} className="group flex items-center gap-3 py-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold">{u.who}</p>
-                    <p className="text-sm text-text-2">{u.risk}</p>
-                  </div>
-                  <span className="shrink-0 rounded-lg bg-accent-soft px-2.5 py-1 text-sm font-semibold text-accent transition group-hover:bg-accent group-hover:text-accent-ink">
-                    Hedge →
-                  </span>
-                </Link>
-              </li>
-            ))}
+        {/* Step 2: who it protects */}
+        <aside className="min-w-0 lg:col-span-2">
+          <StepLabel n={2}>See who it protects</StepLabel>
+          <ul className="mt-3 space-y-2">
+            {m.uses.map((u) => {
+              const stake = m.cost !== null ? Math.max(1, Math.round(u.payout * m.cost)) : null;
+              return (
+                <li key={u.who}>
+                  <Link href={u.href} className="group block rounded-xl border border-border bg-surface p-4 transition hover:border-accent">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold">{u.who}</p>
+                        <p className="text-sm text-text-2">{u.risk}</p>
+                      </div>
+                      <span className="shrink-0 text-sm font-semibold text-accent group-hover:underline">See my numbers →</span>
+                    </div>
+                    {stake !== null && (
+                      <p className="mt-3 rounded-lg bg-surface-2 px-3 py-2 text-sm tabular-nums">
+                        Put in <b>{usd(stake)}</b> → get <b>{usd(u.payout)}</b> back if it happens
+                      </p>
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
+          <p className="mt-3 text-xs text-text-3">Example amounts. Your numbers depend on your own costs.</p>
         </aside>
       </div>
     </section>

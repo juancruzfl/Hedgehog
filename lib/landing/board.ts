@@ -29,6 +29,10 @@ export interface BoardCard {
   other?: { label: string; prob: number };
   /** Plain-English name of the market as Gemini lists it. */
   marketName: string;
+  /** The market as a plain question, e.g. "Will oil rise above $96 by Nov 30?" */
+  question: string;
+  /** Short label for tabs, e.g. "Oil price". */
+  tabLabel: string;
 }
 
 const SINCE = () => Date.now() - 3 * 24 * 3600_000;
@@ -68,6 +72,8 @@ async function cryptoCards(venue: VenueAdapter): Promise<BoardCard[]> {
       cta: { label: `Protect my ${asset}`, href: `/crypto?asset=${asset}` },
       uses: cryptoUses(asset, usd(p.strike), shortDay(h.expiry)),
       marketName: `${h.title}: ${c?.label ?? usd(p.strike)}`,
+      question: `Will ${asset} drop below ${usd(p.strike)} by ${shortDay(h.expiry)}?`,
+      tabLabel: `${asset} price`,
     });
   }
   return out;
@@ -110,6 +116,8 @@ async function commodityCards(venue: VenueAdapter): Promise<BoardCard[]> {
       },
       uses: commodityUses(cm.name, usd(c.strike!.value!), shortDay(pick.market.expiry)),
       marketName: `${pick.market.title.replace(/\?$/, "")}: ${c.label}`,
+      question: `Will ${cm.name.toLowerCase()} rise above ${usd(c.strike!.value!)} by ${shortDay(pick.market.expiry)}?`,
+      tabLabel: `${cm.name} price`,
     });
   }
   return out;
@@ -157,6 +165,8 @@ async function sportsCards(venue: VenueAdapter): Promise<BoardCard[]> {
         uses: gameUses(dog.label, fav.label, day),
         other: { label: `${fav.label} wins`, prob: yesMid(fav.quote)! },
         marketName: `${m.title}: ${dog.label} wins`,
+        question: `Will ${dog.label} beat ${fav.label}?`,
+        tabLabel: `${dog.label} game`,
       },
     ];
   });

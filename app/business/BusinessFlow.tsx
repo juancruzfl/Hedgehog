@@ -1,32 +1,14 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { BUSINESS_EXAMPLES as EXAMPLES } from "@/lib/business/examples";
+import { useEffect, useRef, useState } from "react";
 import { ApprovePanel } from "@/components/ApprovePanel";
 import { PayoffChart, type CurvePoint } from "@/components/charts";
 import type { Analysis, EventMatch } from "@/lib/business/analyze";
 import type { EventHedgeResult } from "@/lib/engine/sizer";
 import { pct, qty, shortDate, usd } from "@/lib/format";
 import type { ExposureRange, HedgeProposal, RiskProfile } from "@/lib/types";
-
-const EXAMPLES = [
-  {
-    label: "Game-day promo",
-    text: "I run a sports bar in Indianapolis. If the Colts beat Houston on Thursday night, wings are half price all night. We usually sell about 500 orders and the discount is $6 each.",
-  },
-  {
-    label: "Fuel costs",
-    text: "We run 6 delivery vans that burn about 2,500 gallons of diesel a month. A jump in fuel prices before the end of the month would wreck our margins.",
-  },
-  {
-    label: "Cold weekend",
-    text: "Our outdoor market in Austin loses about $4,000 in sales when Saturday's high is under 50°F.",
-  },
-  {
-    label: "Metal prices",
-    text: "I'm a jeweler and need to buy about 20 oz of gold for holiday inventory at the end of the month. If gold jumps, my margins disappear.",
-  },
-];
 
 const STEPS = ["Understanding your risk…", "Searching Gemini markets…", "Checking the fine print…"];
 
@@ -88,6 +70,15 @@ export function BusinessFlow() {
     }
   }
 
+  // Arriving from the landing page with ?auto=1 runs the analysis straight away (once).
+  const autoRan = useRef(false);
+  useEffect(() => {
+    if (autoRan.current || params.get("auto") !== "1" || text.trim().length < 10) return;
+    autoRan.current = true;
+    void analyze();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Re-size (deterministic, no AI) whenever the choice or controls change.
   useEffect(() => {
     if (!profile || !analysis || analysis.type === "none") return;
@@ -127,7 +118,7 @@ export function BusinessFlow() {
   return (
     <div className="space-y-6">
       <section className="rounded-2xl border border-border bg-surface p-5">
-        <label htmlFor="risk" className="text-lg font-semibold">What could hurt your business?</label>
+        <label htmlFor="risk" className="text-lg font-semibold">What&apos;s the risk?</label>
         <p className="mt-1 text-sm text-text-2">Describe it like you would to a friend: what happens, when, and roughly what it would cost you.</p>
         <textarea
           id="risk"
