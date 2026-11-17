@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getSpot } from "@/lib/chain/hyperliquid";
+import { getSpotPrice } from "@/lib/chain/prices";
 import { buildDownsideLadder, payoffCurve } from "@/lib/engine/sizer";
 import type { Market, RiskProfile } from "@/lib/types";
 import { getVenue } from "@/lib/venues";
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const [spot, markets] = await Promise.all([
-      getSpot(asset),
+      getSpotPrice(asset),
       getVenue().listMarkets({ category: ["Crypto"], search: asset, limit: 100 }),
     ]);
 

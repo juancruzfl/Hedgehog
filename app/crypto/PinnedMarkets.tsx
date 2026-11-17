@@ -6,7 +6,7 @@ import { ForecastCard, type FAsset, type FHorizon } from "./ForecastCard";
 
 const SEG_VH = 60; // scroll distance per market (vh)
 const MIN_SCALE = 0.75; // below this, a card scrolls inside instead of shrinking further
-const ROW = 56; // room for the coin row under the card (px)
+const ROW = 52; // room for the coin row under the card (px)
 
 function useMedia(query: string) {
   const [match, setMatch] = useState(false);
@@ -147,7 +147,7 @@ export function PinnedMarkets({
 
       {/* The fixed view: title, card, coin row */}
       <div className="sticky flex flex-col" style={{ top: nav, height: `calc(100vh - ${nav}px)` }}>
-        <div className="shrink-0 pb-4 pt-6">{header}</div>
+        <div className="shrink-0 pb-4 pt-6 [@media(max-height:800px)]:pb-3 [@media(max-height:800px)]:pt-4">{header}</div>
 
         <div ref={stage} className="relative grid min-h-0 flex-1 items-start">
           {forecasts.map((f, i) => {

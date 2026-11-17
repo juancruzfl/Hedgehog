@@ -125,10 +125,10 @@ export function CryptoFlow() {
 
   const header = (
     <div>
-      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">How likely is your crypto to drop?</h1>
-      {/* Hidden on short windows so the pinned market card has room */}
-      <p className="mt-2 max-w-2xl text-text-2 [@media(max-height:800px)]:hidden">
-        See the market&apos;s odds of your crypto dropping, and cushion a fall if you want. Nothing happens without your OK.
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl [@media(max-height:800px)]:text-3xl">How likely is your crypto to drop?</h1>
+      {/* One short line so it always fits above the pinned market card */}
+      <p className="mt-1.5 text-text-2 [@media(max-height:800px)]:mt-1 [@media(max-height:800px)]:text-sm">
+        Live odds from Gemini prediction markets. Cushion a fall only if you want to.
       </p>
       {importNote && <p className="mt-3 rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text-2">{importNote}</p>}
       {error && <p className="mt-3 text-sm text-bad">{error}</p>}

@@ -3,7 +3,7 @@
 // Hedgehog's own odds history (collector).
 
 import { impliedMedian, pickPriceMarket } from "@/lib/business/analyze";
-import { getMids } from "@/lib/chain/hyperliquid";
+import { getSpots } from "@/lib/chain/prices";
 import { buildForecast, yesMid } from "@/lib/forecast/forecast";
 import { historyForSymbol } from "@/lib/odds/store";
 import { usd } from "@/lib/format";
@@ -51,7 +51,7 @@ function history(symbol: string, side: "yes" | "no") {
 const shortDay = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 async function cryptoCards(venue: VenueAdapter): Promise<BoardCard[]> {
-  const mids = await getMids();
+  const mids = await getSpots(["BTC", "ETH", "SOL"]);
   const out: BoardCard[] = [];
   for (const asset of ["BTC", "ETH", "SOL"]) {
     const markets = await venue.listMarkets({ category: ["Crypto"], search: asset, limit: 100 });

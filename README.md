@@ -65,11 +65,11 @@ The crypto flow reads a wallet **read-only** over Solana JSON-RPC (`getBalance`,
 ```
 
 - `lib/engine/sizer.ts`: all money math (event hedges, downside/upside strike ladders, payoff curves). Pure and unit-tested.
-- `lib/ai/`: `AIProvider` interface; one OpenAI-compatible implementation (xAI Grok by default). **The AI interprets; it never sizes or places orders**, and it can only pick from real candidate contracts.
+- `lib/ai/`: `AIProvider` interface; one OpenAI-compatible implementation (OpenRouter by default, so any model works: Grok, Claude, Gemini, GPT). If a model doesn't support strict JSON schemas it falls back to JSON mode automatically. **The AI interprets; it never sizes or places orders**, and it can only pick from real candidate contracts.
 - `lib/business/fallback.ts`: if the AI is unavailable, a basic matcher still handles game-day promos (team found in live NFL markets, cost from "500 orders at $6") and fuel/metal costs (gallons converted to barrels), and the page says it was used.
 - `lib/venues/`: venue-agnostic types; `gemini/` client, normalizer and adapter.
 - `lib/hedges/`: approval, re-validation, paper execution and settlement.
-- `lib/holdings/`, `lib/chain/`: Solana wallet reading, Gemini balances, live prices.
+- `lib/holdings/`, `lib/chain/`: Solana wallet reading, Gemini balances, live prices (Gemini's public ticker, Hyperliquid as a fallback).
 
 ### Paper vs. live trading
 
@@ -90,7 +90,7 @@ npm run dev                    # http://localhost:3000
 | `GEMINI_TRADING_ENV` / `GEMINI_MARKET_DATA_ENV` | Where orders go (`sandbox`) / where market data comes from (`production`) |
 | `HEDGE_EXECUTION` | `paper` (default) or `live` |
 | `MAX_HEDGE_USD` | Per-hedge spend cap enforced server-side (default 5000) |
-| `AI_API_KEY`, `AI_BASE_URL`, `AI_MODEL` | Any OpenAI-compatible provider; `npm run ai:check` lists your models |
+| `AI_API_KEY`, `AI_BASE_URL`, `AI_MODEL` | OpenRouter by default (`https://openrouter.ai/api/v1`); any OpenAI-compatible provider works. `npm run ai:check` verifies the key and model |
 
 ```bash
 npm test             # 48 unit tests: sizer, forecast, normalizer, AI guardrails, fallback matcher, execution, settlement
