@@ -21,6 +21,8 @@ export interface GeminiContract {
   instrumentSymbol: string;
   termsAndConditionsUrl?: string;
   strike?: { type?: string; value?: string | null } | null;
+  resolutionSide?: "yes" | "no" | null;
+  settlementValue?: string | null;
   quantityIncrement?: string;
   quantityMinimum?: string;
   priceIncrement?: string;
@@ -90,6 +92,8 @@ export function toContract(c: GeminiContract, ev: GeminiEvent): Contract {
     rulesText: richText(c.description) || richText(ev.description),
     rulesUrl: c.termsAndConditionsUrl,
     tradable: (c.status ?? "active") === "active" && (c.marketState ?? "open") === "open",
+    resolutionSide: c.resolutionSide ?? null,
+    settlementValue: num(c.settlementValue ?? null),
   };
 }
 

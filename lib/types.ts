@@ -72,6 +72,9 @@ export interface Contract {
   rulesText: string;
   rulesUrl?: string;
   tradable: boolean;
+  /** Set once the contract has settled. */
+  resolutionSide?: Outcome | null;
+  settlementValue?: number | null;
 }
 
 export interface Market {
@@ -117,6 +120,8 @@ export interface Position {
   resolutionSide: Outcome | null;
   marketTitle?: string;
   expiry?: string;
+  /** Settled positions: what it paid out ($1 per winning contract). */
+  payout?: number | null;
 }
 
 /** One order in a proposed hedge. Payout is $1 per contract if `outcome` resolves true. */
