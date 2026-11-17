@@ -6,9 +6,9 @@ export const metadata = { title: "Crypto · Hedgehog" };
 export default function CryptoPage() {
   return (
     <main className="mx-auto max-w-4xl px-4 py-10">
-      <h1 className="text-3xl font-bold tracking-tight">Know your downside. Shrink it if you want.</h1>
-      <p className="mt-2 text-text-2">
-        Live odds from Gemini prediction markets show how likely your crypto is to fall, and what it costs to cushion the fall.
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">How likely is your crypto to drop?</h1>
+      <p className="mt-2 max-w-2xl text-text-2">
+        Three quick steps: tell us what you hold, see the odds of a drop, and cushion it if you want. Nothing happens without your OK.
       </p>
       <div className="mt-8">
         <Suspense>

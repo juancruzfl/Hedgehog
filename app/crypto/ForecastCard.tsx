@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { OddsHistoryChart, OddsSparkline } from "@/components/charts";
+import { OddsHistoryChart } from "@/components/charts";
+import { Segmented, oddsInWords } from "@/components/ui";
 import type { AssetForecast, ForecastHorizon, ForecastPoint } from "@/lib/forecast/forecast";
 import { dateTime, pct, qty, shortDate, timeUntil, usd } from "@/lib/format";
 
@@ -13,15 +14,21 @@ export type FHorizon = Omit<ForecastHorizon, "points"> & { points: FPoint[] };
 export type FAsset = Omit<AssetForecast, "horizons"> & { horizons: FHorizon[] };
 
 function Change({ change }: { change: FPoint["change"] }) {
-  if (!change || Math.abs(change.delta) < 0.005) return <span className="text-text-3">no change</span>;
+  if (!change || Math.abs(change.delta) < 0.005) return null;
   const up = change.delta > 0;
   const hours = (Date.now() - change.sinceTs) / 3600_000;
   return (
-    <span className={up ? "text-bad" : "text-good"}>
-      {up ? "▲" : "▼"} {Math.abs(change.delta * 100).toFixed(1)} pts{" "}
+    <span className={`text-sm ${up ? "text-bad" : "text-good"}`}>
+      {up ? "▲ Up" : "▼ Down"} {Math.abs(change.delta * 100).toFixed(1)} pts{" "}
       <span className="text-text-3">since {hours > 20 ? "yesterday" : dateTime(change.sinceTs)}</span>
     </span>
   );
+}
+
+/** "Today" / "Nov 20" style label plus how far away it is. */
+function horizonOption(h: FHorizon, j: number) {
+  const until = timeUntil(h.expiry);
+  return { value: j, label: `By ${shortDate(h.expiry)}`, sub: until.replace(/^in /, "in ") };
 }
 
 export function ForecastCard({ f, asOf, onProtect }: { f: FAsset; asOf: number; onProtect: (horizon: FHorizon) => void }) {
@@ -33,75 +40,72 @@ export function ForecastCard({ f, asOf, onProtect }: { f: FAsset; asOf: number; 
   if (!h) {
     return (
       <article className="rounded-2xl border border-border bg-surface p-5">
-        <h3 className="font-semibold">{f.asset}</h3>
-        <p className="mt-1 text-sm text-text-2">No Gemini price markets for {f.asset} right now.</p>
+        <p className="font-semibold">{f.asset}</p>
+        <p className="mt-1 text-sm text-text-2">Gemini doesn&apos;t list price markets for {f.asset} right now.</p>
       </article>
     );
   }
 
+  // Headline: the drop closest to 10%, the most intuitive "bad week".
   const headline = [...h.points].sort((a, b) => Math.abs(a.drop - 0.1) - Math.abs(b.drop - 0.1))[0];
+  const ladder = [...h.points].sort((a, b) => a.drop - b.drop);
 
   return (
-    <article className="rounded-2xl border border-border bg-surface p-5">
-      <header className="flex flex-wrap items-baseline gap-x-3">
-        <h3 className="text-lg font-semibold">{f.asset}</h3>
-        <span className="text-sm text-text-2 tabular-nums">
-          {qty(f.quantity)} × {usd(f.spot)} = <span className="font-medium text-text">{usd(f.valueUsd)}</span>
-        </span>
+    <article className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
+      <header className="flex flex-wrap items-center gap-3">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-2 text-xs font-bold">{f.asset}</span>
+        <div className="mr-auto">
+          <p className="font-semibold">{f.asset}</p>
+          <p className="text-sm text-text-2 tabular-nums">
+            {qty(f.quantity)} {f.asset} · {usd(f.valueUsd)} at {usd(f.spot)} each
+          </p>
+        </div>
       </header>
 
-      <p className="mt-3 text-2xl font-semibold leading-snug tabular-nums">
-        {pct(headline.probBelow)} chance {f.asset} drops below {usd(headline.strike)}
-        <span className="text-text-2"> by {shortDate(h.expiry)}</span>
-      </p>
-      <p className="mt-1 text-sm text-text-2">
-        That&apos;s a {pct(headline.drop)} fall, which would cost you {usd(headline.lossAtStrike)}. <Change change={headline.change} />
-      </p>
-
-      <div className="mt-4 flex flex-wrap gap-1 text-sm" role="tablist" aria-label="Time frame">
-        {f.horizons.map((x, i) => (
-          <button
-            key={x.marketId}
-            role="tab"
-            aria-selected={i === hi}
-            onClick={() => setHi(i)}
-            className={`rounded-full border px-3 py-1 ${i === hi ? "border-accent font-medium text-accent" : "border-border text-text-2"}`}
-          >
-            By {shortDate(x.expiry)}
-          </button>
-        ))}
+      <div className="mt-4">
+        <Segmented label="Time frame" options={f.horizons.map(horizonOption)} value={hi} onChange={setHi} />
       </div>
 
-      <table className="mt-4 w-full text-sm">
-        <caption className="sr-only">Market-implied chance of {f.asset} ending below each price by {shortDate(h.expiry)}</caption>
-        <thead className="text-left text-xs text-text-3">
-          <tr>
-            <th className="pb-2 font-normal">Ends below</th>
-            <th className="pb-2 font-normal">Chance</th>
-            <th className="hidden pb-2 font-normal sm:table-cell">Odds over time</th>
-            <th className="pb-2 text-right font-normal">Would cost you</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {h.points.map((p) => (
-            <tr key={p.symbol}>
-              <td className="py-2 tabular-nums">
-                {usd(p.strike)} <span className="text-text-3">(−{pct(p.drop)})</span>
-              </td>
-              <td className="py-2 font-medium tabular-nums">{pct(p.probBelow)}</td>
-              <td className="hidden py-1 sm:table-cell">
-                {p.history.length >= 3 ? <OddsSparkline data={p.history} /> : <span className="text-xs text-text-3">collecting…</span>}
-              </td>
-              <td className="py-2 text-right tabular-nums">{usd(p.lossAtStrike)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* The headline question */}
+      <div className="mt-5 rounded-xl bg-surface-2 p-4 sm:p-5">
+        <h3 className="text-lg font-bold leading-snug sm:text-xl">
+          Will {f.asset} drop below {usd(headline.strike)} by {shortDate(h.expiry)}?
+        </h3>
+        <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span className="text-4xl font-extrabold tabular-nums tracking-tight text-accent">{pct(headline.probBelow)}</span>
+          <span className="text-text-2">chance · {oddsInWords(headline.probBelow)}</span>
+          <Change change={headline.change} />
+        </div>
+        <p className="mt-2 text-[15px]">
+          If it does, you&apos;d be down about <b className="tabular-nums">{usd(headline.lossAtStrike)}</b> (a {pct(headline.drop)} fall).
+        </p>
+      </div>
+
+      {/* Ladder of drops */}
+      {ladder.length > 1 && (
+        <div className="mt-5">
+          <p className="text-sm font-semibold">Smaller and bigger drops</p>
+          <ul className="mt-2 space-y-2.5">
+            {ladder.map((p) => (
+              <li key={p.symbol} className="grid grid-cols-[7.5rem_1fr_3rem] items-center gap-3 text-sm sm:grid-cols-[9rem_1fr_3rem_5rem]">
+                <span className="tabular-nums">
+                  −{pct(p.drop)} <span className="text-text-3">· {usd(p.strike)}</span>
+                </span>
+                <span className="h-2.5 overflow-hidden rounded-full bg-surface-2" aria-hidden>
+                  <span className="block h-full rounded-full bg-accent" style={{ width: `${Math.max(2, p.probBelow * 100)}%` }} />
+                </span>
+                <span className="text-right font-semibold tabular-nums">{pct(p.probBelow)}</span>
+                <span className="hidden text-right text-text-2 tabular-nums sm:block">−{usd(p.lossAtStrike)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {h.points.some((p) => p.history.length >= 3) && (
-        <div className="mt-3">
-          <button onClick={() => setShowHistory((v) => !v)} className="text-sm text-accent" aria-expanded={showHistory}>
-            {showHistory ? "Hide" : "See"} how the odds have moved
+        <div className="mt-4">
+          <button onClick={() => setShowHistory((v) => !v)} className="text-sm font-medium text-accent" aria-expanded={showHistory}>
+            {showHistory ? "Hide" : "See"} how these odds have moved
           </button>
           {showHistory && (
             <div className="mt-3 rounded-xl border border-border p-4">
@@ -110,7 +114,7 @@ export function ForecastCard({ f, asOf, onProtect }: { f: FAsset; asOf: number; 
                 series={h.points.map((p) => ({
                   key: p.symbol,
                   label: `Below ${usd(p.strike)}`,
-                  data: [...p.history, { ts: asOf, probBelow: p.probBelow }], // end on the live value
+                  data: [...p.history, { ts: asOf, probBelow: p.probBelow }],
                 }))}
               />
             </div>
@@ -118,13 +122,11 @@ export function ForecastCard({ f, asOf, onProtect }: { f: FAsset; asOf: number; 
         </div>
       )}
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <button onClick={() => onProtect(h)} className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink">
-          Reduce this risk
+      <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-border pt-4">
+        <button onClick={() => onProtect(h)} className="rounded-xl bg-accent px-5 py-3 font-semibold text-accent-ink hover:brightness-110">
+          Soften a drop in my {f.asset} →
         </button>
-        <span className="text-xs text-text-3">
-          Odds from Gemini prediction markets · settles {timeUntil(h.expiry)}
-        </span>
+        <span className="text-xs text-text-3">Odds from Gemini prediction markets</span>
       </div>
     </article>
   );
