@@ -3,9 +3,9 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { StepHeading } from "@/components/ui";
-import { qty as fmtQty, usd } from "@/lib/format";
 import { combineHoldings, isHedgeable, type Holding } from "@/lib/holdings";
 import { ForecastCard, type FAsset, type FHorizon } from "./ForecastCard";
+import { useScrollFocus } from "./useScrollFocus";
 import { HedgeBuilder } from "./HedgeBuilder";
 import { HoldingsDialog, type Method } from "./HoldingsDialog";
 
@@ -119,12 +119,13 @@ export function CryptoFlow() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
+  // The market card nearest the middle of the screen is "in focus"; others dim.
+  const { active, register } = useScrollFocus(forecasts?.map((f) => f.asset) ?? []);
+
   function protect(f: FAsset, h: FHorizon) {
     setBuilding({ asset: f.asset, marketId: h.marketId });
     setTimeout(() => builderRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   }
-
-  const total = combined.reduce((t, c) => t + (prices[c.asset] ?? 0) * c.quantity, 0);
 
   return (
     <div className="space-y-6">
@@ -150,22 +151,6 @@ export function CryptoFlow() {
         </section>
       ) : (
         <>
-          {/* What they hold, in one line */}
-          <section className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-border bg-surface px-5 py-4">
-            <p className="text-sm text-text-2">Your crypto</p>
-            <ul className="flex flex-wrap gap-2">
-              {combined.map((c) => (
-                <li key={c.asset} className="rounded-full bg-surface-2 px-3 py-1 text-sm font-semibold tabular-nums">
-                  {fmtQty(c.quantity)} {c.asset}
-                </li>
-              ))}
-            </ul>
-            {total > 0 && <p className="text-sm tabular-nums">{usd(total)} total</p>}
-            <button onClick={() => setDialogOpen(true)} className="ml-auto text-sm font-semibold text-accent hover:underline">
-              Edit
-            </button>
-          </section>
-
           <section className="space-y-4">
             <div className="flex items-start justify-between gap-3">
               <StepHeading n={1} title="How likely is a drop?" sub="The odds come from live Gemini prediction markets, where people trade on where prices will end." />
@@ -173,7 +158,21 @@ export function CryptoFlow() {
             </div>
             {error && <p className="text-sm text-bad">{error}</p>}
             {!forecasts && !error && <div className="h-48 animate-pulse rounded-2xl border border-border bg-surface" aria-label="Loading odds" />}
-            {forecasts?.map((f) => <ForecastCard key={f.asset} f={f} asOf={asOf} onProtect={(h) => protect(f, h)} />)}
+            {forecasts?.map((f) => {
+              const focused = active === null || active === f.asset || forecasts.length === 1;
+              return (
+                <div
+                  key={f.asset}
+                  ref={register(f.asset)}
+                  data-focused={focused}
+                  className={`snap-center rounded-2xl transition duration-300 ease-out motion-reduce:transition-none ${
+                    focused ? "scale-100 opacity-100 ring-2 ring-accent" : "scale-[0.97] opacity-45"
+                  }`}
+                >
+                  <ForecastCard f={f} asOf={asOf} onProtect={(h) => protect(f, h)} />
+                </div>
+              );
+            })}
           </section>
         </>
       )}
