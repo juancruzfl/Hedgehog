@@ -12,7 +12,7 @@ export function PinnedMarkets({
   asOf,
   onProtect,
 }: {
-  header: React.ReactNode;
+  header: (current: FAsset | null) => React.ReactNode;
   updating: boolean;
   forecasts: FAsset[];
   asOf: number;
@@ -20,7 +20,7 @@ export function PinnedMarkets({
 }) {
   return (
     <PinnedStage
-      header={header}
+      header={(i) => header(i === null ? null : forecasts[i])}
       status={updating ? "Updating odds…" : null}
       items={forecasts.map((f) => ({
         key: f.asset,
@@ -32,7 +32,7 @@ export function PinnedMarkets({
           </>
         ),
       }))}
-      renderCard={(i) => <ForecastCard f={forecasts[i]} asOf={asOf} onProtect={(h) => onProtect(forecasts[i], h)} />}
+      renderCard={(i, pinned) => <ForecastCard f={forecasts[i]} asOf={asOf} onProtect={(h) => onProtect(forecasts[i], h)} showHolding={!pinned} />}
     />
   );
 }

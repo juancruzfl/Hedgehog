@@ -109,3 +109,8 @@ dialog::backdrop {
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
 }
+
+/* Crypto page title/subtitle change with the card on screen */
+@keyframes hh-swap-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.hh-swap-in { animation: hh-swap-in 260ms ease-out both; }
+@media (prefers-reduced-motion: reduce) { .hh-swap-in { animation: none; } }
