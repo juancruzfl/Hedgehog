@@ -8,7 +8,7 @@ import type { AIProvider } from "@/lib/ai/types";
 import { upcomingGames } from "@/lib/landing/board";
 import type { Market, RiskProfile } from "@/lib/types";
 import type { VenueAdapter } from "@/lib/venues/types";
-import { analyzeRisk, type Analysis } from "./analyze";
+import { analyzeRisk, type Analysis, type OnStep } from "./analyze";
 
 const num = (s: string) => Number(s.replace(/,/g, ""));
 
@@ -86,7 +86,7 @@ export interface FallbackResult {
 
 const noAI = {} as AIProvider; // price risks never call the AI in analyzeRisk
 
-export async function fallbackAnalyze(text: string, venue: VenueAdapter, now = new Date()): Promise<FallbackResult | null> {
+export async function fallbackAnalyze(text: string, venue: VenueAdapter, now = new Date(), onStep: OnStep = () => {}): Promise<FallbackResult | null> {
   const exposure = parseExposure(text);
   const range = (v: number) => ({ low: Math.round(v * 0.8), expected: Math.round(v), high: Math.round(v * 1.2) });
 
@@ -103,17 +103,23 @@ export async function fallbackAnalyze(text: string, venue: VenueAdapter, now = n
       exposureUsd: range(exposure ?? 0),
       window: { start: now.toISOString(), end: endOfWindow(text, now) },
       source: "conversation",
+      headline: `${commodity.ref === "Brent" ? "Fuel" : commodity.ref} prices rising`,
       notes: commodity.ref === "Brent" ? `${Math.round(commodity.units)} barrels-equivalent (42 gallons each); oil as a stand-in for fuel.` : undefined,
       position: { asset: commodity.ref, quantity: commodity.units, spotPrice: 0 },
     };
-    const analysis = await analyzeRisk(profile, { venue, ai: noAI, now });
+    onStep({ step: "understand", status: "done", detail: `${profile.condition} · about ${Math.round(commodity.units)} ${commodity.ref === "Brent" ? "barrels-equivalent" : "units"}` });
+    const analysis = await analyzeRisk(profile, { venue, ai: noAI, now, onStep });
     return { profile, followUps: [], analysis };
   }
 
   // Game-day promos.
+  onStep({ step: "search", status: "active", detail: "Looking through upcoming NFL games" });
   const games = await upcomingGames(venue);
   const hit = findTeam(text, games);
   if (!hit || !exposure) return null;
+  onStep({ step: "understand", status: "done", detail: `${hit.team} wins · costs you about $${Math.round(exposure).toLocaleString()}` });
+  onStep({ step: "search", status: "done", detail: `${games.length} upcoming games checked · found ${hit.m.title}` });
+  onStep({ step: "match", status: "done", detail: "1 option · exact match on the game result" });
   const contract = hit.m.contracts.find((c) => c.label === hit.team)!;
   const profile: RiskProfile = {
     id: `biz-${now.getTime()}`,
@@ -124,6 +130,7 @@ export async function fallbackAnalyze(text: string, venue: VenueAdapter, now = n
     exposureUsd: range(exposure),
     window: { start: now.toISOString(), end: hit.m.expiry },
     source: "conversation",
+    headline: `Your promo if ${hit.team} wins`,
     notes: `Cost estimated from your description; turnout ±20%.`,
   };
   return {

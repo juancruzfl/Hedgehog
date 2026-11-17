@@ -17,7 +17,7 @@ type Chat = Pick<OpenAI, "chat">;
 const riskJsonSchema = {
   type: "object",
   additionalProperties: false,
-  required: ["kind", "underlyingType", "underlyingRef", "condition", "exposureLow", "exposureExpected", "exposureHigh", "priceUnits", "windowStart", "windowEnd", "notes", "followUps"],
+  required: ["kind", "headline", "underlyingType", "underlyingRef", "condition", "exposureLow", "exposureExpected", "exposureHigh", "priceUnits", "windowStart", "windowEnd", "notes", "followUps"],
   properties: {
     kind: { type: "string", enum: ["price_drop", "price_rise", "event_trigger", "threshold"] },
     underlyingType: { type: "string", enum: ["crypto", "sports", "weather", "commodity"] },
@@ -36,6 +36,10 @@ const riskJsonSchema = {
     windowStart: { type: "string", description: "ISO 8601" },
     windowEnd: { type: "string", description: "ISO 8601" },
     notes: { type: "string", description: "Assumptions you made" },
+    headline: {
+      type: "string",
+      description: "The risk in the owner's own words, as a short title under 60 characters, e.g. 'Half-price wings if Indianapolis beats Houston' or 'Diesel prices rising before month-end'",
+    },
     followUps: { type: "array", items: { type: "string" }, description: "Questions if key facts are missing; empty if none" },
   },
 } as const;
@@ -52,6 +56,7 @@ const RiskOut = z.object({
   windowStart: z.string(),
   windowEnd: z.string(),
   notes: z.string(),
+  headline: z.string(),
   followUps: z.array(z.string()),
 });
 
@@ -232,6 +237,7 @@ export class OpenAICompatibleProvider implements AIProvider {
         kind: out.kind,
         underlying: { type: out.underlyingType, ref: out.underlyingRef },
         condition: out.condition,
+        headline: out.headline.trim().slice(0, 80) || undefined,
         exposureUsd: { low, expected, high },
         window: { start: out.windowStart, end: out.windowEnd },
         source: "conversation",
@@ -271,7 +277,8 @@ export class OpenAICompatibleProvider implements AIProvider {
         "You match a user's risk to prediction market contracts. Each contract pays $1 if its outcome resolves true.",
         "For each relevant contract return the outcome (yes/no) that PAYS OUT WHEN THE USER'S RISK HAPPENS.",
         "quality: exact = the contract resolves on the same event/condition as the risk; proxy = correlated but not identical; none = irrelevant (omit these).",
-        "Read the rules carefully and list concrete mismatches with the user's condition (overtime, margins, thresholds, timing, data source, cancellation).",
+        "Read the rules carefully. List only mismatches that could change whether the contract pays out when the risk happens (overtime, margins, thresholds, data source, ties, postponement or cancellation). Ignore small timing differences within the same game or day.",
+        "Write the rationale and mismatches to the business owner in second person (\"your promo\", \"you\"), in short plain sentences. Never say \"the user\".",
         "Only use symbols from the candidate list. Return at most 5, best first.",
       ].join(" "),
       JSON.stringify({ risk: { condition: profile.condition, underlying: profile.underlying, window: profile.window }, candidates: compact }),

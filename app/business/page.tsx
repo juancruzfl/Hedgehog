@@ -13,17 +13,11 @@ export default async function BusinessPage() {
   const examples = BUSINESS_EXAMPLES.map((ex) => (game && ex.label === game.label ? game : ex));
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10">
-      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Turn a surprise cost into a known one</h1>
-      <p className="mt-2 max-w-2xl text-text-2">
-        Promos, fuel, weather, metal prices. Tell Hedgehog what worries you, and it finds a Gemini market that pays out if it happens. Nothing
-        happens without your OK.
-      </p>
-      <div className="mt-8">
-        <Suspense>
-          <BusinessFlow examples={examples} />
-        </Suspense>
-      </div>
+    // The title lives inside BusinessFlow: once a risk is analyzed, it becomes the title.
+    <main className="mx-auto max-w-4xl px-4 pb-10">
+      <Suspense>
+        <BusinessFlow examples={examples} />
+      </Suspense>
     </main>
   );
 }

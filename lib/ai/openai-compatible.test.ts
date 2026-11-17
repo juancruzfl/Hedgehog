@@ -54,6 +54,7 @@ describe("OpenAICompatibleProvider", () => {
         exposureExpected: 3000,
         exposureHigh: 2400,
         priceUnits: 0,
+        headline: "Half-price wings if the Colts win",
         windowStart: "2026-11-22T00:00:00Z",
         windowEnd: "2026-11-23T00:00:00Z",
         notes: "",
