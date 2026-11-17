@@ -5,6 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 const SEG_VH = 60; // scroll distance per card (vh)
 const MIN_SCALE = 0.75; // below this, a card scrolls inside instead of shrinking further
 const ROW = 52; // room for the chip row under the card (px)
+const GESTURE_QUIET_MS = 450; // a scroll gesture ends after this long without wheel events
 
 function useMedia(query: string) {
   const [match, setMatch] = useState(false);
@@ -70,6 +71,7 @@ export function PinnedStage({
   const [index, setIndex] = useState(0);
   const [fit, setFit] = useState<Record<string, { scale: number; maxH: number }>>({});
   const [rowTop, setRowTop] = useState<number | null>(null);
+  const [uniformH, setUniformH] = useState<number | null>(null);
   const keys = items.map((i) => i.key).join("|");
 
   const seg = () => (window.innerHeight * SEG_VH) / 100;
@@ -102,15 +104,21 @@ export function PinnedStage({
       const st = stage.current;
       if (!st) return;
       const avail = st.clientHeight - ROW;
-      const next: Record<string, { scale: number; maxH: number }> = {};
-      let tallest = 0;
-      inner.current.forEach((el, key) => {
-        const scale = Math.max(MIN_SCALE, Math.min(1, avail / el.scrollHeight));
-        next[key] = { scale, maxH: avail / scale };
-        tallest = Math.max(tallest, Math.min(avail, el.scrollHeight * scale));
+      // Every card takes the height of the tallest one, so they're all the same size.
+      let natural = 0;
+      inner.current.forEach((el) => {
+        const prev = el.style.minHeight;
+        el.style.minHeight = "0px";
+        natural = Math.max(natural, el.scrollHeight);
+        el.style.minHeight = prev;
       });
+      if (!natural) return;
+      const scale = Math.max(MIN_SCALE, Math.min(1, avail / natural));
+      const next: Record<string, { scale: number; maxH: number }> = {};
+      inner.current.forEach((_, key) => (next[key] = { scale, maxH: avail / scale }));
+      setUniformH(natural);
       setFit(next);
-      setRowTop(tallest + 12); // just under the tallest card, so it doesn't jump
+      setRowTop(Math.min(avail, natural * scale) + 12);
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -118,6 +126,73 @@ export function PinnedStage({
     if (stage.current) ro.observe(stage.current);
     return () => ro.disconnect();
   }, [pinned, keys]);
+
+  const indexRef = useRef(0);
+  indexRef.current = index;
+
+  useEffect(() => {
+    if (!pinned) return;
+    let lockedUntil = 0;
+    let touchY: number | null = null;
+
+    // The stage is "engaged" while it's pinned and fills the screen.
+    const engaged = () => {
+      const r = wrap.current?.getBoundingClientRect();
+      return !!r && r.top <= nav + 2 && r.bottom >= window.innerHeight - 2;
+    };
+    const step = (dir: 1 | -1) => {
+      const target = indexRef.current + dir;
+      if (target < 0 || target >= n) return false;
+      jumpRef.current(target);
+      return true;
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || Math.abs(e.deltaY) < Math.abs(e.deltaX) || !engaged()) return;
+      const now = performance.now();
+      if (now < lockedUntil) {
+        // Still the same gesture (incl. trackpad momentum): absorb it.
+        e.preventDefault();
+        lockedUntil = now + GESTURE_QUIET_MS;
+        return;
+      }
+      if (step(e.deltaY > 0 ? 1 : -1)) {
+        e.preventDefault();
+        lockedUntil = now + GESTURE_QUIET_MS;
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t?.closest("input, textarea, select, [contenteditable=true]") || !engaged()) return;
+      const dir = ["ArrowDown", "PageDown", " "].includes(e.key) ? 1 : ["ArrowUp", "PageUp"].includes(e.key) ? -1 : 0;
+      if (dir && step(dir as 1 | -1)) e.preventDefault();
+    };
+    const onTouchStart = (e: TouchEvent) => (touchY = e.touches[0]?.clientY ?? null);
+    const onTouchMove = (e: TouchEvent) => {
+      if (touchY === null || !engaged()) return;
+      const dy = touchY - (e.touches[0]?.clientY ?? touchY);
+      const dir = dy > 0 ? 1 : -1;
+      const inside = indexRef.current + dir >= 0 && indexRef.current + dir < n;
+      if (!inside) return; // at either end, let the page scroll normally
+      e.preventDefault();
+      if (Math.abs(dy) > 40 && performance.now() >= lockedUntil) {
+        step(dir);
+        lockedUntil = performance.now() + 600;
+        touchY = null;
+      }
+    };
+
+    window.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    return () => {
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+    };
+  }, [pinned, n, nav]);
 
   const jumpTo = useCallback(
     (i: number) => {
@@ -128,6 +203,8 @@ export function PinnedStage({
     },
     [reduceMotion, nav],
   );
+  const jumpRef = useRef(jumpTo);
+  jumpRef.current = jumpTo;
 
   if (!pinned) {
     return (
@@ -171,6 +248,8 @@ export function PinnedStage({
                     if (el) inner.current.set(it.key, el);
                     else inner.current.delete(it.key);
                   }}
+                  className="flex flex-col *:flex-1"
+                  style={{ minHeight: uniformH ?? undefined }}
                 >
                   {renderCard(i)}
                 </div>

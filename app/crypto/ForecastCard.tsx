@@ -69,12 +69,13 @@ export function ForecastCard({ f, asOf, onProtect }: { f: FAsset; asOf: number; 
   return (
     // A card with two faces: the odds (front) and how they've moved (back). The back
     // is laid over the front, so the card keeps exactly the same size when flipped.
-    <div className="[perspective:1600px]">
+    // It fills whatever height the stage gives it, so every coin's card is the same size.
+    <div className="flex flex-col [perspective:1600px]">
       <div
-        className="relative transition-transform duration-500 ease-out [transform-style:preserve-3d] motion-reduce:transition-none"
+        className="relative flex flex-1 flex-col transition-transform duration-500 ease-out [transform-style:preserve-3d] motion-reduce:transition-none"
         style={{ transform: flipped ? "rotateY(180deg)" : "none" }}
       >
-        <article className={face} inert={flipped} aria-hidden={flipped}>
+        <article className={`${face} flex flex-1 flex-col`} inert={flipped} aria-hidden={flipped}>
           <header className="flex flex-wrap items-center gap-3">
             <CoinIcon asset={f.asset} />
             <div className="mr-auto">
@@ -105,10 +106,10 @@ export function ForecastCard({ f, asOf, onProtect }: { f: FAsset; asOf: number; 
           </div>
 
           {/* Ladder of drops */}
-          {ladder.length > 1 && (
-            <div className="mt-5">
+          {/* Always room for three price levels, so switching dates never resizes the card */}
+          <div className="mt-5">
               <p className="text-sm font-semibold">Smaller and bigger drops</p>
-              <ul className="mt-2 space-y-2.5">
+              <ul className="mt-2 min-h-[5.25rem] space-y-2.5">
                 {ladder.map((p) => (
                   <li key={p.symbol} className="grid grid-cols-[7.5rem_1fr_3rem] items-center gap-3 text-sm sm:grid-cols-[9rem_1fr_3rem_5rem]">
                     <span className="tabular-nums">
@@ -121,20 +122,22 @@ export function ForecastCard({ f, asOf, onProtect }: { f: FAsset; asOf: number; 
                     <span className="hidden text-right text-text-2 tabular-nums sm:block">−{usd(p.lossAtStrike)}</span>
                   </li>
                 ))}
+                {ladder.length < 2 && <li className="text-sm text-text-3">Gemini lists only this price level for this date.</li>}
               </ul>
-            </div>
-          )}
+          </div>
 
-
-          {hasHistory && (
-            <div className="mt-4">
+          <div className="mt-4 mb-5">
+            {hasHistory ? (
               <button ref={flipRef} onClick={() => setFlipped(true)} className="text-sm font-medium text-accent hover:underline">
                 See how these odds have moved ↻
               </button>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-text-3">Odds history shows up after a few snapshots.</p>
+            )}
+          </div>
 
-          <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-border pt-4">
+          {/* Button row sits at the bottom, whatever the card's height */}
+          <div className="mt-auto flex flex-wrap items-center gap-3 border-t border-border pt-4">
             <button onClick={() => onProtect(h)} className="rounded-xl bg-accent px-5 py-3 font-semibold text-accent-ink hover:brightness-110">
               Soften a drop in my {f.asset} →
             </button>

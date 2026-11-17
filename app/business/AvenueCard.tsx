@@ -26,7 +26,7 @@ export function EventAvenueCard({
   const leg = p?.legs[0];
   const s = p?.scenarios.find((x) => x.exposure === "expected");
   return (
-    <article className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
+    <article className="flex flex-col rounded-2xl border border-border bg-surface p-5 sm:p-6">
       <div className="flex flex-wrap items-center gap-2 text-xs text-text-3">
         <span>
           Option {i + 1} of {n}
@@ -56,7 +56,7 @@ export function EventAvenueCard({
         </div>
       )}
 
-      <div className="mt-4 grid grid-cols-3 gap-2">
+      <div className="mb-5 mt-4 grid grid-cols-3 gap-2">
         {p && leg && s ? (
           <>
             <Stat label="You pay now" value={usd(p.totalCost)} note={`priced at ${pct(leg.limitPrice)}`} />
@@ -74,7 +74,7 @@ export function EventAvenueCard({
         )}
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-border pt-4">
+      <div className="mt-auto flex flex-wrap items-center gap-3 border-t border-border pt-4">
         <button
           onClick={onUse}
           disabled={!leg}
