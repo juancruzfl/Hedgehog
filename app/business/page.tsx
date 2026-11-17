@@ -14,9 +14,10 @@ export default async function BusinessPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-10">
-      <h1 className="text-3xl font-bold tracking-tight">Turn a surprise cost into a known one</h1>
-      <p className="mt-2 text-text-2">
-        Promos, fuel, weather, metal prices: tell Hedgehog what worries you, and it finds Gemini prediction markets that pay out when it happens.
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Turn a surprise cost into a known one</h1>
+      <p className="mt-2 max-w-2xl text-text-2">
+        Promos, fuel, weather, metal prices. Tell Hedgehog what worries you, and it finds a Gemini market that pays out if it happens. Nothing
+        happens without your OK.
       </p>
       <div className="mt-8">
         <Suspense>
