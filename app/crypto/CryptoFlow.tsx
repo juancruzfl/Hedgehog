@@ -15,7 +15,13 @@ export const EDIT_ASSETS_EVENT = "hedgehog:edit-assets";
 
 function loadHoldings(): Holding[] {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
+    // Drop anything malformed (old formats, hand edits) instead of crashing the page.
+    const raw: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
+    if (!Array.isArray(raw)) return [];
+    return raw.filter(
+      (h): h is Holding =>
+        !!h && typeof h.asset === "string" && typeof h.quantity === "number" && Number.isFinite(h.quantity) && h.quantity > 0 && typeof h.source === "string",
+    );
   } catch {
     return [];
   }

@@ -86,7 +86,7 @@ export default async function Home() {
         <h1 className="mx-auto mt-5 max-w-4xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
           Are the odds
           <br />
-          <span className="text-accent">in your favor?</span>
+          in your favor?
         </h1>
         <p className="mx-auto mt-3 max-w-2xl text-lg text-text-2">
           See how likely the things that could cost you are, and cushion the hit before it happens. Pick any risk to see the numbers.
