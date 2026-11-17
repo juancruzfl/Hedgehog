@@ -4,10 +4,9 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { CoinIcon } from "@/components/CoinIcon";
 import { ForecastCard, type FAsset, type FHorizon } from "./ForecastCard";
 
-const NAV = 72; // sticky offset below the site header (px)
 const SEG_VH = 60; // scroll distance per market (vh)
 const MIN_SCALE = 0.75; // below this, a card scrolls inside instead of shrinking further
-const HINT = 28; // room for the "1 of 3" line under the card (px)
+const ROW = 56; // room for the coin row under the card (px)
 
 function useMedia(query: string) {
   const [match, setMatch] = useState(false);
@@ -21,40 +20,92 @@ function useMedia(query: string) {
   return match;
 }
 
+/** Height of the sticky site header, so the pinned view sits right under it. */
+function useNavHeight() {
+  const [h, setH] = useState(57);
+  useEffect(() => {
+    const el = document.querySelector("header");
+    if (!el) return;
+    const update = () => setH(el.getBoundingClientRect().height);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return h;
+}
+
 /**
- * The markets for each coin, shown one at a time in a card that stays pinned in the
- * middle of the screen. Scrolling swaps the card in place: the current market slides
- * up and out while the next slides up into the same spot. On small screens (where a
- * pinned card wouldn't fit) or with a single coin, it's a normal list.
+ * The page title, one market card and a row of coin buttons, pinned together as one
+ * view. Scrolling doesn't move the view; it swaps the card in place (the current
+ * market slides up and out, the next slides up in). After the last coin the page
+ * continues normally. Phones/short windows and single coins get a normal layout.
  */
-export function PinnedMarkets({ forecasts, asOf, onProtect }: { forecasts: FAsset[]; asOf: number; onProtect: (f: FAsset, h: FHorizon) => void }) {
-  // Laptop windows are often only ~600-700px tall, so the swap runs from 500px up;
-  // cards are scaled to fit the space instead of requiring a tall window.
+export function PinnedMarkets({
+  header,
+  updating,
+  forecasts,
+  asOf,
+  onProtect,
+}: {
+  header: React.ReactNode;
+  updating: boolean;
+  forecasts: FAsset[];
+  asOf: number;
+  onProtect: (f: FAsset, h: FHorizon) => void;
+}) {
   const roomy = useMedia("(min-width: 768px) and (min-height: 500px)");
   const reduceMotion = useMedia("(prefers-reduced-motion: reduce)");
-  const pinned = roomy && forecasts.length > 1;
+  const nav = useNavHeight();
   const n = forecasts.length;
+  const pinned = roomy && n > 1;
   const wrap = useRef<HTMLDivElement>(null);
-  const [index, setIndex] = useState(0);
   const stage = useRef<HTMLDivElement>(null);
   const inner = useRef(new Map<string, HTMLDivElement>());
+  const [index, setIndex] = useState(0);
   const [fit, setFit] = useState<Record<string, { scale: number; maxH: number }>>({});
+  const [rowTop, setRowTop] = useState<number | null>(null);
 
-  // Scale each card so it fits the pinned stage (never below MIN_SCALE; past that it scrolls).
+  const seg = () => (window.innerHeight * SEG_VH) / 100;
+
+  // Which market is showing, from how far the user has scrolled through the section.
+  useEffect(() => {
+    if (!pinned) return;
+    const onScroll = () => {
+      const el = wrap.current;
+      if (!el) return;
+      const scrolled = nav - el.getBoundingClientRect().top;
+      setIndex(Math.min(n - 1, Math.max(0, Math.floor((scrolled + seg() / 2) / seg()))));
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    const html = document.documentElement;
+    html.style.scrollSnapType = "y proximity"; // each market settles in place
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      html.style.scrollSnapType = "";
+    };
+  }, [pinned, n, nav]);
+
+  // Scale each card to fit the space between the title and the coin row.
   useLayoutEffect(() => {
     if (!pinned) return;
     const measure = () => {
       const st = stage.current;
       if (!st) return;
-      const pad = parseFloat(getComputedStyle(st).paddingTop) || 0;
-      const avail = st.clientHeight - pad - HINT;
+      const avail = st.clientHeight - ROW;
       const next: Record<string, { scale: number; maxH: number }> = {};
+      let tallest = 0;
       inner.current.forEach((el, key) => {
-        const natural = el.scrollHeight;
-        const scale = Math.max(MIN_SCALE, Math.min(1, avail / natural));
+        const scale = Math.max(MIN_SCALE, Math.min(1, avail / el.scrollHeight));
         next[key] = { scale, maxH: avail / scale };
+        tallest = Math.max(tallest, Math.min(avail, el.scrollHeight * scale));
       });
       setFit(next);
+      // The coin row sits just under the tallest card, so it doesn't jump between coins.
+      setRowTop(tallest + 12);
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -63,79 +114,42 @@ export function PinnedMarkets({ forecasts, asOf, onProtect }: { forecasts: FAsse
     return () => ro.disconnect();
   }, [pinned, n]);
 
-  const seg = () => (window.innerHeight * SEG_VH) / 100;
-
-  useEffect(() => {
-    if (!pinned) return;
-    const onScroll = () => {
-      const el = wrap.current;
-      if (!el) return;
-      const scrolled = NAV - el.getBoundingClientRect().top;
-      setIndex(Math.min(n - 1, Math.max(0, Math.floor((scrolled + seg() / 2) / seg()))));
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    // Gentle snapping so each market settles in place when scrolling stops.
-    const html = document.documentElement;
-    html.style.scrollSnapType = "y proximity";
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      html.style.scrollSnapType = "";
-    };
-  }, [pinned, n]);
-
   const jumpTo = useCallback(
     (i: number) => {
       const el = wrap.current;
       if (!el) return;
-      const top = window.scrollY + el.getBoundingClientRect().top - NAV + i * seg();
+      const top = window.scrollY + el.getBoundingClientRect().top - nav + i * seg();
       window.scrollTo({ top, behavior: reduceMotion ? "auto" : "smooth" });
     },
-    [reduceMotion],
+    [reduceMotion, nav],
   );
 
   if (!pinned) {
     return (
-      <div className="space-y-4">
-        {forecasts.map((f) => (
-          <ForecastCard key={f.asset} f={f} asOf={asOf} onProtect={(h) => onProtect(f, h)} />
-        ))}
+      <div className="space-y-8 pt-10">
+        {header}
+        <div className="space-y-4">
+          {forecasts.map((f) => (
+            <ForecastCard key={f.asset} f={f} asOf={asOf} onProtect={(h) => onProtect(f, h)} />
+          ))}
+        </div>
       </div>
     );
   }
 
   const current = Math.min(index, n - 1);
   return (
-    <div ref={wrap} className="relative" style={{ height: `calc(100vh - ${NAV + 16}px + ${(n - 1) * SEG_VH}vh)` }}>
+    <div ref={wrap} className="relative" style={{ height: `calc(100vh - ${nav}px + ${(n - 1) * SEG_VH}vh)` }}>
       {/* Snap points, one per market */}
       {forecasts.map((f, i) => (
-        <div key={f.asset} aria-hidden className="pointer-events-none absolute h-px w-full snap-start" style={{ top: `${i * SEG_VH}vh`, scrollMarginTop: NAV }} />
+        <div key={f.asset} aria-hidden className="pointer-events-none absolute h-px w-full snap-start" style={{ top: `${i * SEG_VH}vh`, scrollMarginTop: nav }} />
       ))}
 
-      <div className="sticky flex gap-4" style={{ top: NAV, height: `calc(100vh - ${NAV + 16}px)` }}>
-        {/* Which coin you're on */}
-        <nav aria-label="Your coins" className="flex w-16 shrink-0 flex-col items-center gap-3 pt-[4vh]">
-          {forecasts.map((f, i) => (
-            <button
-              key={f.asset}
-              onClick={() => jumpTo(i)}
-              aria-current={i === current}
-              aria-label={`Show ${f.asset}`}
-              className={`flex flex-col items-center gap-1 rounded-xl p-2 text-[11px] font-semibold transition ${
-                i === current ? "bg-surface text-text ring-1 ring-border" : "text-text-3 opacity-60 hover:opacity-100"
-              }`}
-            >
-              <CoinIcon asset={f.asset} size="sm" />
-              {f.asset}
-            </button>
-          ))}
-        </nav>
+      {/* The fixed view: title, card, coin row */}
+      <div className="sticky flex flex-col" style={{ top: nav, height: `calc(100vh - ${nav}px)` }}>
+        <div className="shrink-0 pb-4 pt-6">{header}</div>
 
-        {/* The stage: every card occupies the same spot; only the current one shows */}
-        {/* Cards share one top edge so the swap happens exactly in place. */}
-        <div ref={stage} className="relative grid min-w-0 flex-1 items-start pt-[4vh]">
+        <div ref={stage} className="relative grid min-h-0 flex-1 items-start">
           {forecasts.map((f, i) => {
             const state = i === current ? "now" : i < current ? "past" : "next";
             return (
@@ -159,10 +173,30 @@ export function PinnedMarkets({ forecasts, asOf, onProtect }: { forecasts: FAsse
               </div>
             );
           })}
-          <p className="pointer-events-none absolute bottom-1 left-0 right-0 text-center text-xs text-text-3">
-            {current < n - 1 ? `${current + 1} of ${n} · scroll for ${forecasts[current + 1].asset} ↓` : `${n} of ${n}`}
-          </p>
+          {/* Coin row under the card */}
+          <div className="absolute inset-x-0 flex flex-wrap items-center justify-center gap-2" style={{ top: rowTop ?? undefined, bottom: rowTop === null ? 0 : undefined }}>
+            <nav aria-label="Your coins" className="flex items-center gap-2">
+              {forecasts.map((f, i) => (
+                <button
+                  key={f.asset}
+                  onClick={() => jumpTo(i)}
+                  aria-current={i === current}
+                  aria-label={`Show ${f.asset}`}
+                  className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
+                    i === current ? "border-accent bg-surface text-text" : "border-border bg-surface/60 text-text-3 hover:text-text"
+                  }`}
+                >
+                  <CoinIcon asset={f.asset} size="sm" className={i === current ? "" : "opacity-60"} />
+                  {f.asset}
+                </button>
+              ))}
+            </nav>
+            <span className="text-xs text-text-3">
+              {updating ? "Updating odds…" : current < n - 1 ? `${current + 1} of ${n} · scroll for ${forecasts[current + 1].asset} ↓` : `${n} of ${n}`}
+            </span>
+          </div>
         </div>
+
       </div>
     </div>
   );

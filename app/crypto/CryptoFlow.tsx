@@ -123,6 +123,18 @@ export function CryptoFlow() {
     setTimeout(() => builderRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   }
 
+  const header = (
+    <div>
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">How likely is your crypto to drop?</h1>
+      {/* Hidden on short windows so the pinned market card has room */}
+      <p className="mt-2 max-w-2xl text-text-2 [@media(max-height:800px)]:hidden">
+        See the market&apos;s odds of your crypto dropping, and cushion a fall if you want. Nothing happens without your OK.
+      </p>
+      {importNote && <p className="mt-3 rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text-2">{importNote}</p>}
+      {error && <p className="mt-3 text-sm text-bad">{error}</p>}
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <HoldingsDialog
@@ -135,25 +147,23 @@ export function CryptoFlow() {
         initialAsset={initialAsset}
       />
 
-      {importNote && <p className="rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text-2">{importNote}</p>}
-
-      {combined.length === 0 ? (
-        <section className="flex flex-col items-center rounded-2xl border border-dashed border-border px-5 py-12 text-center">
-          <p className="text-lg font-semibold">Start by telling us what you hold</p>
-          <p className="mt-1 max-w-md text-sm text-text-2">Connect a wallet, import from Gemini, or type it in. Then you&apos;ll see the odds of a drop.</p>
-          <button onClick={() => setDialogOpen(true)} className="mt-5 rounded-xl bg-accent px-5 py-3 font-semibold text-accent-ink hover:brightness-110">
-            Add what you hold
-          </button>
-        </section>
+      {combined.length > 0 && forecasts ? (
+        <PinnedMarkets header={header} updating={loading} forecasts={forecasts} asOf={asOf} onProtect={protect} />
       ) : (
-        <>
-          <section className="space-y-4">
-            {loading && forecasts && <p className="text-right text-sm text-text-3">Updating odds…</p>}
-            {error && <p className="text-sm text-bad">{error}</p>}
-            {!forecasts && !error && <div className="h-48 animate-pulse rounded-2xl border border-border bg-surface" aria-label="Loading odds" />}
-            {forecasts && <PinnedMarkets forecasts={forecasts} asOf={asOf} onProtect={protect} />}
-          </section>
-        </>
+        <div className="space-y-8 pt-10">
+          {header}
+          {combined.length === 0 ? (
+            <section className="flex flex-col items-center rounded-2xl border border-dashed border-border px-5 py-12 text-center">
+              <p className="text-lg font-semibold">Start by telling us what you hold</p>
+              <p className="mt-1 max-w-md text-sm text-text-2">Connect a wallet, import from Gemini, or type it in. Then you&apos;ll see the odds of a drop.</p>
+              <button onClick={() => setDialogOpen(true)} className="mt-5 rounded-xl bg-accent px-5 py-3 font-semibold text-accent-ink hover:brightness-110">
+                Add what you hold
+              </button>
+            </section>
+          ) : (
+            !error && <div className="h-48 animate-pulse rounded-2xl border border-border bg-surface" aria-label="Loading odds" />
+          )}
+        </div>
       )}
 
       <div ref={builderRef} className="scroll-mt-20">
