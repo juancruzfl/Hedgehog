@@ -224,38 +224,3 @@ export function OddsHistoryChart({ series, title }: { series: OddsSeries[]; titl
     </figure>
   );
 }
-
-export function OddsAreaChart({ data, height = 220 }: { data: { ts: number; p: number }[]; height?: number }) {
-  const maxVal = Math.max(0.01, ...data.map((d) => d.p));
-  const step = [0.02, 0.05, 0.1, 0.2, 0.25].find((st) => Math.ceil((maxVal + 0.01) / st) <= 5) ?? 0.25;
-  const top = Math.min(1, Math.ceil((maxVal + 0.01) / step) * step);
-  const ticks = Array.from({ length: Math.round(top / step) + 1 }, (_, i) => +(i * step).toFixed(2));
-  const spanHours = data.length > 1 ? (data[data.length - 1].ts - data[0].ts) / 3600_000 : 0;
-  const fmt = (ts: number) =>
-    new Date(ts).toLocaleString("en-US", spanHours > 36 ? { month: "short", day: "numeric" } : { hour: "numeric", minute: "2-digit" });
-  return (
-    <div style={{ height }} className="w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-          <CartesianGrid stroke={C.grid} vertical={false} />
-          <XAxis dataKey="ts" type="number" scale="time" domain={["dataMin", "dataMax"]} tick={axisTick} tickFormatter={fmt} stroke={C.grid} minTickGap={48} />
-          <YAxis orientation="right" tick={axisTick} tickFormatter={(v) => pct(v)} stroke={C.grid} width={40} domain={[0, top]} ticks={ticks} />
-          <Tooltip
-            cursor={{ stroke: C.text3, strokeWidth: 1 }}
-            content={({ active, payload }) => {
-              const d = payload?.[0]?.payload as { ts: number; p: number } | undefined;
-              if (!active || !d) return null;
-              return (
-                <TooltipBox>
-                  <div className="text-text-3">{dateTime(d.ts)}</div>
-                  <div className="font-medium">{pct(d.p, 1)} chance</div>
-                </TooltipBox>
-              );
-            }}
-          />
-          <Area type="monotone" dataKey="p" stroke="var(--accent)" strokeWidth={2} fill="var(--accent-soft)" fillOpacity={1} isAnimationActive={false} activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface)" }} />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
