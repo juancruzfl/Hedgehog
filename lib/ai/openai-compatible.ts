@@ -16,15 +16,22 @@ type Chat = Pick<OpenAI, "chat">;
 const riskJsonSchema = {
   type: "object",
   additionalProperties: false,
-  required: ["kind", "underlyingType", "underlyingRef", "condition", "exposureLow", "exposureExpected", "exposureHigh", "windowStart", "windowEnd", "notes", "followUps"],
+  required: ["kind", "underlyingType", "underlyingRef", "condition", "exposureLow", "exposureExpected", "exposureHigh", "priceUnits", "windowStart", "windowEnd", "notes", "followUps"],
   properties: {
     kind: { type: "string", enum: ["price_drop", "price_rise", "event_trigger", "threshold"] },
     underlyingType: { type: "string", enum: ["crypto", "sports", "weather", "commodity"] },
-    underlyingRef: { type: "string", description: "Team matchup, city, asset or commodity, e.g. 'Indianapolis vs Houston', 'Austin', 'WTI'" },
+    underlyingRef: {
+      type: "string",
+      description: "sports: 'Indianapolis vs Houston' (city names, not nicknames); weather: the city; commodity: one of WTI, Brent, Natural Gas, Gold, Silver, Copper; crypto: BTC/ETH/SOL/XRP",
+    },
     condition: { type: "string", description: "The trigger that costs the user money, e.g. 'Indianapolis wins', 'Austin high above 90F'" },
     exposureLow: { type: "number", description: "USD cost to the user if triggered, low estimate" },
     exposureExpected: { type: "number" },
     exposureHigh: { type: "number" },
+    priceUnits: {
+      type: "number",
+      description: "price_rise/price_drop only: how many units of the market's price the business is exposed to over the window (WTI/Brent in barrels, natural gas in MMBtu, gold/silver in troy ounces, copper in pounds, crypto in coins). Convert: 42 gallons of diesel/gasoline ~= 1 barrel. 0 for other kinds.",
+    },
     windowStart: { type: "string", description: "ISO 8601" },
     windowEnd: { type: "string", description: "ISO 8601" },
     notes: { type: "string", description: "Assumptions you made" },
@@ -40,6 +47,7 @@ const RiskOut = z.object({
   exposureLow: z.number().nonnegative(),
   exposureExpected: z.number().nonnegative(),
   exposureHigh: z.number().nonnegative(),
+  priceUnits: z.number().nonnegative(),
   windowStart: z.string(),
   windowEnd: z.string(),
   notes: z.string(),
@@ -133,11 +141,15 @@ export class OpenAICompatibleProvider implements AIProvider {
   async parseRisk(text: string, now: Date): Promise<ParsedRisk> {
     const out = await this.json(
       [
-        "You turn a small business owner's description of a promotion or cost risk into structured data.",
-        "exposure* = the USD the business loses IF the trigger happens (e.g. promo discount x expected redemptions).",
+        "You turn a small business owner's description of something that could hurt their business into structured data.",
+        "Kinds: event_trigger = a discrete event costs them money (a promo that pays out if a team wins, a game-day outcome that hurts sales);",
+        "threshold = a measured value crossing a line hurts them (daily high temperature too hot/cold for their sales);",
+        "price_rise = a cost they pay rises (fuel, energy, metals); price_drop = something they hold or sell loses value.",
+        "exposure* = the USD the business loses IF the bad outcome happens (promo: discount x expected redemptions; weather/game day: lost profit).",
+        "For price kinds, exposure* = estimated extra cost from a 10%/20%/30% price move, and priceUnits = units exposed.",
         "Give low/expected/high estimates around the owner's numbers (e.g. +/-20% turnout) unless they gave a range.",
-        "Resolve relative dates ('Sunday', 'this weekend') against the current time. Use US team/city names as written.",
-        "If the trigger, the date, or the cost cannot be determined, list short follow-up questions. Never invent prices.",
+        "Resolve relative dates ('Sunday', 'this weekend', 'this week') against the current time; windowEnd is when the risk is over.",
+        "If the trigger, the date, or the cost cannot be determined, list short follow-up questions. Never invent market prices.",
       ].join(" "),
       `Current time: ${now.toISOString()}\n\nDescription:\n${text}`,
       "risk_profile",
@@ -156,6 +168,9 @@ export class OpenAICompatibleProvider implements AIProvider {
         window: { start: out.windowStart, end: out.windowEnd },
         source: "conversation",
         notes: out.notes,
+        ...((out.kind === "price_rise" || out.kind === "price_drop") && out.priceUnits > 0
+          ? { position: { asset: out.underlyingRef, quantity: out.priceUnits, spotPrice: 0 } } // spot filled from markets
+          : {}),
       },
       followUps: out.followUps,
     };
@@ -164,7 +179,7 @@ export class OpenAICompatibleProvider implements AIProvider {
   async searchPlan(profile: RiskProfile): Promise<SearchPlan> {
     return this.json(
       [
-        `Prediction market titles look like "Indianapolis vs Houston", "Highest temperature in Austin on November 17, 2026?", "BTC price on November 20", "Oil (WTI) price on November 20?".`,
+        `Prediction market titles look like "Indianapolis vs Houston", "Highest temperature in Austin on November 17, 2026?", "BTC price on November 20", "Oil (WTI) price on November 20?", "Natural Gas price on November 20?", "Gold price on November 17?".`,
         `Choose categories from ${CATEGORIES.join(", ")} and 1-4 short search terms that would appear in matching titles (single team or city names work best).`,
       ].join(" "),
       JSON.stringify({ underlying: profile.underlying, condition: profile.condition, window: profile.window }),

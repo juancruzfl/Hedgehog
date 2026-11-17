@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import { ApprovePanel } from "@/components/ApprovePanel";
 import { PayoffChart, type CurvePoint } from "@/components/charts";
 import type { LadderResult } from "@/lib/engine/sizer";
 import { qty, shortDate, usd } from "@/lib/format";
@@ -16,14 +16,6 @@ interface Preview {
   curve: CurvePoint[];
 }
 
-interface ExecResult {
-  ok: boolean;
-  mode?: "paper" | "live";
-  problems?: string[];
-  error?: string;
-  results?: { symbol: string; status: string; fillPrice?: number; error?: string }[];
-}
-
 export function HedgeBuilder({ asset, quantity, marketId, onClose }: { asset: string; quantity: number; marketId: string; onClose: () => void }) {
   const [market, setMarket] = useState(marketId);
   const [startDrop, setStartDrop] = useState(0.05);
@@ -31,9 +23,6 @@ export function HedgeBuilder({ asset, quantity, marketId, onClose }: { asset: st
   const [preview, setPreview] = useState<Preview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [confirming, setConfirming] = useState(false);
-  const [understood, setUnderstood] = useState(false);
-  const [result, setResult] = useState<ExecResult | null>(null);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -58,51 +47,9 @@ export function HedgeBuilder({ asset, quantity, marketId, onClose }: { asset: st
     };
   }, [asset, quantity, market, startDrop, floorDrop]);
 
-  async function approve() {
-    if (!preview) return;
-    setResult(null);
-    const p = preview.proposal;
-    const res = await fetch("/api/hedge/execute", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: `Protect ${qty(quantity)} ${asset} through ${shortDate(preview.market.expiry)}`,
-        segment: "crypto",
-        profile: preview.profile,
-        legs: p.legs.map((l) => ({
-          marketId: l.contract.marketId,
-          symbol: l.contract.symbol,
-          outcome: l.outcome,
-          quantity: l.quantity,
-          limitPrice: l.limitPrice,
-        })),
-      }),
-    });
-    const body = await res.json();
-    setResult(body.ok ? body : { ok: false, problems: body.problems, error: body.error });
-    setConfirming(false);
-  }
-
   const p = preview?.proposal;
   const lowestStrike = p?.legs.length ? p.legs[p.legs.length - 1].contract.strike?.value ?? null : null;
   const topStrike = p?.legs[0]?.contract.strike?.value ?? null;
-
-  if (result?.ok) {
-    return (
-      <section className="rounded-2xl border border-border bg-surface p-5">
-        <h2 className="text-lg font-semibold">Your {asset} is hedged ✓</h2>
-        <p className="mt-1 text-sm text-text-2">
-          {result.mode === "paper"
-            ? "Recorded as a paper trade at live Gemini prices. No real money moved."
-            : "Orders sent to Gemini. Fills will show in My hedges."}
-        </p>
-        <div className="mt-4 flex gap-3">
-          <Link href="/positions" className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink">See my hedges</Link>
-          <button onClick={onClose} className="rounded-lg border border-border px-4 py-2 text-sm">Done</button>
-        </div>
-      </section>
-    );
-  }
 
   return (
     <section className="rounded-2xl border border-border bg-surface p-5">
@@ -186,30 +133,15 @@ export function HedgeBuilder({ asset, quantity, marketId, onClose }: { asset: st
                 <p className="mt-2 text-xs text-text-3">Each contract pays $1 if {asset} ends below its price. Buying “NO” on “$X or above” pays when the price falls under $X.</p>
               </details>
 
-              {result && !result.ok && (
-                <div className="mt-4 rounded-lg bg-warn-bg p-3 text-sm">
-                  <p className="font-medium">Nothing was placed.</p>
-                  <ul className="mt-1 list-disc pl-5">{(result.problems ?? [result.error]).map((x) => <li key={x}>{x}</li>)}</ul>
-                </div>
-              )}
-
-              {!confirming ? (
-                <button onClick={() => { setConfirming(true); setUnderstood(false); }} className="mt-5 w-full rounded-lg bg-accent px-4 py-3 font-medium text-accent-ink sm:w-auto">
-                  Review & approve
-                </button>
-              ) : (
-                <div className="mt-5 rounded-xl border border-accent p-4">
-                  <p className="font-medium">Approve {p.legs.length} order{p.legs.length > 1 ? "s" : ""} for up to {usd(p.totalCost)}?</p>
-                  <label className="mt-3 flex items-start gap-2 text-sm text-text-2">
-                    <input type="checkbox" checked={understood} onChange={(e) => setUnderstood(e.target.checked)} className="mt-0.5" />
-                    I understand this reduces but does not remove my losses, and I can lose the {usd(p.totalCost)} I pay.
-                  </label>
-                  <div className="mt-4 flex gap-3">
-                    <button disabled={!understood} onClick={approve} className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink disabled:opacity-50">Approve</button>
-                    <button onClick={() => setConfirming(false)} className="rounded-lg border border-border px-4 py-2 text-sm">Cancel</button>
-                  </div>
-                </div>
-              )}
+              <ApprovePanel
+                legs={p.legs.map((l) => ({ marketId: l.contract.marketId, symbol: l.contract.symbol, outcome: l.outcome, quantity: l.quantity, limitPrice: l.limitPrice }))}
+                totalCost={p.totalCost}
+                title={`Protect ${qty(quantity)} ${asset} through ${shortDate(preview.market.expiry)}`}
+                segment="crypto"
+                profile={preview.profile}
+                successTitle={`Your ${asset} is hedged`}
+                onDone={onClose}
+              />
             </>
           )}
         </div>

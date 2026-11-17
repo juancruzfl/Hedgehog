@@ -211,6 +211,80 @@ export function buildDownsideLadder(
 }
 
 // ---------------------------------------------------------------------------
+// Upside ladders (businesses exposed to rising costs: fuel, energy, materials).
+// Mirror of the downside ladder: buy YES on "$K or above" strikes above spot, so
+// the payout grows step-wise as the price rises. position.quantity is the number
+// of price units the business is exposed to (e.g. barrels-equivalent of fuel), so
+// the extra cost at price P is Q * (P - spot).
+// ---------------------------------------------------------------------------
+
+export interface UpsideLadderOptions {
+  /** Start offsetting after this fractional rise from spot (0.03 = costs above +3%). */
+  startRise?: number;
+  /** Stop offsetting beyond this fractional rise (0.25 = payout capped at +25%). */
+  capRise?: number;
+  maxLegs?: number;
+}
+
+export interface UpsideLadderResult extends HedgeProposal {
+  startPrice: number;
+  capPrice: number;
+}
+
+export function buildUpsideLadder(
+  profile: RiskProfile,
+  contracts: Contract[],
+  opts: UpsideLadderOptions = {},
+): UpsideLadderResult {
+  if (!profile.position) throw new Error("Upside ladder requires profile.position");
+  const { quantity: Q, spotPrice: spot } = profile.position;
+  const startPrice = spot * (1 + (opts.startRise ?? 0.03));
+  let capPrice = spot * (1 + (opts.capRise ?? 0.25));
+  const warnings = [FEE_WARNING];
+
+  const inBand = contracts
+    .filter((c) => c.tradable && c.strike?.type === "above" && c.strike.value !== null && c.quote.yesAsk !== null)
+    .filter((c) => c.strike!.value! >= startPrice && c.strike!.value! < capPrice)
+    .sort((a, b) => a.strike!.value! - b.strike!.value!);
+  const strikes = pickEvenly(inBand, opts.maxLegs ?? 5);
+
+  if (strikes.length > 0) {
+    const ks = strikes.map((c) => c.strike!.value!);
+    const gaps = ks.slice(1).map((k, i) => k - ks[i]).sort((a, b) => a - b);
+    const typical = gaps.length ? gaps[Math.floor(gaps.length / 2)] : ks[0] * 0.05;
+    const highest = ks[ks.length - 1];
+    if (capPrice - highest > typical) {
+      capPrice = highest + typical;
+      warnings.push("Listed prices don't reach the requested cap; the offset range was narrowed.");
+    }
+  }
+
+  const legs: HedgeLeg[] = [];
+  strikes.forEach((c, i) => {
+    const k = c.strike!.value!;
+    const next = i + 1 < strikes.length ? strikes[i + 1].strike!.value! : capPrice;
+    const leg = makeLeg(c, "yes", Q * (next - k));
+    if (leg) legs.push(leg);
+  });
+
+  if (legs.length === 0) warnings.push("No tradable prices between the start and cap for this date.");
+
+  const { totalCost, maxPayout } = total(legs);
+  return {
+    riskProfileId: profile.id,
+    legs,
+    totalCost,
+    maxPayout,
+    startPrice,
+    capPrice,
+    summary: legs.length
+      ? `${legs.length} strikes, $${totalCost.toFixed(2)} total, up to $${maxPayout.toFixed(2)} paid out as price rises.`
+      : "No hedge available.",
+    warnings,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Payoff curves for charts.
 // ---------------------------------------------------------------------------
 
@@ -231,11 +305,13 @@ export interface CurvePoint {
 export function payoffCurve(profile: RiskProfile, proposal: HedgeProposal, points = 60): CurvePoint[] {
   if (!profile.position) return [];
   const { quantity: Q, spotPrice: spot } = profile.position;
-  const lo = spot * 0.55;
-  const hi = spot * 1.15;
+  // Holders lose when price falls; cost-exposed businesses lose when it rises.
+  const rising = profile.kind === "price_rise";
+  const lo = spot * (rising ? 0.85 : 0.55);
+  const hi = spot * (rising ? 1.45 : 1.15);
   return Array.from({ length: points + 1 }, (_, i) => {
     const price = lo + ((hi - lo) * i) / points;
-    const unhedged = Q * (price - spot);
+    const unhedged = (rising ? -1 : 1) * Q * (price - spot);
     const payout = proposal.legs.reduce((s, l) => s + legPayoutAt(l, price), 0);
     return { price: money(price), unhedged: money(unhedged), hedged: money(unhedged + payout - proposal.totalCost) };
   });

@@ -64,7 +64,17 @@ export interface CurvePoint {
 }
 
 /** P&L at expiry vs settlement price: hedged (accent) vs no hedge (neutral, dashed). */
-export function PayoffChart({ data, spot, asset }: { data: CurvePoint[]; spot: number; asset: string }) {
+export function PayoffChart({
+  data,
+  spot,
+  asset,
+  caption = "Your gain or loss on this holding at expiry, including what the hedge costs. Hover to compare any price.",
+}: {
+  data: CurvePoint[];
+  spot: number;
+  asset: string;
+  caption?: string;
+}) {
   return (
     <figure>
       <div className="mb-2 flex flex-wrap items-center gap-4 text-xs text-text-2" aria-hidden>
@@ -84,7 +94,7 @@ export function PayoffChart({ data, spot, asset }: { data: CurvePoint[]; spot: n
               type="number"
               domain={["dataMin", "dataMax"]}
               tick={axisTick}
-              tickFormatter={(v) => usd(v, v >= 1000 ? 0 : 0)}
+              tickFormatter={(v) => usd(v, v >= 100 ? 0 : 2)}
               stroke={C.grid}
               label={{ value: `${asset} price at expiry`, position: "insideBottom", offset: -12, fill: C.text3, fontSize: 11 }}
             />
@@ -110,9 +120,7 @@ export function PayoffChart({ data, spot, asset }: { data: CurvePoint[]; spot: n
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <figcaption className="mt-1 text-xs text-text-3">
-        Your gain or loss on this holding at expiry, including what the hedge costs. Hover to compare any price.
-      </figcaption>
+      <figcaption className="mt-1 text-xs text-text-3">{caption}</figcaption>
     </figure>
   );
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Contract, RiskProfile } from "@/lib/types";
-import { buildDownsideLadder, ladderCandidates, payoffCurve, roundQuantity, sizeEventHedge } from "./sizer";
+import { buildDownsideLadder, buildUpsideLadder, ladderCandidates, payoffCurve, roundQuantity, sizeEventHedge } from "./sizer";
 
 function contract(overrides: Partial<Contract> = {}): Contract {
   return {
@@ -137,5 +137,43 @@ describe("buildDownsideLadder", () => {
     const rally = curve[curve.length - 1];
     expect(crash.hedged).toBeGreaterThan(crash.unhedged);
     expect(rally.unhedged - rally.hedged).toBeCloseTo(r.totalCost, 2);
+  });
+});
+
+describe("buildUpsideLadder (rising costs)", () => {
+  // Business burns ~150 barrels-equivalent of fuel; WTI at $60; strikes every $2 from 56 to 80.
+  const fuel: RiskProfile = {
+    id: "fuel-1",
+    segment: "business",
+    kind: "price_rise",
+    underlying: { type: "commodity", ref: "WTI" },
+    condition: "Oil rises",
+    exposureUsd: { low: 0, expected: 0, high: 0 },
+    window: { start: "2026-11-17T00:00:00Z", end: "2026-11-20T00:00:00Z" },
+    source: "conversation",
+    position: { asset: "WTI", quantity: 150, spotPrice: 60 },
+  };
+  const oil = Array.from({ length: 13 }, (_, i) => 56 + i * 2).map((k) => ({
+    ...btcStrike(k, 0.5),
+    symbol: `GEMI-WTI-HI${k}`,
+    quote: { yesBid: null, yesAsk: Math.max(0.02, 0.9 - (k - 56) * 0.07), noBid: null, noAsk: null, last: null },
+  }));
+
+  it("buys YES on strikes above spot, sized by spacing", () => {
+    const r = buildUpsideLadder(fuel, oil, { startRise: 0.03, capRise: 0.2, maxLegs: 4 });
+    const ks = r.legs.map((l) => l.contract.strike!.value!);
+    expect(r.legs.every((l) => l.outcome === "yes")).toBe(true);
+    expect(ks.every((k) => k >= 61.8 && k < 72)).toBe(true);
+    expect(ks).toEqual([...ks].sort((a, b) => a - b));
+    expect(r.maxPayout).toBeCloseTo(150 * (r.capPrice - ks[0]), 0);
+  });
+
+  it("hedged cost is better than unhedged when prices spike", () => {
+    const r = buildUpsideLadder(fuel, oil);
+    const curve = payoffCurve(fuel, r, 200);
+    const spike = curve.find((p) => p.price >= 60 * 1.2)!;
+    expect(spike.hedged).toBeGreaterThan(spike.unhedged);
+    const calm = curve[0]; // prices fell: unhedged gains, hedge cost is the drag
+    expect(calm.unhedged - calm.hedged).toBeCloseTo(r.totalCost, 2);
   });
 });
