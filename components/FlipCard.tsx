@@ -76,7 +76,8 @@ export function FlipCard({
           >
             <p className="font-semibold">{backTitle}</p>
             {backSub && <p className="text-sm text-text-2">{backSub}</p>}
-            <div className="mt-4 min-h-0 flex-1">{everFlipped && <OddsHistoryChart title="" series={series!} />}</div>
+            {/* The chart grows to fill the back, so there's no empty band above the button. */}
+            <div className="mt-4 flex min-h-0 flex-1 flex-col">{everFlipped && <OddsHistoryChart title="" series={series!} fill />}</div>
             <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-4">
               <button
                 ref={backRef}

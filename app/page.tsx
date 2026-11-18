@@ -1,5 +1,6 @@
 import { swr } from "@/lib/cache";
 import Link from "next/link";
+import { GeminiLogo } from "@/components/GeminiLogo";
 import { usd } from "@/lib/format";
 import { buildBoard, type BoardCard } from "@/lib/landing/board";
 import { getVenue } from "@/lib/venues";
@@ -23,7 +24,7 @@ function steps(cards: BoardCard[]) {
     },
     {
       title: "We find the market",
-      body: "Hedgehog matches it to a live Gemini market on the same event and reads the fine print for you.",
+      body: "Hedgehog matches it to a live prediction market on the same event and reads the fine print for you.",
       example: game ? `${game.question} ${Math.round(game.prob * 100)}% chance, ${Math.round(cost * 100)}¢ per $1` : "A market on the same game, with its live odds",
     },
     {
@@ -83,7 +84,8 @@ export default async function Home() {
       {/* Hero: one market, many risks */}
       <section className="pt-8 text-center sm:pt-10">
         <p className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-text-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-accent" /> Live odds from Gemini prediction markets
+          {/* The one place the landing page names the market venue */}
+          Powered by <GeminiLogo className="h-3.5 w-auto text-text" /> prediction markets
         </p>
         <h1 className="mx-auto mt-5 max-w-4xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
           Are the odds

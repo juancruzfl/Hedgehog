@@ -27,6 +27,8 @@ const LEVELS: Record<Exclude<Level, "custom">, { start: number; floor: number; l
 };
 
 const signed = (n: number) => (n > 0.5 ? `+${usd(n)}` : n < -0.5 ? `−${usd(Math.abs(n))}` : usd(0));
+/** Green for a gain, red for a loss, plain for about zero: the color always agrees with the sign. */
+const tone = (n: number) => (n > 0.5 ? "text-good" : n < -0.5 ? "text-bad" : "");
 
 /** Rows for "What happens if…": price up 10%, down 10/20/30%, read off the payoff curve. */
 function scenarios(curve: CurvePoint[], spot: number) {
@@ -172,8 +174,12 @@ export function HedgeBuilder({ asset, quantity, marketId, onClose }: { asset: st
                           <td className="px-3 py-2.5">
                             {usd(s.price)} <span className="text-text-3">({s.move > 0 ? "+" : "−"}{Math.abs(s.move * 100)}%)</span>
                           </td>
-                          <td className="px-3 py-2.5 text-right">{signed(s.without)}</td>
-                          <td className={`px-3 py-2.5 text-right font-semibold ${s.with > s.without + 0.5 ? "text-good" : ""}`}>{signed(s.with)}</td>
+                          <td className={`px-3 py-2.5 text-right ${tone(s.without)}`}>{signed(s.without)}</td>
+                          <td className="px-3 py-2.5 text-right">
+                            {/* The number's color follows its own sign; how much the hedge helps is its own line. */}
+                            <span className={`font-semibold ${tone(s.with)}`}>{signed(s.with)}</span>
+                            {s.with > s.without + 0.5 && <span className="block text-xs font-medium text-good">{usd(s.with - s.without)} better</span>}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

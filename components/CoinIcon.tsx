@@ -1,4 +1,5 @@
 // Coin icons. Flat except Solana, whose brand mark is a purple-to-green gradient.
+// ZEC and HYPE are simplified versions of the Zcash and Hyperliquid marks.
 // Unknown assets fall back to a lettered circle.
 
 import { useId } from "react";
@@ -58,6 +59,25 @@ export function CoinIcon({ asset, size = "md", className = "" }: { asset: string
             strokeWidth="2"
             strokeLinecap="round"
             d="M9 9.5h1.6l3.6 3.7a2.6 2.6 0 0 0 3.6 0l3.6-3.7H23M9 22.5h1.6l3.6-3.7a2.6 2.6 0 0 1 3.6 0l3.6 3.7H23"
+          />
+        </svg>
+      );
+    case "ZEC":
+      return (
+        <svg viewBox="0 0 32 32" className={cls} role="img" aria-label="Zcash">
+          <circle cx="16" cy="16" r="16" fill="#F4B728" />
+          {/* Zcash mark: a Z with a bar through the top and bottom */}
+          <path fill="#1A1A1A" d="M15 6.5h2V9h4.2v2.6l-6.4 8.7h6.4V23H17v2.5h-2V23h-4.2v-2.6l6.4-8.7h-6.4V9H15z" />
+        </svg>
+      );
+    case "HYPE":
+      return (
+        <svg viewBox="0 0 32 32" className={cls} role="img" aria-label="Hyperliquid">
+          <circle cx="16" cy="16" r="16" fill="#0F3933" />
+          {/* Hyperliquid mark: a rounded figure-eight wave */}
+          <path
+            fill="#97FCE4"
+            d="M24.6 15.9c0 4.4-2.6 6-5.3 3.7-2.2-1.9-2.6-5.6-3.3-5.6s-1.1 3.7-3.3 5.6c-2.7 2.3-5.3.7-5.3-3.7s2.6-6 5.3-3.7c2.2 1.9 2.6 5.6 3.3 5.6s1.1-3.7 3.3-5.6c2.7-2.3 5.3-.7 5.3 3.7z"
           />
         </svg>
       );
