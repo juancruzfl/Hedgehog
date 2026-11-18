@@ -1,29 +1,30 @@
 @import "tailwindcss";
 
 /*
- * Hedgehog theme: off-white, dense market-board layout with bold type and a deep
- * teal accent. Flat colors only (no gradients).
+ * Hedgehog theme: cool greyish-white page with white cards, neutral greys, bold type
+ * and a deep teal accent. Flat colors only (no gradients). Text colors meet WCAG AA
+ * (4.5:1) on the page, cards and chips.
  */
 :root {
   color-scheme: light;
-  --background: #f6f5f1;   /* off-white page */
-  --surface: #fffefb;      /* cards */
-  --surface-2: #efede7;    /* chips, tracks, inactive tabs */
-  --border: #e3e0d8;
+  --background: #f2f3f5;   /* greyish-white page */
+  --surface: #ffffff;      /* cards sit a step brighter than the page */
+  --surface-2: #eceef1;    /* chips, tracks, inactive tabs */
+  --border: #dfe2e7;
   --text: #15181d;
-  --text-2: #565d69;
-  --text-3: #6c737e;
+  --text-2: #4f5663;
+  --text-3: #626a78;
   --accent: #0e7490;       /* deep teal: primary action, hedged line */
   --accent-ink: #ffffff;   /* text on accent */
-  --accent-soft: #e2f0f3;
-  --neutral-series: #9aa0a8;
-  --grid: #ebe8e1;
+  --accent-soft: #e0eef3;
+  --neutral-series: #9aa1ab;
+  --grid: #e6e8ec;
   --good: #137a47;
-  --good-soft: #e3f2e9;
-  --warn: #8f5f00;
-  --warn-bg: #faf0d9;
+  --good-soft: #e2f2e8;
+  --warn: #8a5a00;
+  --warn-bg: #fcf1d6;
   --bad: #c0392f;
-  --bad-soft: #f9e5e3;
+  --bad-soft: #fbe6e4;
   /* categorical chart slots (validated light palette) */
   --series-1: #2a78d6;
   --series-2: #eb6834;
