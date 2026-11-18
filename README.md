@@ -52,6 +52,20 @@ Each person trades from their own Gemini account. **Connect Gemini account** in 
 - Balances, positions and live orders use the signed-in user's token (`Authorization: Bearer`, no nonce). Sign out revokes the refresh token.
 - Until Gemini approves the app for production, sign-in runs against the sandbox.
 
+## Odds archive, sealed on Solana
+
+Gemini's API returns today's odds but no history, so Hedgehog records every crypto, commodity and weather contract (plus any game someone looks at) every 5 minutes. Each finished hour is **sealed on Solana**:
+
+- All of that hour's readings are hashed into a Merkle tree, and only the 32-byte root goes on-chain, in a Memo transaction from Hedgehog's archive wallet (`hedgehog-odds v1 <hour> n=<readings> root=<hash>`). Users never sign or pay anything.
+- The odds themselves are never published. Gemini's Market Data Agreement allows internal use; redistribution needs a separate agreement, so a public API for the archive comes after that.
+- `/archive` lists every sealed hour with its Solana transaction. **Check it yourself** fetches one reading and its proof (about 14 hashes) from Hedgehog, rebuilds the fingerprint in the browser, reads the memo straight from Solana's public RPC, and shows whether they match.
+- `lib/archive/merkle.ts` is the format (leaf = SHA-256(0x00 ‖ reading), node = SHA-256(0x01 ‖ left ‖ right)); it runs in Node and in the browser.
+
+```bash
+npm run archive:anchor -- --wallet   # show the archive wallet and balance (devnet key is created in data/)
+npm run archive:anchor               # seal every finished hour that isn't on-chain yet
+```
+
 ## How it uses Solana
 
 The crypto flow reads a wallet **read-only** over Solana JSON-RPC (`getBalance`, `getTokenAccountsByOwner`): native SOL plus SPL tokens that track hedgeable assets (cbBTC, Wormhole WBTC/WETH, mSOL, JitoSOL). Paste an address or connect Phantom just to share the public key. Nothing is signed.
