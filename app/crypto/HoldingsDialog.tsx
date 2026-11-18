@@ -114,17 +114,21 @@ export function HoldingsDialog({
     setMessage({ kind: "info", text: `Added ${qty(n)} ${asset}.` });
   }
 
+  /** Balances for one address on one network (hedgeable coins only). */
+  async function fetchWallet(addr: string, net: WalletNetwork): Promise<Holding[]> {
+    const res = await fetch(`/api/holdings/${net}?address=${encodeURIComponent(addr)}`);
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error);
+    return (body.holdings as Holding[]).filter((h) => isHedgeable(h.asset));
+  }
+
   async function readWallet(addr: string, known?: WalletNetwork) {
     const net = known ?? detectNetwork(addr);
-    if (!net)
-      return setMessage({ kind: "error", text: "We couldn't tell which network that is. Paste a Solana, Ethereum (0x…) or Bitcoin (bc1…, 1…, 3…) address." });
+    if (!net) return setMessage({ kind: "error", text: "We couldn't tell which network that is. Paste a Solana, Ethereum (0x…) or Bitcoin (bc1…, 1…, 3…) address." });
     setBusy(true);
     setMessage(null);
     try {
-      const res = await fetch(`/api/holdings/${net}?address=${encodeURIComponent(addr)}`);
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error);
-      const found = (body.holdings as Holding[]).filter((h) => isHedgeable(h.asset));
+      const found = await fetchWallet(addr, net);
       replaceSource(net, found);
       setMessage(
         found.length
@@ -151,15 +155,50 @@ export function HoldingsDialog({
     await readWallet(addr, "evm");
   }
 
+  /**
+   * Phantom holds both a Solana and an Ethereum/Base account, so one button reads both.
+   * Each side is optional: whichever the user approves gets read.
+   */
   async function connectPhantom() {
-    const phantom = window.phantom?.solana;
-    if (!phantom) return setMessage({ kind: "error", text: "Phantom isn't installed in this browser. Paste your address below instead." });
+    const sol = window.phantom?.solana;
+    const evm = phantomEvm;
+    if (!sol && !evm) return setMessage({ kind: "error", text: "Phantom isn't installed in this browser. Paste your address below instead." });
+    setMessage({ kind: "info", text: "Waiting for Phantom… approve the request in its window." });
+    const accounts: { net: WalletNetwork; addr: string }[] = [];
+    let lastError: unknown = null;
+    if (sol) {
+      try {
+        accounts.push({ net: "solana", addr: (await sol.connect()).publicKey.toString() });
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    if (evm) {
+      try {
+        accounts.push({ net: "evm", addr: await requestEvmAccount(evm) });
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    if (!accounts.length) return setMessage({ kind: "error", text: walletErrorMessage(lastError, "Phantom") });
+
+    setBusy(true);
     try {
-      const { publicKey } = await phantom.connect();
-      setAddress(publicKey.toString());
-      await readWallet(publicKey.toString());
-    } catch {
-      setMessage({ kind: "error", text: "The wallet connection was cancelled." });
+      const results = await Promise.allSettled(accounts.map((a) => fetchWallet(a.addr, a.net)));
+      const found = results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
+      const read = accounts.filter((_, k) => results[k].status === "fulfilled").map((a) => a.net);
+      // One update for both networks, so neither overwrites the other.
+      onChange([...holdings.filter((h) => !read.includes(h.source as WalletNetwork)), ...found]);
+      const nets = read.map((n) => NETWORK_LABEL[n]).join(" and ");
+      setMessage(
+        found.length
+          ? { kind: "info", text: `Found ${found.length} asset${found.length > 1 ? "s" : ""} in your Phantom wallet (${nets}).` }
+          : read.length
+            ? { kind: "error", text: `We didn't find SOL, ETH or BTC in your Phantom wallet (${nets}).` }
+            : { kind: "error", text: "Couldn't read your Phantom wallet right now. Try again in a moment." },
+      );
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -182,7 +221,10 @@ export function HoldingsDialog({
     }
   }
 
-  const evmWallets = useEvmWallets();
+  const discovered = useEvmWallets();
+  const isPhantom = (w: EvmWallet) => w.id === "app.phantom" || /phantom/i.test(w.name);
+  const phantomEvm = discovered.find(isPhantom);
+  const evmWallets = discovered.filter((w) => !isPhantom(w));
   const pasted = detectNetwork(address);
   const total = holdings.reduce((s, h) => s + (prices[h.asset] ?? 0) * h.quantity, 0);
   const chosen = METHODS.find((m) => m.id === method);
@@ -282,8 +324,10 @@ export function HoldingsDialog({
                   <button
                     disabled={busy}
                     onClick={connectPhantom}
-                    className="rounded-xl border border-border bg-surface py-3 font-semibold hover:border-accent disabled:opacity-40"
+                    className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface py-3 font-semibold hover:border-accent disabled:opacity-40"
                   >
+                    {/* eslint-disable-next-line @next/next/no-img-element -- Phantom's own data-URI icon */}
+                    {phantomEvm?.icon && <img src={phantomEvm.icon} alt="" className="h-5 w-5" />}
                     Phantom
                   </button>
                 </div>
