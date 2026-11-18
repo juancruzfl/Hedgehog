@@ -5,6 +5,8 @@ import { createHmac } from "node:crypto";
 //   so the demo shows real markets even when trading in the sandbox).
 // - Private routes use HMAC-SHA384 signing: the JSON payload is base64-encoded into
 //   X-GEMINI-PAYLOAD with an empty body. See developer.gemini.com/authentication/api-key
+// - Or, for a user who connected their account through "Connect Gemini account", an OAuth
+//   access token: Authorization: Bearer <token> plus the same payload, with no nonce.
 
 const BASES = {
   production: "https://api.gemini.com",
@@ -15,6 +17,8 @@ type Env = keyof typeof BASES;
 export interface GeminiClientConfig {
   apiKey?: string;
   apiSecret?: string;
+  /** OAuth access token of a signed-in user. Takes the place of the key and secret. */
+  accessToken?: string;
   tradingEnv?: Env;
   marketDataEnv?: Env;
   /** "time" = unix seconds (Gemini's recommended mode); "incremental" = ms counter. */
@@ -60,7 +64,7 @@ export class GeminiClient {
   }
 
   get hasCredentials(): boolean {
-    return Boolean(this.cfg.apiKey && this.cfg.apiSecret);
+    return Boolean(this.cfg.accessToken || (this.cfg.apiKey && this.cfg.apiSecret));
   }
 
   get tradingEnv(): Env {
@@ -109,14 +113,18 @@ export class GeminiClient {
     query: Record<string, string | number | undefined>,
   ): Promise<T> {
     if (!this.hasCredentials) {
-      throw new Error("Gemini API key/secret not configured (GEMINI_API_KEY, GEMINI_API_SECRET)");
+      throw new Error("Gemini isn't connected. Connect your Gemini account first.");
     }
-    const payload = { request: path, nonce: this.nextNonce(), ...fields };
+    const oauth = Boolean(this.cfg.accessToken);
+    // OAuth payloads need no nonce; API-key payloads must carry a strictly increasing one.
+    const payload = oauth ? { request: path, ...fields } : { request: path, nonce: this.nextNonce(), ...fields };
     // Order ids exceed JS's safe integer range, so callers pass them as strings and
     // they are written back into the JSON as bare numbers, digit for digit.
     const json = JSON.stringify(payload).replace(/"(orderId)":"(\d+)"/g, '"$1":$2');
     const b64 = Buffer.from(json).toString("base64");
-    const signature = createHmac("sha384", this.cfg.apiSecret!).update(b64).digest("hex");
+    const auth: Record<string, string> = oauth
+      ? { Authorization: `Bearer ${this.cfg.accessToken}` }
+      : { "X-GEMINI-APIKEY": this.cfg.apiKey!, "X-GEMINI-SIGNATURE": createHmac("sha384", this.cfg.apiSecret!).update(b64).digest("hex") };
 
     const url = new URL(path, BASES[this.cfg.tradingEnv ?? "sandbox"]);
     for (const [k, v] of Object.entries(query)) if (v !== undefined) url.searchParams.set(k, String(v));
@@ -125,9 +133,8 @@ export class GeminiClient {
       method,
       headers: {
         ...(method === "POST" ? { "Content-Type": "text/plain", "Content-Length": "0" } : {}),
-        "X-GEMINI-APIKEY": this.cfg.apiKey!,
+        ...auth,
         "X-GEMINI-PAYLOAD": b64,
-        "X-GEMINI-SIGNATURE": signature,
         "Cache-Control": "no-cache",
       },
       cache: "no-store",
