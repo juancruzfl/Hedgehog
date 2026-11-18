@@ -202,9 +202,13 @@ export function HowItWorksTip() {
         // Keyboard focus opens it; focus from a tap doesn't (the tap toggles it instead).
         onFocus={(e) => e.currentTarget.matches(":focus-visible") && setOpen(true)}
         onBlur={(e) => !ref.current?.contains(e.relatedTarget as Node) && setOpen(false)}
-        className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-border text-base font-bold italic text-text-3 hover:border-accent hover:text-accent aria-expanded:border-accent aria-expanded:text-accent"
+        className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-border text-text-3 hover:border-accent hover:text-accent aria-expanded:border-accent aria-expanded:text-accent"
       >
-        i
+        {/* Drawn rather than a text "i", so it sits dead center whatever the font. */}
+        <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor" aria-hidden>
+          <circle cx="8" cy="3.75" r="1.4" />
+          <rect x="6.75" y="6.5" width="2.5" height="7" rx="1.25" />
+        </svg>
       </button>
       {open && (
         <div
