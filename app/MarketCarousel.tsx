@@ -49,7 +49,6 @@ function MarketCard({ m }: { m: BoardCard }) {
     <div className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
       <div className="flex items-center gap-2 text-xs">
         <span className="rounded-full bg-accent-soft px-2.5 py-1 font-semibold text-accent">{m.tabLabel}</span>
-        <span className="text-text-3">Live on Gemini</span>
       </div>
       <h2 className="mt-3 text-xl font-bold leading-snug sm:text-2xl">{m.question}</h2>
       <p className="mt-1 text-sm text-text-2">{context(m.subtitle)}</p>
@@ -215,7 +214,7 @@ export function MarketCarousel({ cards }: { cards: BoardCard[] }) {
         </div>
 
         <p className="mt-3 text-xs text-text-3">
-          Live Gemini market: &ldquo;{m.marketName}&rdquo;. Example amounts; your numbers depend on your own costs.
+          Live market: &ldquo;{m.marketName}&rdquo;. Example amounts; your numbers depend on your own costs.
         </p>
       </div>
     </section>
