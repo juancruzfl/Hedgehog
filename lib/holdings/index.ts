@@ -1,7 +1,7 @@
 // Holdings: what the user owns, from any source. Every source produces Holding[],
 // and the forecast/hedge engine never cares where they came from.
 
-export type HoldingSource = "manual" | "gemini" | "solana";
+export type HoldingSource = "manual" | "gemini" | "solana" | "evm" | "bitcoin";
 
 export interface Holding {
   asset: string; // canonical ticker that Gemini lists markets for: BTC, ETH, SOL, XRP

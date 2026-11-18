@@ -3,7 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { CoinIcon } from "@/components/CoinIcon";
 import { qty, usd } from "@/lib/format";
+import { useEvmWallets, type EvmWallet } from "@/components/useEvmWallets";
 import { HEDGEABLE_ASSETS, isHedgeable, type Holding } from "@/lib/holdings";
+import { detectNetwork, NETWORK_LABEL, type WalletNetwork } from "@/lib/holdings/detect";
+
+/** What each network's reader looks for, shown under the address box. */
+const READS: Record<WalletNetwork, string> = {
+  solana: "SOL, plus BTC and ETH tokens held on Solana",
+  evm: "ETH, WETH, staked ETH, WBTC and cbBTC on Ethereum and Base",
+  bitcoin: "the BTC at this address",
+};
 
 declare global {
   interface Window {
@@ -13,13 +22,19 @@ declare global {
 
 export type Method = "wallet" | "gemini" | "manual";
 
-const SOURCE_LABEL: Record<Holding["source"], string> = { solana: "Solana wallet", gemini: "Gemini", manual: "Entered by you" };
+const SOURCE_LABEL: Record<Holding["source"], string> = {
+  solana: "Solana wallet",
+  evm: "Ethereum wallet",
+  bitcoin: "Bitcoin address",
+  gemini: "Gemini",
+  manual: "Entered by you",
+};
 
 const METHODS: { id: Method; title: string; body: string; icon: React.ReactNode }[] = [
   {
     id: "wallet",
     title: "Connect wallet",
-    body: "Read a Solana wallet. Nothing to sign.",
+    body: "Solana, Ethereum or Bitcoin. Nothing to sign.",
     icon: (
       <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden>
         <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v3" />
@@ -99,22 +114,40 @@ export function HoldingsDialog({
     setMessage({ kind: "info", text: `Added ${qty(n)} ${asset}.` });
   }
 
-  async function readWallet(addr: string) {
+  async function readWallet(addr: string, known?: WalletNetwork) {
+    const net = known ?? detectNetwork(addr);
+    if (!net)
+      return setMessage({ kind: "error", text: "We couldn't tell which network that is. Paste a Solana, Ethereum (0x…) or Bitcoin (bc1…, 1…, 3…) address." });
     setBusy(true);
     setMessage(null);
     try {
-      const res = await fetch(`/api/holdings/solana?address=${encodeURIComponent(addr)}`);
+      const res = await fetch(`/api/holdings/${net}?address=${encodeURIComponent(addr)}`);
       const body = await res.json();
       if (!res.ok) throw new Error(body.error);
       const found = (body.holdings as Holding[]).filter((h) => isHedgeable(h.asset));
-      replaceSource("solana", found);
+      replaceSource(net, found);
       setMessage(
-        found.length ? { kind: "info", text: `Found ${found.length} asset${found.length > 1 ? "s" : ""} in your wallet.` } : { kind: "error", text: "We didn't find SOL, BTC or ETH in that wallet." },
+        found.length
+          ? { kind: "info", text: `Found ${found.length} asset${found.length > 1 ? "s" : ""} in your ${NETWORK_LABEL[net]} wallet.` }
+          : { kind: "error", text: `We didn't find ${READS[net]} in that ${NETWORK_LABEL[net]} wallet.` },
       );
     } catch (e) {
       setMessage({ kind: "error", text: (e as Error).message });
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function connectEvm(w: EvmWallet) {
+    setMessage(null);
+    try {
+      const accounts = (await w.provider.request({ method: "eth_requestAccounts" })) as string[];
+      const addr = accounts?.[0];
+      if (!addr) throw new Error();
+      setAddress(addr);
+      await readWallet(addr, "evm");
+    } catch {
+      setMessage({ kind: "error", text: `The ${w.name} connection was cancelled.` });
     }
   }
 
@@ -138,7 +171,10 @@ export function HoldingsDialog({
       const body = await res.json();
       if (!res.ok) throw new Error(body.error);
       replaceSource("gemini", body.holdings);
-      setMessage({ kind: "info", text: `Imported ${body.holdings.length} asset${body.holdings.length === 1 ? "" : "s"} from Gemini${body.env === "sandbox" ? " (test account)" : ""}.` });
+      setMessage({
+        kind: "info",
+        text: `Imported ${body.holdings.length} asset${body.holdings.length === 1 ? "" : "s"} from Gemini${body.env === "sandbox" ? " (test account)" : ""}.`,
+      });
     } catch (e) {
       setMessage({ kind: "error", text: (e as Error).message });
     } finally {
@@ -146,6 +182,8 @@ export function HoldingsDialog({
     }
   }
 
+  const evmWallets = useEvmWallets();
+  const pasted = detectNetwork(address);
   const total = holdings.reduce((s, h) => s + (prices[h.asset] ?? 0) * h.quantity, 0);
   const chosen = METHODS.find((m) => m.id === method);
 
@@ -213,19 +251,53 @@ export function HoldingsDialog({
 
             {method === "wallet" && (
               <div className="mt-4">
-                <button disabled={busy} onClick={connectPhantom} className="w-full rounded-xl bg-accent py-3 font-semibold text-accent-ink hover:brightness-110 disabled:opacity-40">
-                  Connect Phantom
-                </button>
+                {/* Wallets installed in this browser; Phantom (Solana) is always offered */}
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {evmWallets.map((w) => (
+                    <button
+                      key={w.id}
+                      disabled={busy}
+                      onClick={() => connectEvm(w)}
+                      className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface py-3 font-semibold hover:border-accent disabled:opacity-40"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element -- the wallet's own data-URI icon */}
+                      {w.icon && <img src={w.icon} alt="" className="h-5 w-5" />}
+                      {w.name}
+                    </button>
+                  ))}
+                  {evmWallets.length === 0 && (
+                    <button
+                      disabled={busy}
+                      onClick={() =>
+                        setMessage({
+                          kind: "error",
+                          text: "No Ethereum wallet (like MetaMask) is installed in this browser. Paste your 0x address below instead.",
+                        })
+                      }
+                      className="rounded-xl border border-border bg-surface py-3 font-semibold hover:border-accent disabled:opacity-40"
+                    >
+                      MetaMask
+                    </button>
+                  )}
+                  <button
+                    disabled={busy}
+                    onClick={connectPhantom}
+                    className="rounded-xl border border-border bg-surface py-3 font-semibold hover:border-accent disabled:opacity-40"
+                  >
+                    Phantom
+                  </button>
+                </div>
                 <div className="my-3 flex items-center gap-3 text-xs text-text-3">
-                  <span className="h-px flex-1 bg-border" /> or paste an address <span className="h-px flex-1 bg-border" />
+                  <span className="h-px flex-1 bg-border" /> or paste any address <span className="h-px flex-1 bg-border" />
                 </div>
                 <div className="flex gap-2">
                   <input
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && address.trim() && readWallet(address.trim())}
-                    placeholder="Solana wallet address"
-                    aria-label="Solana wallet address"
+                    placeholder="Solana, Ethereum or Bitcoin address"
+                    aria-label="Wallet address"
+                    aria-describedby="wallet-network"
                     className="min-w-0 flex-1 rounded-xl border border-border bg-surface px-3.5 py-2.5 font-mono text-sm outline-none focus:border-accent"
                   />
                   <button
@@ -236,13 +308,27 @@ export function HoldingsDialog({
                     Read
                   </button>
                 </div>
-                <p className="mt-2 text-xs text-text-3">We read SOL, plus BTC and ETH tokens held on Solana.</p>
+                <p id="wallet-network" className="mt-2 text-xs text-text-3">
+                  {pasted ? (
+                    <>
+                      <b className="font-semibold text-text-2">{NETWORK_LABEL[pasted]} address</b> · we&apos;ll read {READS[pasted]}.
+                    </>
+                  ) : address.trim() ? (
+                    "That doesn't look like a Solana, Ethereum or Bitcoin address yet."
+                  ) : (
+                    "We read Solana, Ethereum (and Base) and Bitcoin wallets. Read-only: we never ask for keys or signatures."
+                  )}
+                </p>
               </div>
             )}
 
             {method === "gemini" && (
               <div className="mt-4">
-                <button disabled={busy} onClick={importGemini} className="w-full rounded-xl bg-accent py-3 font-semibold text-accent-ink hover:brightness-110 disabled:opacity-40">
+                <button
+                  disabled={busy}
+                  onClick={importGemini}
+                  className="w-full rounded-xl bg-accent py-3 font-semibold text-accent-ink hover:brightness-110 disabled:opacity-40"
+                >
                   Import my Gemini balances
                 </button>
                 <p className="mt-2 text-xs text-text-3">Uses the Gemini account connected to Hedgehog. Balances only.</p>
@@ -306,7 +392,10 @@ export function HoldingsDialog({
                     </td>
                     <td className="py-2.5 text-right">{qty(h.quantity)}</td>
                     <td className="py-2.5 text-right text-text-2">{prices[h.asset] ? usd(h.quantity * prices[h.asset]) : "—"}</td>
-                    <td className="hidden py-2.5 pl-4 text-text-2 sm:table-cell">{SOURCE_LABEL[h.source]}</td>
+                    <td className="hidden py-2.5 pl-4 text-text-2 sm:table-cell">
+                      {SOURCE_LABEL[h.source]}
+                      {h.detail && h.source !== "manual" && <span className="block text-xs text-text-3">{h.detail}</span>}
+                    </td>
                     <td className="py-2.5 text-right">
                       <button
                         onClick={() => onChange(holdings.filter((_, j) => j !== i))}
