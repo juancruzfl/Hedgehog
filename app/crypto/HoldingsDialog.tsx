@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CoinIcon } from "@/components/CoinIcon";
 import { qty, usd } from "@/lib/format";
-import { useEvmWallets, type EvmWallet } from "@/components/useEvmWallets";
+import { requestEvmAccount, useEvmWallets, walletErrorMessage, type EvmWallet } from "@/components/useEvmWallets";
 import { HEDGEABLE_ASSETS, isHedgeable, type Holding } from "@/lib/holdings";
 import { detectNetwork, NETWORK_LABEL, type WalletNetwork } from "@/lib/holdings/detect";
 
@@ -139,16 +139,16 @@ export function HoldingsDialog({
   }
 
   async function connectEvm(w: EvmWallet) {
-    setMessage(null);
+    setMessage({ kind: "info", text: `Waiting for ${w.name}… approve the request in its window.` });
+    let addr: string;
     try {
-      const accounts = (await w.provider.request({ method: "eth_requestAccounts" })) as string[];
-      const addr = accounts?.[0];
-      if (!addr) throw new Error();
-      setAddress(addr);
-      await readWallet(addr, "evm");
-    } catch {
-      setMessage({ kind: "error", text: `The ${w.name} connection was cancelled.` });
+      addr = await requestEvmAccount(w);
+    } catch (e) {
+      console.error(`[wallet] ${w.name} connection failed`, e);
+      return setMessage({ kind: "error", text: walletErrorMessage(e, w.name) });
     }
+    setAddress(addr);
+    await readWallet(addr, "evm");
   }
 
   async function connectPhantom() {

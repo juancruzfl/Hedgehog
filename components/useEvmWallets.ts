@@ -1,20 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { Eip1193Provider, EvmWallet } from "@/lib/wallet/evm-connect";
 
-/** Minimal EIP-1193 provider: all Hedgehog ever asks for is the account address. */
-export interface Eip1193Provider {
-  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
-  isMetaMask?: boolean;
-}
-
-export interface EvmWallet {
-  id: string;
-  name: string;
-  /** Data-URI icon provided by the wallet itself. */
-  icon?: string;
-  provider: Eip1193Provider;
-}
+export { requestEvmAccount, walletErrorMessage, type EvmWallet } from "@/lib/wallet/evm-connect";
 
 declare global {
   interface Window {
@@ -51,3 +40,4 @@ export function useEvmWallets(): EvmWallet[] {
   }, []);
   return wallets;
 }
+
