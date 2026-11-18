@@ -48,6 +48,9 @@ export function ForecastCard({
   const [hi, setHi] = useState(Math.min(1, f.horizons.length - 1));
   // Each card flips on its own; flipping one never changes another.
   const [flipped, setFlipped] = useState(false);
+  // The chart on the back is only built once someone flips the card (it's the costly part).
+  const [everFlipped, setEverFlipped] = useState(false);
+  if (flipped && !everFlipped) setEverFlipped(true);
   const flipRef = useRef<HTMLButtonElement>(null);
   const backRef = useRef<HTMLButtonElement>(null);
   const firstRender = useRef(true);
@@ -121,22 +124,22 @@ export function ForecastCard({
           {/* Ladder of drops */}
           {/* Always room for three price levels, so switching dates never resizes the card */}
           <div className="mt-5">
-              <p className="text-sm font-semibold">Smaller and bigger drops</p>
-              <ul className="mt-2 min-h-[5.25rem] space-y-2.5">
-                {ladder.map((p) => (
-                  <li key={p.symbol} className="grid grid-cols-[7.5rem_1fr_3rem] items-center gap-3 text-sm sm:grid-cols-[9rem_1fr_3rem_5rem]">
-                    <span className="tabular-nums">
-                      −{pct(p.drop)} <span className="text-text-3">· {usd(p.strike)}</span>
-                    </span>
-                    <span className="h-2.5 overflow-hidden rounded-full bg-surface-2" aria-hidden>
-                      <span className="block h-full rounded-full bg-accent" style={{ width: `${Math.max(2, p.probBelow * 100)}%` }} />
-                    </span>
-                    <span className="text-right font-semibold tabular-nums">{pct(p.probBelow)}</span>
-                    <span className="hidden text-right text-text-2 tabular-nums sm:block">−{usd(p.lossAtStrike)}</span>
-                  </li>
-                ))}
-                {ladder.length < 2 && <li className="text-sm text-text-3">Gemini lists only this price level for this date.</li>}
-              </ul>
+            <p className="text-sm font-semibold">Smaller and bigger drops</p>
+            <ul className="mt-2 min-h-[5.25rem] space-y-2.5">
+              {ladder.map((p) => (
+                <li key={p.symbol} className="grid grid-cols-[7.5rem_1fr_3rem] items-center gap-3 text-sm sm:grid-cols-[9rem_1fr_3rem_5rem]">
+                  <span className="tabular-nums">
+                    −{pct(p.drop)} <span className="text-text-3">· {usd(p.strike)}</span>
+                  </span>
+                  <span className="h-2.5 overflow-hidden rounded-full bg-surface-2" aria-hidden>
+                    <span className="block h-full rounded-full bg-accent" style={{ width: `${Math.max(2, p.probBelow * 100)}%` }} />
+                  </span>
+                  <span className="text-right font-semibold tabular-nums">{pct(p.probBelow)}</span>
+                  <span className="hidden text-right text-text-2 tabular-nums sm:block">−{usd(p.lossAtStrike)}</span>
+                </li>
+              ))}
+              {ladder.length < 2 && <li className="text-sm text-text-3">Gemini lists only this price level for this date.</li>}
+            </ul>
           </div>
 
           <div className="mt-4 mb-5">
@@ -174,14 +177,16 @@ export function ForecastCard({
               </div>
             </header>
             <div className="mt-4 min-h-0 flex-1">
-              <OddsHistoryChart
-                title=""
-                series={h.points.map((p) => ({
-                  key: p.symbol,
-                  label: `Below ${usd(p.strike)}`,
-                  data: [...p.history, { ts: asOf, probBelow: p.probBelow }],
-                }))}
-              />
+              {everFlipped && (
+                <OddsHistoryChart
+                  title=""
+                  series={h.points.map((p) => ({
+                    key: p.symbol,
+                    label: `Below ${usd(p.strike)}`,
+                    data: [...p.history, { ts: asOf, probBelow: p.probBelow }],
+                  }))}
+                />
+              )}
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-4">
               <button

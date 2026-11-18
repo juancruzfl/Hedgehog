@@ -16,7 +16,7 @@ export function Nav() {
     <header className="sticky top-0 z-20 border-b border-border bg-background">
       <nav className="mx-auto flex max-w-6xl items-center gap-0.5 px-4 py-3 text-sm sm:gap-1">
         <Link href="/" className="mr-2 flex items-center gap-2 font-bold tracking-tight sm:mr-4" aria-label="hedgehog home">
-          <Logo className="h-8 w-8 text-accent" />
+          <Logo className="h-8 w-8 text-text" />
           <span className="hidden text-base sm:inline">hedgehog</span>
         </Link>
         {/* Everything else sits on the right */}

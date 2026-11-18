@@ -1,3 +1,4 @@
+import { swr } from "@/lib/cache";
 import Link from "next/link";
 import { usd } from "@/lib/format";
 import { buildBoard, type BoardCard } from "@/lib/landing/board";
@@ -74,7 +75,8 @@ const honest = [
 ];
 
 export default async function Home() {
-  const cards = await buildBoard(getVenue()).catch(() => []);
+  // Served from a server cache that refreshes in the background, so the page never waits on Gemini once warm.
+  const cards = await swr("landing-board", 60_000, () => buildBoard(getVenue())).catch(() => []);
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-16">

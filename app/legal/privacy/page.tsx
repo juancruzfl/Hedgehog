@@ -15,7 +15,7 @@ export default function PrivacyPage() {
           <ul>
             <li>No accounts, no cookies, no ads, no analytics. We don&apos;t sell or share your personal information.</li>
             <li>What you hold is saved in your browser, not on our servers.</li>
-            <li>To answer your questions, some of what you type is sent to the services that power Hedgehog (Gemini, a Solana data provider, and AI providers).</li>
+            <li>To answer your questions, some of what you type is sent to the services that power Hedgehog (Gemini, blockchain data providers, and AI providers).</li>
             <li>Don&apos;t type anything confidential into the business risk box.</li>
           </ul>
         }
@@ -36,11 +36,11 @@ export default function PrivacyPage() {
         to calculate the forecast and then discards them. We don&apos;t store them on our servers. &ldquo;Import from Gemini&rdquo; reads balances
         from the Gemini account connected to this site; we never ask for your Gemini login or API keys.
       </p>
-      <h3>Solana wallet address</h3>
+      <h3>Wallet addresses</h3>
       <p>
-        If you paste a Solana address or connect a wallet such as Phantom, we receive the public address only. We send it to a Solana network data
-        provider to read the address&apos;s token balances. We never ask for, receive or store a private key or seed phrase, and we don&apos;t store
-        the address on our servers. Wallet addresses and balances are public on the Solana blockchain.
+        If you paste a Solana, Ethereum or Bitcoin address, or connect a wallet such as Phantom, MetaMask or Coinbase Wallet, we receive the public
+        address only. We send it to a data provider for that network to read its balances. We never ask for, receive or store a private key, seed
+        phrase or signature, and we don&apos;t store the address on our servers. Wallet addresses and balances are public on their blockchains.
       </p>
       <h3>Business risk descriptions</h3>
       <p>
@@ -73,7 +73,8 @@ export default function PrivacyPage() {
           does not.
         </li>
         <li>
-          <strong>Solana network data provider</strong>: reads balances for a wallet address you provide.
+          <strong>Blockchain data providers</strong>: read balances for a wallet address you provide: a Solana network provider, Ethereum and Base
+          network providers (PublicNode by default), and a Bitcoin explorer (mempool.space, with blockstream.info as a backup).
         </li>
         <li>
           <strong>Hyperliquid</strong>: a backup source of public crypto prices (no personal information is sent).

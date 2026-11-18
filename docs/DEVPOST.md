@@ -16,7 +16,7 @@ Prediction markets already price these events every minute. A market that pays $
 
 Hedgehog has two front doors that feed one hedging engine.
 
-**For crypto holders.** Connect a Solana wallet (read-only, nothing to sign), import from Gemini, or type what you hold. Each coin gets its own card, and the page title follows along: *"How likely is your SOL to drop?"* Hedgehog shows the market's odds in plain words: *"Will SOL drop below $65 by Nov 20? 7%, about 1 in 14. If it does, you'd be down about $223."* Pick a Light, Balanced or Strong cushion and see exactly what happens if SOL ends 10%, 20% or 30% lower, with and without the hedge.
+**For crypto holders.** Connect a wallet (Phantom, MetaMask, Coinbase Wallet and others) or paste any Solana, Ethereum or Bitcoin address (read-only, nothing to sign), import from Gemini, or type what you hold. Each coin gets its own card, and the page title follows along: *"How likely is your SOL to drop?"* Hedgehog shows the market's odds in plain words: *"Will SOL drop below $65 by Nov 20? 7%, about 1 in 14. If it does, you'd be down about $223."* Pick a Light, Balanced or Strong cushion and see exactly what happens if SOL ends 10%, 20% or 30% lower, with and without the hedge.
 
 **For small businesses.** The page is one big chat box: *"What could hurt your business?"* Describe the worry in your own words. The engine's steps then take over the screen, one at a time, as AI turns it into a structured risk, searches live Gemini markets, labels each one an *Exact* or *Partial* match and reads the contract's fine print ("Overtime counts…"). Then the numbers: *"You pay $480 now · if it happens you get $3,000 · your cost either way: $480."* An uncertain $3,000 hit becomes a known $480 cost.
 
@@ -45,6 +45,7 @@ The AI is one step, reading your description, and the app still works with it sw
 - **Gemini Prediction Markets API** for everything market-related: event discovery with category, search and sport filters; per-event re-validation; order placement, cancel and active orders; positions; terms status; balances. Private calls use HMAC-SHA384 signing through a client that serializes requests so nonces always increase.
 - **Odds history:** Gemini doesn't return price history for these markets, so we built a collector that snapshots every crypto, commodity and weather contract every 5 minutes into SQLite, plus any game market a business has been shown (recorded until it settles). Every card flips over to chart how the odds moved.
 - **Solana:** read-only wallet reading over JSON-RPC (`getBalance`, `getTokenAccountsByOwner`), mapping native SOL and SPL tokens (cbBTC, Wormhole WBTC/WETH, mSOL, JitoSOL) to hedgeable assets. Phantom is used only to share the public key.
+- **Ethereum, Base and Bitcoin:** browser wallets are discovered with EIP-6963 (MetaMask, Coinbase Wallet, Rabby…); balances are read over JSON-RPC (native ETH plus WETH, stETH, wstETH, cbETH, WBTC and cbBTC, contracts verified on-chain). Bitcoin addresses are read from the mempool.space API. The paste box detects which network an address belongs to.
 - **Hedging engine:** a pure, unit-tested sizer that builds event hedges and multi-strike ladders for falling prices (crypto) and rising prices (fuel, metals), plus payoff curves.
 - **AI (OpenAI-compatible through OpenRouter, so the model is swappable):** parses plain-English risks, plans the market search and checks the fine print. It never does money math, and it can only pick from real candidate contracts; invented market symbols are dropped.
 - **Venue adapter:** the engine only talks to a `VenueAdapter` interface. Gemini is the implementation; Kalshi or others can plug in.
@@ -73,4 +74,4 @@ The hardest part wasn't the trading. It was translation: turning "$93 or above, 
 
 ## Built with
 
-Next.js · TypeScript · Gemini Prediction Markets API · Gemini price ticker · Solana JSON-RPC · Phantom · OpenRouter (OpenAI-compatible) · SQLite · Recharts · Tailwind CSS · Vitest
+Next.js · TypeScript · Gemini Prediction Markets API · Gemini price ticker · Solana JSON-RPC · Phantom · Ethereum & Base JSON-RPC · EIP-6963 wallets · mempool.space · OpenRouter (OpenAI-compatible) · SQLite · Recharts · Tailwind CSS · Vitest

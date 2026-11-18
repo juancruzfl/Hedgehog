@@ -1,7 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 68 68" fill="none">
-  <g transform="rotate(45 32 32)">
-    <path d="M10.19 39.02 L2.8 37.28 L10.12 35.38 L3.56 32.36 L11.3 31.85 L5.98 27.74 L13.66 28.64 L9.91 23.7 L17.04 25.96 L15.11 20.5 L21.23 23.97 L21.23 18.33 L25.98 22.8 L27.91 17.34 L30.98 22.52 L34.72 17.58 L35.91 23.15 L41.24 19.04 L40.48 24.65 L47.04 21.63 L44.39 26.93 C50.39 25.43 54.39 29.93 60.5 35.43 C61.8 36.53 61.2 38.33 59.4 38.23 C55 37.93 51.5 39.43 48.5 46 L43.5 48.5 C43.5 51.5 39 51.5 39 49 L24 49.5 C24 52 19.5 52 19.5 49.3 C14.5 48 9.69 44 10.19 39.02 Z" stroke="#0e7490" stroke-width="4.4" stroke-linejoin="round" stroke-linecap="round"/>
-    <circle cx="48.59" cy="33.23" r="2.2" fill="#0e7490"/>
-    <circle cx="60.1" cy="36.83" r="1.8" fill="#0e7490"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Greyish-white tile (the page color) with the black hedgehog, the same on light and dark tabs -->
+  <rect width="64" height="64" rx="14" fill="#f2f3f5"/>
+  <g transform="translate(32 33) scale(0.84) translate(-32 -32)">
+    <path d="M10.48 35.95 L4.75 33.12 L10.14 29.83 L5.75 25.58 L12.08 23.94 L9.48 18.7 L16.08 18.89 L15.55 13.21 L21.73 15.2 L23.32 9.66 L28.46 13.25 L32 8.44 L35.54 13.25 L40.68 9.66 L42.27 15.2 L48.45 13.21 L47.92 18.89 L54.52 18.7 L51.92 23.94 L58.25 25.58 L53.86 29.83 L59.25 33.12 L53.52 35.95 C59.52 37.95 56.82 54.95 39 55.45 C36.5 55.75 34.5 58.45 32 58.45 C29.5 58.45 27.5 55.75 25 55.45 C7.18 54.95 4.48 37.95 10.48 35.95 Z" stroke="#000000" stroke-width="4.6" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="24.5" cy="37.5" r="2.9" fill="#000000"/>
+    <circle cx="39.5" cy="37.5" r="2.9" fill="#000000"/>
+    <ellipse cx="32" cy="50" rx="3.5" ry="2.8" fill="#000000"/>
   </g>
 </svg>

@@ -70,8 +70,8 @@ export default function CookiesPage() {
 
       <h2 id="wallets">Wallet extensions</h2>
       <p>
-        If you connect a wallet extension such as Phantom, the extension runs in your browser under its own privacy policy. Hedgehog only receives
-        the public address it shares.
+        If you connect a wallet extension such as Phantom, MetaMask or Coinbase Wallet, the extension runs in your browser under its own privacy
+        policy. Hedgehog only receives the public address it shares.
       </p>
 
       <h2 id="hosting">Our host</h2>

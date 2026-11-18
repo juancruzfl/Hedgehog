@@ -1,11 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 const SEG_VH = 60; // scroll distance per card (vh)
 const MIN_SCALE = 0.75; // below this, a card scrolls inside instead of shrinking further
 const ROW = 52; // room for the chip row under the card (px)
 const GESTURE_QUIET_MS = 450; // a scroll gesture ends after this long without wheel events
+const SWAP_IN_MS = 620; // incoming card
+const SWAP_OUT_MS = 320; // outgoing card
+const EASE_OUT = "cubic-bezier(0.22, 1, 0.36, 1)"; // fast start, long gentle settle
+const EASE_IN = "cubic-bezier(0.4, 0, 1, 1)";
 
 function useMedia(query: string) {
   const [match, setMatch] = useState(false);
@@ -77,6 +81,9 @@ export function PinnedStage({
   const keys = items.map((i) => i.key).join("|");
 
   const seg = () => (window.innerHeight * SEG_VH) / 100;
+  // While a jump's smooth scroll is in flight, keep showing its target card instead of
+  // re-deriving the card from the moving scroll position (which lags and can flicker).
+  const jumping = useRef<{ target: number; until: number } | null>(null);
 
   // Which card is showing, from how far the user has scrolled through the section.
   useEffect(() => {
@@ -85,7 +92,11 @@ export function PinnedStage({
       const el = wrap.current;
       if (!el) return;
       const scrolled = nav - el.getBoundingClientRect().top;
-      setIndex(Math.min(n - 1, Math.max(0, Math.floor((scrolled + seg() / 2) / seg()))));
+      const fromScroll = Math.min(n - 1, Math.max(0, Math.floor((scrolled + seg() / 2) / seg())));
+      const j = jumping.current;
+      if (j && performance.now() < j.until && fromScroll !== j.target) return;
+      jumping.current = null;
+      setIndex(fromScroll);
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -202,10 +213,16 @@ export function PinnedStage({
       const el = wrap.current;
       if (!el) return;
       const top = window.scrollY + el.getBoundingClientRect().top - nav + i * seg();
+      // Swap the card now; the page scroll catches up underneath it.
+      jumping.current = { target: i, until: performance.now() + 1000 };
+      setIndex(i);
       window.scrollTo({ top, behavior: reduceMotion ? "auto" : "smooth" });
     },
     [reduceMotion, nav],
   );
+  // The cards themselves only change when the items do. A swap only changes their position
+  // and opacity, so React can skip re-rendering every card (and its chart) on each scroll.
+  const cardEls = useMemo(() => items.map((_, i) => renderCard(i, true)), [items, renderCard]);
   const jumpRef = useRef(jumpTo);
   jumpRef.current = jumpTo;
 
@@ -226,11 +243,18 @@ export function PinnedStage({
   return (
     <div ref={wrap} className="relative" style={{ height: `calc(100vh - ${nav}px + ${(n - 1) * SEG_VH}vh)` }}>
       {items.map((it, i) => (
-        <div key={it.key} aria-hidden className="pointer-events-none absolute h-px w-full snap-start" style={{ top: `${i * SEG_VH}vh`, scrollMarginTop: nav }} />
+        <div
+          key={it.key}
+          aria-hidden
+          className="pointer-events-none absolute h-px w-full snap-start"
+          style={{ top: `${i * SEG_VH}vh`, scrollMarginTop: nav }}
+        />
       ))}
 
       <div className="sticky flex flex-col" style={{ top: nav, height: `calc(100vh - ${nav}px)` }}>
-        <div className="shrink-0 pb-4 pt-6 [@media(max-height:800px)]:pb-3 [@media(max-height:800px)]:pt-4">{typeof header === "function" ? header(current) : header}</div>
+        <div className="shrink-0 pb-4 pt-6 [@media(max-height:800px)]:pb-3 [@media(max-height:800px)]:pt-4">
+          {typeof header === "function" ? header(current) : header}
+        </div>
 
         <div ref={stage} className="relative grid min-h-0 flex-1 items-start">
           {items.map((it, i) => {
@@ -241,9 +265,24 @@ export function PinnedStage({
                 inert={state !== "now"}
                 aria-hidden={state !== "now"}
                 data-stage-card
-                style={{ scale: fit[it.key]?.scale ?? 1, transformOrigin: "top center", maxHeight: fit[it.key]?.maxH }}
-                className={`[grid-area:1/1] overflow-y-auto rounded-2xl transition-[translate,opacity] duration-500 ease-out motion-reduce:transition-none ${
-                  state === "now" ? "translate-y-0 opacity-100" : state === "past" ? "pointer-events-none -translate-y-16 opacity-0" : "pointer-events-none translate-y-16 opacity-0"
+                style={{
+                  scale: fit[it.key]?.scale ?? 1,
+                  transformOrigin: "top center",
+                  maxHeight: fit[it.key]?.maxH,
+                  // Incoming card glides in on a soft ease-out; the outgoing one leaves quickly so they barely overlap.
+                  transition: reduceMotion
+                    ? "none"
+                    : state === "now"
+                      ? `translate ${SWAP_IN_MS}ms ${EASE_OUT}, opacity ${SWAP_IN_MS - 200}ms ${EASE_OUT} 60ms`
+                      : `translate ${SWAP_OUT_MS}ms ${EASE_IN}, opacity ${SWAP_OUT_MS - 80}ms ${EASE_IN}`,
+                  willChange: "translate, opacity",
+                }}
+                className={`[grid-area:1/1] overflow-y-auto rounded-2xl ${
+                  state === "now"
+                    ? "translate-y-0 opacity-100"
+                    : state === "past"
+                      ? "pointer-events-none -translate-y-8 opacity-0"
+                      : "pointer-events-none translate-y-10 opacity-0"
                 }`}
               >
                 <div
@@ -254,13 +293,16 @@ export function PinnedStage({
                   className="flex flex-col *:flex-1"
                   style={{ minHeight: uniformH ?? undefined }}
                 >
-                  {renderCard(i, true)}
+                  {cardEls[i]}
                 </div>
               </div>
             );
           })}
 
-          <div className="absolute inset-x-0 flex flex-wrap items-center justify-center gap-2" style={{ top: rowTop ?? undefined, bottom: rowTop === null ? 0 : undefined }}>
+          <div
+            className="absolute inset-x-0 flex flex-wrap items-center justify-center gap-2"
+            style={{ top: rowTop ?? undefined, bottom: rowTop === null ? 0 : undefined }}
+          >
             <nav aria-label="Switch card" className="flex flex-wrap items-center justify-center gap-2">
               {items.map((it, i) => (
                 <button
