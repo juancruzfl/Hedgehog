@@ -149,7 +149,7 @@ export function CryptoFlow() {
         )}
       </h1>
       {/* One short line so it always fits above the pinned market card */}
-      <p key={f?.asset ?? "all"} className="hh-swap-in mt-1.5 text-text-2 tabular-nums [@media(max-height:800px)]:mt-1 [@media(max-height:800px)]:text-sm">
+      <p key={f?.asset ?? "all"} className="hh-swap-in mt-4 text-text-2 tabular-nums [@media(max-height:800px)]:mt-3 [@media(max-height:800px)]:text-sm">
         {f ? (
           <>
             Your {qty(f.quantity)} {f.asset} is worth <b className="font-semibold text-text">{usd(f.valueUsd)}</b> at {usd(f.spot)} each.
