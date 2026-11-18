@@ -23,7 +23,7 @@ const riskJsonSchema = {
     underlyingType: { type: "string", enum: ["crypto", "sports", "weather", "commodity"] },
     underlyingRef: {
       type: "string",
-      description: "sports: 'Indianapolis vs Houston' (city names, not nicknames); weather: the city; commodity: one of WTI, Brent, Natural Gas, Gold, Silver, Copper; crypto: BTC/ETH/SOL/XRP",
+      description: "sports: 'Indianapolis vs Houston' (city names, not nicknames); weather: the city; commodity: one of WTI, Brent, Natural Gas, Gold, Silver, Copper; crypto: BTC/ETH/SOL/XRP/ZEC/HYPE",
     },
     condition: { type: "string", description: "The trigger that costs the user money, e.g. 'Indianapolis wins', 'Austin high above 90F'" },
     exposureLow: { type: "number", description: "USD cost to the user if triggered, low estimate" },

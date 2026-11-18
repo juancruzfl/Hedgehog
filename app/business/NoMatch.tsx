@@ -54,7 +54,7 @@ const AVAILABLE: { title: string; body: string; icon: React.ReactNode }[] = [
   },
   {
     title: "Crypto prices",
-    body: "Bitcoin, Ether, Solana and XRP",
+    body: "Bitcoin, Ether, Solana, XRP, Zcash and Hyperliquid",
     icon: (
       <>
         <circle cx="12" cy="12" r="8" />

@@ -19,6 +19,8 @@ const PRICE_TITLES: Record<string, string> = {
   ETH: "ETH price on",
   SOL: "SOL price on",
   XRP: "XRP price on",
+  ZEC: "ZEC price on",
+  HYPE: "HYPE price on",
 };
 
 export const priceTitleFor = (ref: string) => PRICE_TITLES[ref.trim().toUpperCase()] ?? null;

@@ -140,8 +140,8 @@ function ResultCard({ hedges, o, now }: { hedges: HedgeRecord[]; o: (h: HedgeRec
 
 /* ---------- Rows ---------- */
 
-const COIN = /\b(BTC|Bitcoin|ETH|Ethereum|SOL|Solana|XRP)\b/i;
-const COIN_SYMBOL: Record<string, string> = { bitcoin: "BTC", ethereum: "ETH", solana: "SOL" };
+const COIN = /\b(BTC|Bitcoin|ETH|Ethereum|SOL|Solana|XRP|ZEC|Zcash|HYPE|Hyperliquid)\b/i;
+const COIN_SYMBOL: Record<string, string> = { bitcoin: "BTC", ethereum: "ETH", solana: "SOL", zcash: "ZEC", hyperliquid: "HYPE" };
 
 function HedgeIcon({ h }: { h: HedgeRecord }) {
   const m = h.segment !== "business" ? h.title.match(COIN) : null;

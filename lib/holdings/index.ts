@@ -4,7 +4,7 @@
 export type HoldingSource = "manual" | "gemini" | "solana" | "evm" | "bitcoin";
 
 export interface Holding {
-  asset: string; // canonical ticker that Gemini lists markets for: BTC, ETH, SOL, XRP
+  asset: string; // canonical ticker that Gemini lists markets for: BTC, ETH, SOL, XRP, ZEC, HYPE
   quantity: number;
   source: HoldingSource;
   /** Where it came from in human terms, e.g. "cbBTC in Solana wallet". */
@@ -12,7 +12,7 @@ export interface Holding {
 }
 
 /** Assets Gemini currently lists daily price markets for. */
-export const HEDGEABLE_ASSETS = ["BTC", "ETH", "SOL", "XRP"] as const;
+export const HEDGEABLE_ASSETS = ["BTC", "ETH", "SOL", "XRP", "ZEC", "HYPE"] as const;
 export type HedgeableAsset = (typeof HEDGEABLE_ASSETS)[number];
 
 export const isHedgeable = (a: string): a is HedgeableAsset =>
