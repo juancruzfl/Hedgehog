@@ -43,6 +43,15 @@ Private calls use HMAC-SHA384 signing with a shared client that serializes reque
 
 **Odds over time:** Gemini doesn't return price history for these markets, so `scripts/collect-odds.ts` snapshots every crypto, commodity and weather contract every 5 minutes into SQLite. The forecast cards and landing page chart that history.
 
+## Connecting a Gemini account
+
+Each person trades from their own Gemini account. **Connect Gemini account** in the nav sends them to Gemini to sign in and approve Hedgehog's access (`account:read`, `balances:read`, `orders:read`, `orders:create`). Gemini redirects back to `/api/auth/gemini/callback`, where the server swaps the code for an access token (24 hours) and a one-time-use refresh token.
+
+- Tokens stay on the server, encrypted with AES-256-GCM. The browser holds only a random session id in an httpOnly cookie, and the database stores just its hash.
+- Access tokens refresh automatically before they expire; one refresh runs at a time per session, because each refresh token works once.
+- Balances, positions and live orders use the signed-in user's token (`Authorization: Bearer`, no nonce). Sign out revokes the refresh token.
+- Until Gemini approves the app for production, sign-in runs against the sandbox.
+
 ## How it uses Solana
 
 The crypto flow reads a wallet **read-only** over Solana JSON-RPC (`getBalance`, `getTokenAccountsByOwner`): native SOL plus SPL tokens that track hedgeable assets (cbBTC, Wormhole WBTC/WETH, mSOL, JitoSOL). Paste an address or connect Phantom just to share the public key. Nothing is signed.
@@ -86,7 +95,10 @@ npm run dev                    # http://localhost:3000
 
 | Variable | Purpose |
 |---|---|
-| `GEMINI_API_KEY`, `GEMINI_API_SECRET` | Account-scoped key with the Trader role (balances, positions, live orders) |
+| `GEMINI_OAUTH_CLIENT_ID`, `GEMINI_OAUTH_CLIENT_SECRET` | OAuth app for "Connect Gemini account" (each user's balances, positions and live orders) |
+| `GEMINI_OAUTH_ENV` | `sandbox` (default) or `production`; production needs Gemini's approval of the app |
+| `SESSION_SECRET` | Encrypts the Gemini tokens stored for signed-in users |
+| `GEMINI_API_KEY`, `GEMINI_API_SECRET` | Local development only: one server-side key, used when OAuth isn't configured |
 | `GEMINI_TRADING_ENV` / `GEMINI_MARKET_DATA_ENV` | Where orders go (`sandbox`) / where market data comes from (`production`) |
 | `HEDGE_EXECUTION` | `paper` (default) or `live` |
 | `MAX_HEDGE_USD` | Per-hedge spend cap enforced server-side (default 5000) |

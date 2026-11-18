@@ -1,11 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { geminiClientFor } from "@/lib/auth/session";
 import { executionMode } from "@/lib/hedges/execute";
 import { paperPortfolio } from "@/lib/hedges/paper";
 import { listHedges } from "@/lib/hedges/store";
-import { GeminiClient } from "@/lib/venues/gemini/client";
+import { GeminiAdapter } from "@/lib/venues/gemini/adapter";
 import { getVenue } from "@/lib/venues";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const mode = executionMode();
   const hedges = listHedges();
   try {
@@ -13,8 +14,9 @@ export async function GET() {
       const p = await paperPortfolio(getVenue(), hedges);
       return NextResponse.json({ mode, hedges, open: p.open, settled: p.settled, outcomes: p.outcomes });
     }
-    if (!GeminiClient.fromEnv().hasCredentials) return NextResponse.json({ mode, hedges, open: [], settled: [], outcomes: {}, connected: false });
-    const positions = await getVenue().getPositions();
+    const client = await geminiClientFor(req);
+    if (!client) return NextResponse.json({ mode, hedges, open: [], settled: [], outcomes: {}, connected: false });
+    const positions = await new GeminiAdapter(client).getPositions();
     return NextResponse.json({
       mode,
       hedges,

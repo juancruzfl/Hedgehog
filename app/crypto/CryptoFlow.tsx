@@ -12,8 +12,6 @@ import { HedgeBuilder } from "./HedgeBuilder";
 import { HoldingsDialog, type Method } from "./HoldingsDialog";
 
 const STORAGE_KEY = STORAGE_KEYS.holdings; // listed on the Cookies & Storage page
-/** Fired by the nav's "Edit assets" button. */
-export const EDIT_ASSETS_EVENT = "hedgehog:edit-assets";
 
 function loadHoldings(): Holding[] {
   try {
@@ -82,12 +80,6 @@ export function CryptoFlow() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  // The nav's "Edit assets" button reopens the popup.
-  useEffect(() => {
-    const open = () => setDialogOpen(true);
-    window.addEventListener(EDIT_ASSETS_EVENT, open);
-    return () => window.removeEventListener(EDIT_ASSETS_EVENT, open);
-  }, []);
 
   const update = (h: Holding[]) => {
     setHoldings(h);
@@ -149,15 +141,30 @@ export function CryptoFlow() {
         )}
       </h1>
       {/* One short line so it always fits above the pinned market card */}
-      <p key={f?.asset ?? "all"} className="hh-swap-in mt-4 text-text-2 tabular-nums [@media(max-height:800px)]:mt-3 [@media(max-height:800px)]:text-sm">
-        {f ? (
-          <>
-            Your {qty(f.quantity)} {f.asset} is worth <b className="font-semibold text-text">{usd(f.valueUsd)}</b> at {usd(f.spot)} each.
-          </>
-        ) : (
-          "Live odds from Gemini prediction markets. Cushion a fall only if you want to."
+      <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 [@media(max-height:800px)]:mt-3">
+        <p key={f?.asset ?? "all"} className="hh-swap-in text-text-2 tabular-nums [@media(max-height:800px)]:text-sm">
+          {f ? (
+            <>
+              Your {qty(f.quantity)} {f.asset} is worth <b className="font-semibold text-text">{usd(f.valueUsd)}</b> at {usd(f.spot)} each.
+            </>
+          ) : (
+            "Live odds from Gemini prediction markets. Cushion a fall only if you want to."
+          )}
+        </p>
+        {/* Change what you hold (this used to sit in the nav, which now holds the Gemini sign-in) */}
+        {combined.length > 0 && (
+          <button
+            onClick={() => setDialogOpen(true)}
+            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-semibold text-text hover:border-accent hover:text-accent"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3Z" />
+              <path d="m13.5 8.5 3 3" />
+            </svg>
+            Edit assets
+          </button>
         )}
-      </p>
+      </div>
       {importNote && <p className="mt-3 rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text-2">{importNote}</p>}
       {error && <p className="mt-3 text-sm text-bad">{error}</p>}
     </div>

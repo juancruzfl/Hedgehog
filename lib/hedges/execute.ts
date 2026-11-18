@@ -3,6 +3,7 @@ import { z } from "zod";
 import { askFor } from "@/lib/engine/sizer";
 import type { Contract } from "@/lib/types";
 import type { VenueAdapter } from "@/lib/venues/types";
+import { SIGN_IN_EXPIRED, isSignInExpired } from "@/lib/auth/session";
 import { addHedgeOrder, createHedge, setHedgeStatus } from "./store";
 
 // Places the orders for a hedge the user approved. The server never trusts the
@@ -119,7 +120,7 @@ export async function executeHedge(venue: VenueAdapter, hedge: ApprovedHedge, mo
       addHedgeOrder(id, { ...l, fillPrice: order.avgExecutionPrice, orderId: order.orderId, status: order.status, error: null });
     } catch (e) {
       failed = true;
-      const error = (e as Error).message;
+      const error = isSignInExpired(e) ? SIGN_IN_EXPIRED : (e as Error).message;
       results.push({ symbol: l.symbol, status: "rejected", error });
       addHedgeOrder(id, { ...l, fillPrice: null, orderId: null, status: "rejected", error });
     }

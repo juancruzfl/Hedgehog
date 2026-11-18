@@ -202,12 +202,20 @@ export function HoldingsDialog({
     }
   }
 
+  // Set when the import needs a Gemini sign-in first.
+  const [needsConnect, setNeedsConnect] = useState(false);
+
   async function importGemini() {
     setBusy(true);
     setMessage(null);
+    setNeedsConnect(false);
     try {
       const res = await fetch("/api/holdings/gemini");
       const body = await res.json();
+      if (body.needsConnect) {
+        setNeedsConnect(true);
+        return;
+      }
       if (!res.ok) throw new Error(body.error);
       replaceSource("gemini", body.holdings);
       setMessage({
@@ -368,14 +376,26 @@ export function HoldingsDialog({
 
             {method === "gemini" && (
               <div className="mt-4">
-                <button
-                  disabled={busy}
-                  onClick={importGemini}
-                  className="w-full rounded-xl bg-accent py-3 font-semibold text-accent-ink hover:brightness-110 disabled:opacity-40"
-                >
-                  Import my Gemini balances
-                </button>
-                <p className="mt-2 text-xs text-text-3">Uses the Gemini account connected to Hedgehog. Balances only.</p>
+                {needsConnect ? (
+                  <>
+                    <p className="mb-3 text-sm text-text-2">Sign in with Gemini first, then come back to import your balances.</p>
+                    <a
+                      href="/api/auth/gemini/login?next=%2Fcrypto"
+                      className="block w-full rounded-xl bg-accent py-3 text-center font-semibold text-accent-ink hover:brightness-110"
+                    >
+                      Connect Gemini account
+                    </a>
+                  </>
+                ) : (
+                  <button
+                    disabled={busy}
+                    onClick={importGemini}
+                    className="w-full rounded-xl bg-accent py-3 font-semibold text-accent-ink hover:brightness-110 disabled:opacity-40"
+                  >
+                    Import my Gemini balances
+                  </button>
+                )}
+                <p className="mt-2 text-xs text-text-3">Uses the Gemini account you signed in with. Balances only.</p>
               </div>
             )}
 
