@@ -83,6 +83,12 @@ export async function snapshot(): Promise<void> {
   rows.push(...toRows(ts, await fetchWatched(watchedMarketIds().filter((id) => !seen.has(id)))));
   insertSnapshot(rows);
   console.log(`[collect] ${new Date(ts).toISOString()} stored ${rows.length} contract quotes`);
+  // Seal any finished hour into the on-chain archive (Solana fingerprints). Loaded lazily so
+  // the collector doesn't pull in the Solana library when the archive is switched off.
+  if (process.env.ARCHIVE_ANCHOR === "1") {
+    const { anchorPending } = await import("@/lib/archive/anchor");
+    anchorPending().catch((e) => console.error("[archive]", (e as Error).message));
+  }
 }
 
 let started = false;
