@@ -246,7 +246,11 @@ export function OddsHistoryChart({ series, title, fill = false }: { series: Odds
         </ResponsiveContainer>
       </div>
       <p className="mt-1 text-xs text-text-3">
-        Market-implied chance from Gemini prediction markets, recorded every 5 minutes by Hedgehog.
+        Market-implied chance. Data provided by Gemini, recorded every 5 minutes by Hedgehog and{" "}
+        <a href="/archive" className="underline hover:text-text">
+          sealed on Solana
+        </a>
+        .
         {gaps > 0 && " Breaks in the line are times with no readings, such as exchange maintenance."}
       </p>
     </figure>

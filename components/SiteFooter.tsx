@@ -14,6 +14,9 @@ export function SiteFooter() {
           <Link href="/legal/privacy#notice-at-collection" className="text-text-2 hover:text-text hover:underline">
             Notice at Collection
           </Link>
+          <Link href="/archive" className="text-text-2 hover:text-text hover:underline">
+            Odds archive
+          </Link>
         </nav>
         <p className="mt-4 max-w-3xl text-xs leading-relaxed text-text-3">
           Hedgehog is software, not an exchange, broker, financial advisor or insurer, and nothing on this site is financial advice. Prediction
