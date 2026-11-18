@@ -2,6 +2,7 @@
 // can reduce. Each card's odds come straight from the market; sparklines come from
 // Hedgehog's own odds history (collector).
 
+import { swr } from "@/lib/cache";
 import { impliedMedian, pickPriceMarket } from "@/lib/business/analyze";
 import { getSpots } from "@/lib/chain/prices";
 import { buildForecast, yesMid } from "@/lib/forecast/forecast";
@@ -51,10 +52,15 @@ function history(symbol: string, side: "yes" | "no") {
 const shortDay = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 async function cryptoCards(venue: VenueAdapter): Promise<BoardCard[]> {
-  const mids = await getSpots(["BTC", "ETH", "SOL"]);
+  const assets = ["BTC", "ETH", "SOL"];
+  // Prices and each coin's markets in parallel, not one after another.
+  const [mids, ...lists] = await Promise.all([
+    getSpots(assets),
+    ...assets.map((asset) => venue.listMarkets({ category: ["Crypto"], search: asset, limit: 100 })),
+  ]);
   const out: BoardCard[] = [];
-  for (const asset of ["BTC", "ETH", "SOL"]) {
-    const markets = await venue.listMarkets({ category: ["Crypto"], search: asset, limit: 100 });
+  for (const [i, asset] of assets.entries()) {
+    const markets = lists[i];
     const f = buildForecast({ asset, spot: mids[asset], quantity: 1, markets, drops: [0.1] });
     const h = f.horizons[Math.min(1, f.horizons.length - 1)];
     const p = h?.points[0];
@@ -132,8 +138,12 @@ function kickoff(ticker: string): Date | null {
 /** Upcoming NFL game-winner markets on Gemini, soonest kickoff first. */
 export async function upcomingGames(venue: VenueAdapter): Promise<{ m: Market; start: Date }[]> {
   // College games dominate this category, so scan a few pages in parallel to reach the NFL games.
-  const pages = await Promise.all(
-    [0, 100, 200, 300].map((offset) => venue.listMarkets({ category: ["Sports"], sport: ["american_football"], limit: 100, offset }).catch(() => [])),
+  // Cached for 5 minutes (shared by the landing page, the business example and the basic
+  // matcher); whether a game has started is still checked on every call below.
+  const pages = await swr("nfl-listings", 5 * 60_000, () =>
+    Promise.all(
+      [0, 100, 200, 300].map((offset) => venue.listMarkets({ category: ["Sports"], sport: ["american_football"], limit: 100, offset }).catch(() => [])),
+    ),
   );
   return pages
     .flat()
