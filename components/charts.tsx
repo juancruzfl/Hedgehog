@@ -12,6 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { timeTicks } from "@/lib/chart-ticks";
 import { dateTime, pct, usd } from "@/lib/format";
 
 // Colors come from CSS tokens so light/dark are both selected values.
@@ -136,8 +137,11 @@ export interface OddsSeries {
 
 const SERIES = ["var(--series-1)", "var(--series-2)", "var(--series-3)"];
 
+// The collector records every 5 minutes; a longer silence (e.g. exchange maintenance)
+// is drawn as a break in the line rather than a straight bridge across it.
+const GAP_MS = 20 * 60_000;
 /** How the market's odds moved over time, one line per price level (max 3, fixed color order). */
-export function OddsHistoryChart({ series, title }: { series: OddsSeries[]; title: string }) {
+export function OddsHistoryChart({ series, title, fill = false }: { series: OddsSeries[]; title: string; fill?: boolean }) {
   const shown = series.slice(0, 3);
   // Collector snapshots share timestamps across contracts, so rows merge cleanly by ts.
   const rows = new Map<number, Record<string, number>>();
@@ -148,46 +152,67 @@ export function OddsHistoryChart({ series, title }: { series: OddsSeries[]; titl
       rows.set(p.ts, row);
     }
   });
-  const data = [...rows.values()].sort((a, b) => a.ts - b.ts);
+  const sorted = [...rows.values()].sort((a, b) => a.ts - b.ts);
+  // A row of nulls inside each long silence breaks the line there.
+  const data: Record<string, number | null>[] = [];
+  let gaps = 0;
+  sorted.forEach((r, k) => {
+    const prev = sorted[k - 1];
+    if (prev && r.ts - prev.ts > GAP_MS) {
+      gaps++;
+      data.push({ ts: prev.ts + 1, ...Object.fromEntries(shown.map((_, i) => [`s${i}`, null])) });
+    }
+    data.push(r);
+  });
   const last = data.length - 1;
   // Clean y ticks: pick a step that gives at most ~5 ticks.
-  const maxVal = Math.max(0.01, ...data.flatMap((r) => shown.map((_, i) => r[`s${i}`] ?? 0)));
+  const maxVal = Math.max(0.01, ...sorted.flatMap((r) => shown.map((_, i) => r[`s${i}`] ?? 0)));
   const step = [0.02, 0.05, 0.1, 0.2, 0.25].find((st) => Math.ceil((maxVal + 0.01) / st) <= 5) ?? 0.25;
   const top = Math.min(1, Math.ceil((maxVal + 0.01) / step) * step);
   const yTicks = Array.from({ length: Math.round(top / step) + 1 }, (_, i) => +(i * step).toFixed(2));
-  const spanHours = data.length > 1 ? (data[last].ts - data[0].ts) / 3600_000 : 0;
-  const tickFmt = (ts: number) =>
-    new Date(ts).toLocaleString("en-US", spanHours > 36 ? { month: "short", day: "numeric" } : { hour: "numeric", minute: "2-digit" });
+  const t0 = sorted[0]?.ts ?? 0;
+  const t1 = sorted.at(-1)?.ts ?? 0;
+  const { ticks, stepH } = timeTicks(t0, t1);
+  // Hour ticks read "7 PM"; a tick at midnight (or day steps) reads the date instead.
+  const tickFmt = (ts: number) => {
+    const d = new Date(ts);
+    return stepH >= 24 || (d.getHours() === 0 && d.getMinutes() === 0)
+      ? d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+      : d.toLocaleTimeString("en-US", { hour: "numeric" });
+  };
 
   return (
-    <figure>
-      <figcaption className="mb-2 text-sm font-medium">{title}</figcaption>
-      <div className="mb-2 flex flex-wrap gap-4 text-xs text-text-2">
-        {shown.map((s, i) => (
-          <span key={s.key} className="flex items-center gap-1.5">
-            <span className="inline-block h-0.5 w-5 rounded" style={{ background: SERIES[i] }} /> {s.label}
-          </span>
-        ))}
-      </div>
-      <div className="h-56 w-full">
+    <figure className={fill ? "flex h-full min-h-0 flex-col" : undefined}>
+      {title && <figcaption className="mb-2 text-sm font-medium">{title}</figcaption>}
+      {/* One line needs no key: the card's title already says what it is. */}
+      {shown.length > 1 && (
+        <div className="mb-2 flex flex-wrap gap-4 text-xs text-text-2">
+          {shown.map((s, i) => (
+            <span key={s.key} className="flex items-center gap-1.5">
+              <span className="inline-block h-0.5 w-5 rounded" style={{ background: SERIES[i] }} /> {s.label}
+            </span>
+          ))}
+        </div>
+      )}
+      <div className={fill ? "min-h-56 w-full flex-1" : "h-56 w-full"}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 56, bottom: 4, left: 0 }}>
             <CartesianGrid stroke={C.grid} vertical={false} />
-            <XAxis dataKey="ts" type="number" scale="time" domain={["dataMin", "dataMax"]} tick={axisTick} tickFormatter={tickFmt} stroke={C.grid} minTickGap={40} />
+            <XAxis dataKey="ts" type="number" scale="time" domain={[t0, t1]} ticks={ticks} tick={axisTick} tickFormatter={tickFmt} stroke={C.grid} interval="preserveStartEnd" minTickGap={24} />
             <YAxis tick={axisTick} tickFormatter={(v) => pct(v)} stroke={C.grid} width={44} domain={[0, top]} ticks={yTicks} />
             <Tooltip
               cursor={{ stroke: C.text3, strokeWidth: 1 }}
               content={({ active, payload }) => {
-                const row = payload?.[0]?.payload as Record<string, number> | undefined;
-                if (!active || !row) return null;
+                const row = payload?.[0]?.payload as Record<string, number | null> | undefined;
+                if (!active || !row || shown.every((_, i) => row[`s${i}`] == null)) return null;
                 return (
                   <TooltipBox>
-                    <div className="mb-1 text-text-3">{dateTime(row.ts)}</div>
+                    <div className="mb-1 text-text-3">{dateTime(row.ts!)}</div>
                     {shown.map((s, i) =>
-                      row[`s${i}`] === undefined ? null : (
+                      row[`s${i}`] == null ? null : (
                         <div key={s.key} className="flex items-center gap-2">
                           <span className="inline-block h-2 w-2 rounded-full" style={{ background: SERIES[i] }} />
-                          {s.label}: <span className="font-medium">{pct(row[`s${i}`], 1)}</span>
+                          {s.label}: <span className="font-medium">{pct(row[`s${i}`]!, 1)}</span>
                         </div>
                       ),
                     )}
@@ -204,7 +229,7 @@ export function OddsHistoryChart({ series, title }: { series: OddsSeries[]; titl
                 strokeWidth={2}
                 dot={false}
                 activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface)" }}
-                connectNulls
+                connectNulls={false}
                 isAnimationActive={false}
                 label={(raw: unknown) => {
                   const p = raw as { index?: number; x?: number | string; y?: number | string; value?: number | string };
@@ -222,6 +247,7 @@ export function OddsHistoryChart({ series, title }: { series: OddsSeries[]; titl
       </div>
       <p className="mt-1 text-xs text-text-3">
         Market-implied chance from Gemini prediction markets, recorded every 5 minutes by Hedgehog.
+        {gaps > 0 && " Breaks in the line are times with no readings, such as exchange maintenance."}
       </p>
     </figure>
   );
