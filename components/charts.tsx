@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  Area,
+  AreaChart,
   CartesianGrid,
   Line,
   LineChart,
@@ -222,5 +224,49 @@ export function OddsHistoryChart({ series, title }: { series: OddsSeries[]; titl
         Market-implied chance from Gemini prediction markets, recorded every 5 minutes by Hedgehog.
       </p>
     </figure>
+  );
+}
+
+/** Running overall result of the user's hedges (paid back + worth today − put in), with a dashed break-even line. */
+export function ResultChart({ data, tone }: { data: { ts: number; value: number }[]; tone: "good" | "bad" | "flat" }) {
+  const stroke = tone === "good" ? "var(--good)" : tone === "bad" ? "var(--bad)" : C.accent;
+  return (
+    <div className="h-28 w-full min-w-0 overflow-hidden">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={{ top: 6, right: 2, bottom: 2, left: 2 }}>
+          <XAxis hide dataKey="ts" type="number" scale="time" domain={["dataMin", "dataMax"]} />
+          {/* Always include $0 so "break-even" is on screen and small moves don't look like cliffs. */}
+          <YAxis hide domain={[(min: number) => Math.min(0, min) * 1.15, (max: number) => Math.max(0, max) * 1.15 || 1]} />
+          <ReferenceLine y={0} stroke={C.text3} strokeDasharray="3 4" strokeWidth={1} />
+          <Tooltip
+            cursor={{ stroke: C.text3, strokeWidth: 1 }}
+            content={({ active, payload }) => {
+              const p = payload?.[0]?.payload as { ts: number; value: number } | undefined;
+              if (!active || !p) return null;
+              return (
+                <TooltipBox>
+                  <div className="text-text-3">{dateTime(p.ts)}</div>
+                  <div className="font-medium">
+                    {p.value >= 0 ? "+" : "−"}
+                    {usd(Math.abs(p.value))} overall
+                  </div>
+                </TooltipBox>
+              );
+            }}
+          />
+          <Area
+            type="linear"
+            dataKey="value"
+            stroke={stroke}
+            strokeWidth={2}
+            fill={stroke}
+            fillOpacity={0.08}
+            dot={false}
+            activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface)" }}
+            isAnimationActive={false}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
   );
 }

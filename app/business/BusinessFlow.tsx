@@ -264,7 +264,7 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
         <section className="flex min-h-[calc(90dvh-4rem)] flex-col justify-center py-10">
           <h1 className="text-center text-4xl font-bold tracking-tight sm:text-5xl">
             What could hurt your business?{" "}
-            <span className="ml-1 inline-block align-middle">
+            <span className="relative -top-[0.12em] ml-1 inline-block align-middle">
               <HowItWorksTip />
             </span>
           </h1>
