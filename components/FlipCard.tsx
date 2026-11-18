@@ -27,6 +27,9 @@ export function FlipCard({
   backSub?: string;
 }) {
   const [flipped, setFlipped] = useState(false);
+  // The chart on the back is only built once someone flips the card (it's the costly part).
+  const [everFlipped, setEverFlipped] = useState(false);
+  if (flipped && !everFlipped) setEverFlipped(true);
   const flipRef = useRef<HTMLButtonElement>(null);
   const backRef = useRef<HTMLButtonElement>(null);
   const firstRender = useRef(true);
@@ -73,9 +76,7 @@ export function FlipCard({
           >
             <p className="font-semibold">{backTitle}</p>
             {backSub && <p className="text-sm text-text-2">{backSub}</p>}
-            <div className="mt-4 min-h-0 flex-1">
-              <OddsHistoryChart title="" series={series!} />
-            </div>
+            <div className="mt-4 min-h-0 flex-1">{everFlipped && <OddsHistoryChart title="" series={series!} />}</div>
             <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-4">
               <button
                 ref={backRef}
