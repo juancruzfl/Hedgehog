@@ -11,9 +11,11 @@
     "typecheck": "tsc --noEmit",
     "collect": "tsx --env-file-if-exists=.env.local scripts/collect-odds.ts",
     "ai:check": "tsx --env-file-if-exists=.env.local scripts/ai-check.ts",
-    "demo:check": "tsx --env-file-if-exists=.env.local scripts/demo-check.ts"
+    "demo:check": "tsx --env-file-if-exists=.env.local scripts/demo-check.ts",
+    "archive:anchor": "tsx --env-file-if-exists=.env.local scripts/archive-anchor.ts"
   },
   "dependencies": {
+    "@solana/web3.js": "1.98.4",
     "next": "15.5.29",
     "openai": "^5.23.2",
     "react": "19.1.0",
