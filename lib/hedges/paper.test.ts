@@ -53,13 +53,19 @@ describe("paperPortfolio", () => {
     const p = await paperPortfolio(v, [h]);
     expect(p.open).toHaveLength(0);
     expect(p.settled.map((x) => x.payout).sort()).toEqual([0, 1000]);
-    expect(p.outcomes.h1).toEqual({ settled: true, payout: 1000, net: 1000 - 250 });
+    expect(p.outcomes.h1).toMatchObject({ settled: true, payout: 1000, net: 1000 - 250, worthNow: 1000, settlesAt: "2026-11-17T22:00:00Z" });
+    expect(p.outcomes.h1.legs.map((l) => [l.label, l.payout])).toEqual([
+      ["HI65000", 1000],
+      ["HI60000", 0],
+    ]);
   });
 
   it("keeps unresolved legs open, marked to the live bid", async () => {
     const v = venue([contract("HI65000", null, 0.3)]);
     const p = await paperPortfolio(v, [hedge("h2", [{ symbol: "HI65000", qty: 100, price: 0.2 }])]);
     expect(p.open[0].marketValue).toBeCloseTo(30);
-    expect(p.outcomes.h2).toEqual({ settled: false, payout: 0, net: null });
+    expect(p.outcomes.h2).toMatchObject({ settled: false, payout: 0, net: null });
+    expect(p.outcomes.h2.worthNow).toBeCloseTo(30); // 100 contracts at a 30¢ bid
+    expect(p.outcomes.h2.legs[0]).toMatchObject({ quantity: 100, price: 0.2, payout: null });
   });
 });

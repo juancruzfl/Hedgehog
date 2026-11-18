@@ -5,10 +5,26 @@ import { listHedges, type HedgeRecord } from "./store";
 // Paper portfolio: filled paper orders, marked to the live production bid while open,
 // and settled from Gemini's own resolution once the market resolves.
 
+/** One order of a hedge, described for people rather than for the exchange. */
+export interface HedgeLegView {
+  market: string; // e.g. "Indianapolis vs Houston"
+  label: string; // e.g. "Indianapolis"
+  outcome: string; // yes | no
+  quantity: number;
+  price: number; // paid per contract
+  expiry: string | null;
+  payout: number | null; // once resolved
+}
+
 export interface HedgeOutcome {
   settled: boolean; // every leg has resolved
   payout: number; // $ paid by resolved legs so far
   net: number | null; // payout - cost, once fully settled
+  /** What the hedge is worth right now: resolved payouts plus open legs at the live bid. Null if a leg has no bid. */
+  worthNow: number | null;
+  /** When the last leg settles. */
+  settlesAt: string | null;
+  legs: HedgeLegView[];
 }
 
 export interface PaperPortfolio {
@@ -38,7 +54,25 @@ export async function paperPortfolio(venue: VenueAdapter, hedges: HedgeRecord[] 
     const payouts = legs.map((o) => legPayout(contractFor(o.marketId, o.symbol), o.outcome, o.quantity));
     const settled = legs.length > 0 && payouts.every((p) => p !== null);
     const payout = payouts.reduce<number>((s, p) => s + (p ?? 0), 0);
-    outcomes[h.id] = { settled, payout, net: settled ? payout - h.totalCost : null };
+    let worthNow: number | null = 0;
+    const views: HedgeLegView[] = legs.map((o, k) => {
+      const c = contractFor(o.marketId, o.symbol);
+      const m = markets.get(o.marketId);
+      const bid = c ? (o.outcome === "yes" ? c.quote.yesBid : c.quote.noBid) : null;
+      const value = payouts[k] ?? (bid === null ? null : o.quantity * bid);
+      worthNow = worthNow === null || value === null ? null : worthNow + value;
+      return {
+        market: m?.title.replace(/\?$/, "") ?? o.marketId,
+        label: c?.label ?? o.symbol,
+        outcome: o.outcome,
+        quantity: o.quantity,
+        price: o.fillPrice ?? o.limitPrice,
+        expiry: c?.expiry ?? m?.expiry ?? null,
+        payout: payouts[k],
+      };
+    });
+    const settlesAt = views.map((v) => v.expiry).filter((x): x is string => !!x).sort().at(-1) ?? null;
+    outcomes[h.id] = { settled, payout, net: settled ? payout - h.totalCost : null, worthNow, settlesAt, legs: views };
   }
 
   // Positions grouped by contract + side.
