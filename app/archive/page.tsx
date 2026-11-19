@@ -38,6 +38,7 @@ interface Proof {
 }
 
 const n = (x: number) => x.toLocaleString("en-US");
+const PAGE = 12;
 const short = (h: string) => `${h.slice(0, 10)}…${h.slice(-6)}`;
 const hourLabel = (ms: number) =>
   `${new Date(ms).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric" })}–${new Date(ms + 3600_000).toLocaleTimeString("en-US", { hour: "numeric" })}`;
@@ -163,6 +164,8 @@ function VerifyBox({ samples }: { samples: Sample[] }) {
 export default function ArchivePage() {
   const [data, setData] = useState<Archive | null>(null);
   const [failed, setFailed] = useState(false);
+  // Sealed hours: the latest few, more on request.
+  const [shown, setShown] = useState(PAGE);
   useEffect(() => {
     fetch("/api/archive")
       .then((r) => r.json())
@@ -186,20 +189,26 @@ export default function ArchivePage() {
 
       {data && t && !data.error && (
         <>
-          <section className="mt-8 grid grid-cols-2 gap-2 rounded-2xl border border-border bg-surface p-3 sm:grid-cols-4" aria-label="Archive totals">
-            {[
-              ["Readings recorded", n(t.readings), t.since ? `since ${dateTime(t.since)}` : ""],
-              ["Contracts", n(t.contracts), `in ${n(t.markets)} markets`],
-              ["Hours sealed on Solana", n(t.hoursSealed), data.cluster === "devnet" ? "Solana devnet" : "Solana mainnet"],
-              ["Cost per seal", "< $0.001", "one small transaction an hour"],
-            ].map(([label, value, note]) => (
-              <div key={label} className="rounded-xl bg-surface-2 px-3 py-3 sm:px-4">
-                <p className="text-xs text-text-2">{label}</p>
-                <p className="mt-0.5 text-xl font-bold tabular-nums sm:text-2xl">{value}</p>
-                <p className="text-xs text-text-3">{note}</p>
-              </div>
-            ))}
-          </section>
+          {/* The archive at a glance: one line instead of a row of boxes */}
+          <p className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-text-2" aria-label="Archive totals">
+            <span>
+              <b className="font-semibold text-text tabular-nums">{n(t.readings)}</b> readings
+            </span>
+            <span aria-hidden>·</span>
+            <span>
+              <b className="font-semibold text-text tabular-nums">{n(t.markets)}</b> markets
+            </span>
+            <span aria-hidden>·</span>
+            <span>
+              <b className="font-semibold text-text tabular-nums">{n(t.hoursSealed)}</b> hours sealed on {data.cluster === "devnet" ? "Solana devnet" : "Solana"}
+            </span>
+            {t.since && (
+              <>
+                <span aria-hidden>·</span>
+                <span>since {dateTime(t.since)}</span>
+              </>
+            )}
+          </p>
 
           <section className="mt-8 rounded-2xl border border-border bg-surface p-5 sm:p-6" aria-labelledby="verify-h">
             <h2 id="verify-h" className="text-xl font-bold tracking-tight">
@@ -234,7 +243,7 @@ export default function ArchivePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {data.batches.map((b) => (
+                    {data.batches.slice(0, shown).map((b) => (
                       <tr key={b.hourStart}>
                         <td className="whitespace-nowrap px-4 py-2.5">{hourLabel(b.hourStart)}</td>
                         <td className="px-4 py-2.5 text-right">{n(b.count)}</td>
@@ -254,6 +263,16 @@ export default function ArchivePage() {
                     ))}
                   </tbody>
                 </table>
+                {shown < data.batches.length && (
+                  <div className="border-t border-border px-4 py-3 text-center">
+                    <button onClick={() => setShown((x) => x + PAGE)} className="text-sm font-medium text-accent hover:underline">
+                      Load {Math.min(PAGE, data.batches.length - shown)} earlier hours
+                    </button>
+                    <span className="ml-2 text-xs text-text-3">
+                      showing {shown} of {data.batches.length}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </section>

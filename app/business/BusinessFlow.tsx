@@ -1,9 +1,7 @@
 "use client";
 
-import { Sheet } from "@/components/Sheet";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { PinnedStage } from "@/components/PinnedStage";
 import { Stepper } from "@/components/HedgeControls";
 import { Segmented } from "@/components/ui";
 import type { Analysis, StepEvent } from "@/lib/business/analyze";
@@ -11,7 +9,7 @@ import { BUSINESS_EXAMPLES } from "@/lib/business/examples";
 import { shortDate, usd } from "@/lib/format";
 import type { ExposureRange, RiskProfile } from "@/lib/types";
 import { AgentSteps, FocusSteps, HowItWorksTip, initialSteps, type StepState } from "./AgentSteps";
-import { EventAvenueCard, PriceAvenueCard } from "./AvenueCard";
+import { EventOptions, PriceOption } from "./OptionsTable";
 import { EventResult, plainTrigger, PriceResult, unitLabel, type SizeResponse } from "./results";
 import { NoMatch } from "./NoMatch";
 import { suggestRewrites } from "@/lib/business/rewrites";
@@ -119,10 +117,12 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
     setPhase("finishing");
     await new Promise((r) => setTimeout(r, FADE_MS + 500));
     setPhase("results");
+    // A single stand-in price market has nothing to compare against, so open it straight away.
+    if (result.analysis.type === "price") choose(0);
     window.scrollTo({ top: 0 });
   }
 
-  /** Price every option at default sizing, so each card shows its numbers. */
+  /** Price every option at default sizing, so each row shows its price. */
   async function priceOptions(p: RiskProfile, a: Analysis, report: boolean) {
     if (a.type === "none") {
       if (report) setStep({ step: "price", status: "error", detail: "Nothing to price" });
@@ -401,6 +401,83 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
     </div>
   );
 
+  // The setup for the open option (payback or range, outcomes, approve). Rendered inside its row.
+  const panel =
+    chosen !== null && analysis.type !== "none" ? (
+      <div>
+        {analysis.type === "event" ? (
+          <div>
+            <p className="mb-2 text-sm font-semibold">How much should it pay back?</p>
+            <Segmented
+              label="How much should it pay back"
+              value={payback}
+              onChange={(k) => {
+                setPayback(k);
+                if (k === "custom") {
+                  setCustomPay(Math.round(profile.exposureUsd.expected));
+                  setSizeTo("high");
+                  setHedgeRatio(Math.min(1, Math.max(0.1, profile.exposureUsd.expected / profile.exposureUsd.high)));
+                } else {
+                  setSizeTo(k);
+                  setHedgeRatio(1);
+                }
+              }}
+              options={[
+                ...(["low", "expected", "high"] as const).map((k) => ({
+                  value: k,
+                  label: usd(profile.exposureUsd[k], 0),
+                  sub: k === "expected" ? "what you expect" : `${k} estimate`,
+                })),
+                { value: "custom" as const, label: "Custom", sub: "pick an amount" },
+              ]}
+            />
+            {payback === "custom" && (
+              <div className="mt-3 rounded-xl bg-surface-2 p-4">
+                <Stepper
+                  label="Pay me back"
+                  value={customPay}
+                  min={Math.max(100, Math.ceil((profile.exposureUsd.high * 0.1) / 100) * 100)}
+                  max={Math.floor(profile.exposureUsd.high / 100) * 100}
+                  step={100}
+                  prefix="$"
+                  onChange={(v) => {
+                    setCustomPay(v);
+                    setSizeTo("high");
+                    setHedgeRatio(Math.min(1, Math.max(0.1, v / profile.exposureUsd.high)));
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-4 rounded-xl bg-surface p-4 sm:grid-cols-2">
+            <Stepper
+              label={`Start paying after a ${profile.kind === "price_rise" ? "rise" : "drop"} of`}
+              value={Math.round(startMove * 100)}
+              min={0}
+              max={Math.min(15, Math.round(capMove * 100) - 5)}
+              suffix="%"
+              onChange={(v) => setStartMove(v / 100)}
+            />
+            <Stepper
+              label="Keep paying up to a move of"
+              value={Math.round(capMove * 100)}
+              min={Math.max(10, Math.round(startMove * 100) + 5)}
+              max={50}
+              suffix="%"
+              onChange={(v) => setCapMove(v / 100)}
+            />
+          </div>
+        )}
+
+        {sized?.kind === "event" && analysis.type === "event" && (
+          <EventResult sized={sized} profile={profile} loading={sizing} trigger={plainTrigger(analysis.matches[chosen], profile)} />
+        )}
+        {sized?.kind === "price" && <PriceResult sized={sized} loading={sizing} />}
+        {!sized && <p className="mt-6 text-sm text-text-3">{sizing ? "Pricing…" : "Couldn't price this option right now."}</p>}
+      </div>
+    ) : null;
+
   return (
     <div className="hh-fade-in">
       {analysis.type === "none" ? (
@@ -415,46 +492,34 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
           steps={steps}
           followUps={followUps}
         />
-      ) : analysis.type === "event" ? (
-        <PinnedStage
-          header={header}
-          items={analysis.matches.map((m, i) => ({
-            key: m.symbol + m.outcome,
-            label: `option ${i + 1}`,
-            chip: (
-              <>
-                Option {i + 1}
-                <span className={`text-xs font-medium ${m.quality === "exact" ? "text-good" : "text-warn"}`}>
-                  {m.quality === "exact" ? "Exact" : "Partial"}
-                </span>
-              </>
-            ),
-          }))}
-          renderCard={(i) => (
-            <EventAvenueCard
-              m={analysis.matches[i]}
-              i={i}
-              n={analysis.matches.length}
-              sized={priced[i] as Extract<SizeResponse, { kind: "event" }> | null | undefined}
-              profile={profile}
-              onUse={() => choose(i)}
-            />
-          )}
-        />
       ) : (
-        <PinnedStage
-          header={header}
-          items={[{ key: analysis.marketId, label: "option 1", chip: "Option 1" }]}
-          renderCard={() => (
-            <PriceAvenueCard
+        <div className="py-8">
+          {header}
+          <h2 className="mb-3 mt-8 text-sm font-semibold text-text-2">
+            {analysis.type === "event" ? `${analysis.matches.length} way${analysis.matches.length > 1 ? "s" : ""} to hedge it` : "Your option"}
+          </h2>
+          {analysis.type === "event" ? (
+            <EventOptions
+              matches={analysis.matches}
+              priced={priced}
+              profile={profile}
+              open={chosen}
+              onToggle={(i) => (chosen === i ? setChosen(null) : choose(i))}
+              panel={panel}
+            />
+          ) : (
+            <PriceOption
               title={analysis.marketTitle}
               notes={analysis.notes}
               spot={analysis.spot}
               sized={priced[0] as Extract<SizeResponse, { kind: "price" }> | null | undefined}
-              onUse={() => choose(0)}
+              rising={profile.kind !== "price_drop"}
+              open={chosen === 0}
+              onToggle={() => (chosen === 0 ? setChosen(null) : choose(0))}
+              panel={panel}
             />
           )}
-        />
+        </div>
       )}
 
       {/* How it got here, plus anything that would sharpen the answer */}
@@ -484,90 +549,6 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
         </div>
       )}
 
-      {/* Fine-tune and approve the chosen option */}
-      {/* Fine-tuning opens as a popup over the options. */}
-      {chosen !== null && analysis.type !== "none" && (
-        <Sheet
-          onClose={() => setChosen(null)}
-          title={analysis.type === "event" ? "Hedge this risk" : "Hedge this cost"}
-          sub={
-            analysis.type === "event"
-              ? `Pays you if ${plainTrigger(analysis.matches[chosen], profile)}`
-              : `Offsets ${profile.kind === "price_rise" ? "a rise" : "a drop"} in ${analysis.marketTitle.split(" price")[0].replace(/\s*\(.*?\)/, "").toLowerCase()} prices`
-          }
-        >
-          {analysis.type === "event" ? (
-            <div className="mt-5">
-              <p className="mb-2 text-sm font-semibold">How much should it pay back?</p>
-              <Segmented
-                label="How much should it pay back"
-                value={payback}
-                onChange={(k) => {
-                  setPayback(k);
-                  if (k === "custom") {
-                    setCustomPay(Math.round(profile.exposureUsd.expected));
-                    setSizeTo("high");
-                    setHedgeRatio(Math.min(1, Math.max(0.1, profile.exposureUsd.expected / profile.exposureUsd.high)));
-                  } else {
-                    setSizeTo(k);
-                    setHedgeRatio(1);
-                  }
-                }}
-                options={[
-                  ...(["low", "expected", "high"] as const).map((k) => ({
-                    value: k,
-                    label: usd(profile.exposureUsd[k], 0),
-                    sub: k === "expected" ? "what you expect" : `${k} estimate`,
-                  })),
-                  { value: "custom" as const, label: "Custom", sub: "pick an amount" },
-                ]}
-              />
-              {payback === "custom" && (
-                <div className="mt-3 rounded-xl bg-surface-2 p-4">
-                  <Stepper
-                    label="Pay me back"
-                    value={customPay}
-                    min={Math.max(100, Math.ceil((profile.exposureUsd.high * 0.1) / 100) * 100)}
-                    max={Math.floor(profile.exposureUsd.high / 100) * 100}
-                    step={100}
-                    prefix="$"
-                    onChange={(v) => {
-                      setCustomPay(v);
-                      setSizeTo("high");
-                      setHedgeRatio(Math.min(1, Math.max(0.1, v / profile.exposureUsd.high)));
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="mt-5 grid gap-4 rounded-xl bg-surface-2 p-4 sm:grid-cols-2">
-              <Stepper
-                label={`Start paying after a ${profile.kind === "price_rise" ? "rise" : "drop"} of`}
-                value={Math.round(startMove * 100)}
-                min={0}
-                max={Math.min(15, Math.round(capMove * 100) - 5)}
-                suffix="%"
-                onChange={(v) => setStartMove(v / 100)}
-              />
-              <Stepper
-                label="Keep paying up to a move of"
-                value={Math.round(capMove * 100)}
-                min={Math.max(10, Math.round(startMove * 100) + 5)}
-                max={50}
-                suffix="%"
-                onChange={(v) => setCapMove(v / 100)}
-              />
-            </div>
-          )}
-
-          {sized?.kind === "event" && analysis.type === "event" && (
-            <EventResult sized={sized} profile={profile} loading={sizing} trigger={plainTrigger(analysis.matches[chosen], profile)} />
-          )}
-          {sized?.kind === "price" && <PriceResult sized={sized} loading={sizing} />}
-          {!sized && <p className="mt-6 text-sm text-text-3">{sizing ? "Pricing…" : "Couldn't price this option right now."}</p>}
-        </Sheet>
-      )}
     </div>
   );
 }
