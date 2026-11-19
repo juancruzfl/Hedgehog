@@ -1,24 +1,25 @@
 @import "tailwindcss";
 
 /*
- * Hedgehog theme: cool greyish-white page with white cards, neutral greys, bold type
- * and a deep teal accent. Flat colors only (no gradients). Text colors meet WCAG AA
- * (4.5:1) on the page, cards and chips.
+ * Hedgehog theme: white page (like Ramp and Sensible Weather), warm near-black text,
+ * light grey chips and a deep teal accent. Color lives on panels, not the page.
+ * Flat colors only (no gradients). Text colors meet WCAG AA (4.5:1) on white and on chips.
  */
 :root {
   color-scheme: light;
-  --background: #f2f3f5;   /* greyish-white page */
-  --surface: #ffffff;      /* cards sit a step brighter than the page */
-  --surface-2: #eceef1;    /* chips, tracks, inactive tabs */
-  --border: #dfe2e7;
-  --text: #15181d;
-  --text-2: #4f5663;
-  --text-3: #626a78;
+  --background: #ffffff;   /* white page */
+  --surface: #ffffff;      /* cards: white, set apart by a hairline border */
+  --surface-2: #f4f5f7;    /* chips, tracks, inactive tabs */
+  --border: #e5e7eb;
+  --text: #0c0a08;         /* warm near-black */
+  --text-2: #5c5a57;       /* subtext */
+  --text-3: #6b6966;
   --accent: #0e7490;       /* deep teal: primary action, hedged line */
   --accent-ink: #ffffff;   /* text on accent */
   --accent-soft: #e0eef3;
+  --panel: #d8e9ef;        /* colored backdrop behind product widgets (hero) */
   --neutral-series: #9aa1ab;
-  --grid: #e6e8ec;
+  --grid: #eceef1;
   --good: #137a47;
   --good-soft: #e2f2e8;
   --warn: #8a5a00;
@@ -42,6 +43,7 @@
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
+  --color-panel: var(--panel);
   --color-good: var(--good);
   --color-good-soft: var(--good-soft);
   --color-warn: var(--warn);
@@ -75,8 +77,24 @@ input, select, textarea {
 .hh-slide-in { animation: hh-slide-in 450ms ease-out both; }
 .hh-paused .hh-float { animation-play-state: paused; }
 
+/* Solana panel: twinkling sparkles and a light sweep across the newest sealed hour */
+@keyframes hh-twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(45deg); }
+}
+@keyframes hh-sweep {
+  0% { transform: translateX(0); }
+  60%, 100% { transform: translateX(450%); }
+}
+.hh-twinkle { animation: hh-twinkle 2.8s ease-in-out infinite; opacity: 0; }
+.hh-sweep {
+  background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.14) 50%, transparent 100%);
+  animation: hh-sweep 3.2s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .hh-float, .hh-slide-in { animation: none; }
+  .hh-float, .hh-slide-in, .hh-sweep { animation: none; }
+  .hh-twinkle { animation: none; opacity: 0.8; }
 }
 
 /* Legal documents: readable long-form text */
