@@ -6,7 +6,15 @@ import { GeminiClient } from "@/lib/venues/gemini/client";
 import { toMarkets, type GeminiEvent } from "@/lib/venues/gemini/normalize";
 import type { Market } from "@/lib/types";
 
-const categories = () => (process.env.ODDS_CATEGORIES ?? "Crypto,Commodities,Weather").split(",");
+const categories = () => (process.env.ODDS_CATEGORIES ?? "Crypto,Commodities,Weather,Sports").split(",");
+
+/**
+ * Sports has hundreds of child markets per game (spreads, totals, props). Only the game
+ * winner (moneyline, ticker ending "-M") is recorded for every game: it's what promos are
+ * tied to, and it's what the past-promo look-back needs. Other game markets are recorded
+ * once someone looks at them (the watch list).
+ */
+export const keepCollected = (m: Market): boolean => m.category !== "Sports" || /-M$/.test(m.id);
 const client = () => GeminiClient.fromEnv();
 
 async function fetchAll(category: string): Promise<Market[]> {
@@ -16,7 +24,7 @@ async function fetchAll(category: string): Promise<Market[]> {
       "/v1/prediction-markets/events",
       { status: "active", category, limit: 100, offset },
     );
-    out.push(...page.data.flatMap(toMarkets));
+    out.push(...page.data.flatMap(toMarkets).filter(keepCollected));
     const total = page.pagination?.total ?? 0;
     if (page.data.length < 100 || offset + 100 >= total) break;
   }

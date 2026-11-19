@@ -8,7 +8,9 @@ import { Logo } from "@/components/Logo";
 const links = [
   { href: "/crypto", label: "Crypto" },
   { href: "/business", label: "Business" },
-  { href: "/positions", label: "My hedges" },
+  // Shorter labels on phones so the bar never pushes the page wider than the screen.
+  { href: "/lookback", label: "Past promos", short: "Past" },
+  { href: "/positions", label: "My hedges", short: "Mine" },
 ];
 
 export function Nav() {
@@ -29,7 +31,14 @@ export function Nav() {
               aria-current={path.startsWith(l.href) ? "page" : undefined}
               className={`whitespace-nowrap rounded-lg px-1.5 py-1.5 min-[400px]:px-2 sm:px-3 ${path.startsWith(l.href) ? "bg-surface-2 font-medium text-text" : "text-text-2 hover:text-text"}`}
             >
-              {l.label}
+              {"short" in l ? (
+                <>
+                  <span className="sm:hidden">{l.short}</span>
+                  <span className="hidden sm:inline">{l.label}</span>
+                </>
+              ) : (
+                l.label
+              )}
             </Link>
           ))}
           {/* Signed-in state of the user's own Gemini account: where their orders go */}

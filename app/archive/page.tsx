@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { ArchiveReading, ProofStep } from "@/lib/archive/merkle";
-import { verifyReading, type VerifyResult } from "@/lib/archive/verify";
+import { checkReading, hourLabel, ProofSteps, shortHash as short, type Proof } from "@/components/ArchiveCheck";
+import type { ArchiveReading } from "@/lib/archive/merkle";
+import type { VerifyResult } from "@/lib/archive/verify";
 import { dateTime } from "@/lib/format";
 
 interface Batch {
@@ -25,42 +26,11 @@ interface Archive {
   samples: Sample[];
   error?: string;
 }
-interface Proof {
-  reading: ArchiveReading;
-  proof: ProofStep[];
-  serverRoot: string;
-  sealedRoot: string;
-  hourStart: number;
-  count: number;
-  signature: string;
-  cluster: string;
-  txUrl: string;
-}
-
 const n = (x: number) => x.toLocaleString("en-US");
-const short = (h: string) => `${h.slice(0, 10)}…${h.slice(-6)}`;
-const hourLabel = (ms: number) =>
-  `${new Date(ms).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric" })}–${new Date(ms + 3600_000).toLocaleTimeString("en-US", { hour: "numeric" })}`;
 const odds = (r: ArchiveReading) => {
   const mid = r.yesBid !== null && r.yesAsk !== null ? (r.yesBid + r.yesAsk) / 2 : (r.last ?? r.yesAsk ?? r.yesBid);
   return mid === null ? "—" : `${Math.round(mid * 100)}%`;
 };
-
-function Step({ state, children }: { state: "wait" | "ok" | "bad"; children: React.ReactNode }) {
-  return (
-    <li className="flex gap-3">
-      <span
-        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-          state === "ok" ? "bg-good-soft text-good" : state === "bad" ? "bg-bad-soft text-bad" : "bg-surface-2 text-text-3"
-        }`}
-        aria-hidden
-      >
-        {state === "ok" ? "✓" : state === "bad" ? "✕" : "·"}
-      </span>
-      <div className="min-w-0 text-sm">{children}</div>
-    </li>
-  );
-}
 
 /** Pick a reading, fetch its proof from Hedgehog, then check it against Solana from the browser. */
 function VerifyBox({ samples }: { samples: Sample[] }) {
@@ -77,10 +47,9 @@ function VerifyBox({ samples }: { samples: Sample[] }) {
     setProof(null);
     setResult(null);
     try {
-      const p = (await (await fetch(`/api/archive/proof?symbol=${encodeURIComponent(s.symbol)}&ts=${s.ts}`)).json()) as Proof & { error?: string };
-      if (p.error) throw new Error(p.error);
-      setProof(p);
-      setResult(await verifyReading(p.reading, p.proof, p.signature, p.cluster));
+      const r = await checkReading(s.symbol, s.ts);
+      setProof(r.proof);
+      setResult(r.result);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -123,38 +92,7 @@ function VerifyBox({ samples }: { samples: Sample[] }) {
         {!proof && !busy && !error && <p className="mt-2 text-sm text-text-2">Pick any reading. Your browser does the checking, not Hedgehog.</p>}
         {busy && <p className="mt-2 text-sm text-text-2">Checking…</p>}
         {error && <p className="mt-2 rounded-xl bg-bad-soft px-3 py-2 text-sm text-bad">{error}</p>}
-        {proof && result && (
-          <ol className="mt-3 space-y-3">
-            <Step state="ok">
-              Hedgehog sent the reading and {proof.proof.length} linking hashes (one hour holds {n(proof.count)} readings).
-            </Step>
-            <Step state="ok">
-              Your browser rebuilt that hour&apos;s fingerprint from them: <code className="break-all font-mono text-xs">{short(result.computedRoot)}</code>
-            </Step>
-            <Step state={result.onChain ? "ok" : "bad"}>
-              {result.onChain ? (
-                <>
-                  Solana recorded <code className="break-all font-mono text-xs">{short(result.onChain.root)}</code> for {hourLabel(result.onChain.hourStart)}
-                  {result.slotTime && <> on {dateTime(result.slotTime)}</>}.{" "}
-                  <a href={proof.txUrl} target="_blank" rel="noreferrer" className="font-medium text-accent hover:underline">
-                    See the transaction ↗
-                  </a>
-                </>
-              ) : (
-                "Couldn't read the fingerprint from Solana right now. Try again in a moment."
-              )}
-            </Step>
-            <Step state={result.matches ? "ok" : result.onChain ? "bad" : "wait"}>
-              <span className={`font-semibold ${result.matches ? "text-good" : "text-bad"}`}>
-                {result.matches
-                  ? "They match: this reading is exactly what was recorded, and it hasn't been changed since."
-                  : result.onChain
-                    ? "They don't match: this reading differs from what was recorded on Solana."
-                    : "Not checked yet."}
-              </span>
-            </Step>
-          </ol>
-        )}
+        {proof && result && <ProofSteps proof={proof} result={result} />}
       </div>
     </div>
   );

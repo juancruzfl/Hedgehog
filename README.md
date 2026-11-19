@@ -54,7 +54,7 @@ Each person trades from their own Gemini account. **Connect Gemini account** in 
 
 ## Odds archive, sealed on Solana
 
-Gemini's API returns today's odds but no history, so Hedgehog records every crypto, commodity and weather contract (plus any game someone looks at) every 5 minutes. Each finished hour is **sealed on Solana**:
+Gemini's API returns today's odds but no history, so Hedgehog records every crypto, commodity and weather contract, every game's winner market (moneyline), and any other game market someone looks at, every 5 minutes. Each finished hour is **sealed on Solana**:
 
 - All of that hour's readings are hashed into a Merkle tree, and only the 32-byte root goes on-chain, in a Memo transaction from Hedgehog's archive wallet (`hedgehog-odds v1 <hour> n=<readings> root=<hash>`). Users never sign or pay anything.
 - The odds themselves are never published. Gemini's Market Data Agreement allows internal use; redistribution needs a separate agreement, so a public API for the archive comes after that.
@@ -65,6 +65,15 @@ Gemini's API returns today's odds but no history, so Hedgehog records every cryp
 npm run archive:anchor -- --wallet   # show the archive wallet and balance (devnet key is created in data/)
 npm run archive:anchor               # seal every finished hour that isn't on-chain yet
 ```
+
+## Past promos (look-back)
+
+`/lookback` answers "what would a hedge have saved on my last promo?" A business picks a past game or weather day from the archive, what triggered the promo ("Indianapolis wins", "the high is 90°F or above"), what the promo cost, and when they'd have hedged (as early as possible, the day before, or last minute).
+
+- The price is the archived YES ask at that time. Only readings from **before** kickoff (games) or 10 AM ET (weather days) are used, so there's no hindsight.
+- The hedge is sized like the live one: enough $1 contracts to pay the promo cost back. Gemini's own settlement says whether the promo kicked in (`lib/lookback/lookback.ts` is pure and unit-tested; `lib/lookback/data.ts` reads the archive and Gemini).
+- **Check it yourself** verifies the exact price used against the hour's fingerprint on Solana, in the browser.
+- Every result is a URL (`?m=&c=&cost=&at=&promo=`) with its own preview image (`/api/lookback/card`), so a "you'd have saved $X" result can be shared or dropped into an outreach email.
 
 ## How it uses Solana
 
