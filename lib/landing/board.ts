@@ -14,6 +14,15 @@ import { commodityUses, cryptoUses, gameUses, type RiskUse } from "./uses";
 
 export type BoardCategory = "Crypto" | "Commodities" | "Sports";
 
+/** One line on the market chart: a price level (or team) and its chance over time. */
+export interface BoardLine {
+  key: string;
+  label: string; // "Below $67", "Above $96", "Houston"
+  prob: number; // chance now
+  history: { ts: number; p: number }[];
+  featured: boolean; // the level the card's question is about
+}
+
 export interface BoardCard {
   id: string;
   category: BoardCategory;
@@ -34,6 +43,14 @@ export interface BoardCard {
   question: string;
   /** Short label for tabs, e.g. "Oil price". */
   tabLabel: string;
+  /** Up to three nearby levels (or both teams) for the chart, highest first. */
+  lines: BoardLine[];
+  /** When the market closes (games: kickoff). */
+  closes: string;
+  /** Crypto only: the chance of each drop level (−5%, −10%, −20%) by the close. */
+  ladder?: { drop: number; strike: number; chance: number }[];
+  /** Header figure, e.g. { label: "Current price", value: "$74.87" }. */
+  spot: { label: string; value: string } | null;
 }
 
 const SINCE = () => Date.now() - 3 * 24 * 3600_000;
@@ -49,6 +66,22 @@ function history(symbol: string, side: "yes" | "no") {
   }
 }
 
+/** The featured strike and its nearest neighbors above and below, highest strike first. */
+function strikeLines(contracts: Contract[], featured: Contract, side: "yes" | "no", label: (v: number) => string): BoardLine[] {
+  const ladder = contracts
+    .filter((x) => x.strike?.type === "above" && x.strike.value !== null && yesMid(x.quote) !== null)
+    .sort((a, b) => a.strike!.value! - b.strike!.value!);
+  const i = ladder.findIndex((x) => x.symbol === featured.symbol);
+  if (i < 0) return [];
+  return [ladder[i + 1], ladder[i], ladder[i - 1]]
+    .filter((x): x is Contract => !!x)
+    .map((x) => {
+      const mid = yesMid(x.quote)!;
+      const prob = side === "yes" ? mid : 1 - mid;
+      return { key: x.symbol, label: label(x.strike!.value!), prob, history: [...history(x.symbol, side), { ts: Date.now(), p: prob }], featured: x === featured };
+    });
+}
+
 const shortDay = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 async function cryptoCards(venue: VenueAdapter): Promise<BoardCard[]> {
@@ -61,9 +94,10 @@ async function cryptoCards(venue: VenueAdapter): Promise<BoardCard[]> {
   const out: BoardCard[] = [];
   for (const [i, asset] of assets.entries()) {
     const markets = lists[i];
-    const f = buildForecast({ asset, spot: mids[asset], quantity: 1, markets, drops: [0.1] });
+    const f = buildForecast({ asset, spot: mids[asset], quantity: 1, markets, drops: [0.05, 0.1, 0.2] });
     const h = f.horizons[Math.min(1, f.horizons.length - 1)];
-    const p = h?.points[0];
+    // The card's question is about the level nearest a 10% drop; the ladder shows all three.
+    const p = h ? [...h.points].sort((a, b) => Math.abs(a.drop - 0.1) - Math.abs(b.drop - 0.1))[0] : undefined;
     if (!h || !p) continue;
     const c = markets.flatMap((m) => m.contracts).find((x) => x.symbol === p.symbol);
     out.push({
@@ -80,6 +114,10 @@ async function cryptoCards(venue: VenueAdapter): Promise<BoardCard[]> {
       marketName: `${h.title}: ${c?.label ?? usd(p.strike)}`,
       question: `Will ${asset} drop below ${usd(p.strike)} by ${shortDay(h.expiry)}?`,
       tabLabel: `${asset} price`,
+      lines: c ? strikeLines(markets.find((m) => m.contracts.includes(c))?.contracts ?? [], c, "no", (v) => `Below ${usd(v)}`) : [],
+      closes: h.expiry,
+      ladder: h.points.map((x) => ({ drop: x.drop, strike: x.strike, chance: x.probBelow })),
+      spot: { label: "Current price", value: usd(f.spot, 2) },
     });
   }
   return out;
@@ -124,6 +162,9 @@ async function commodityCards(venue: VenueAdapter): Promise<BoardCard[]> {
       marketName: `${pick.market.title.replace(/\?$/, "")}: ${c.label}`,
       question: `Will ${cm.name.toLowerCase()} rise above ${usd(c.strike!.value!)} by ${shortDay(pick.market.expiry)}?`,
       tabLabel: `${cm.name} price`,
+      lines: strikeLines(pick.market.contracts, c, "yes", (v) => `Above ${usd(v)}`),
+      closes: pick.market.expiry,
+      spot: { label: "Market expects", value: usd(median, median >= 20 ? 0 : 2) },
     });
   }
   return out;
@@ -181,6 +222,12 @@ async function sportsCards(venue: VenueAdapter): Promise<BoardCard[]> {
         marketName: `${m.title}: ${dog.label} wins`,
         question: `Will ${dog.label} beat ${fav.label}?`,
         tabLabel: `${dog.label} game`,
+        lines: [fav, dog].map((x) => {
+          const p = yesMid(x.quote)!;
+          return { key: x.symbol, label: x.label, prob: p, history: [...history(x.symbol, "yes"), { ts: Date.now(), p }], featured: x === dog };
+        }),
+        closes: start.toISOString(),
+        spot: null,
       },
     ];
   });

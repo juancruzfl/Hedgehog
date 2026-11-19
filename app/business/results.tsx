@@ -5,7 +5,7 @@
 
 import { ApprovePanel } from "@/components/ApprovePanel";
 import { PayoffChart, type CurvePoint } from "@/components/charts";
-import { Stat, StepHeading } from "@/components/ui";
+import { WhatIf } from "@/components/HedgeControls";
 import type { EventMatch } from "@/lib/business/analyze";
 import type { EventHedgeResult } from "@/lib/engine/sizer";
 import { pct, qty, shortDate, usd } from "@/lib/format";
@@ -36,7 +36,32 @@ export const unitLabel = (asset: string) => UNITS[asset.toUpperCase()] ?? asset;
 /** "The Colts beat Houston." -> "the Colts beat Houston" (keeps proper nouns). */
 export const lowerFirst = (s: string) => s.replace(/\.$/, "").replace(/^(The|A|An|Our|My|We|It|If)\b/, (w) => w.toLowerCase());
 
-export function EventResult({ sized, profile, loading }: { sized: Extract<SizeResponse, { kind: "event" }>; profile: RiskProfile; loading: boolean }) {
+/**
+ * What makes this option pay, in plain words. Exact matches reuse the user's own wording
+ * ("the Colts win"); partial ones are described from the contract itself.
+ */
+export function plainTrigger(m: EventMatch, profile: RiskProfile): string {
+  if (m.quality === "exact") return lowerFirst(profile.condition);
+  const c = m.contract;
+  const yes = m.outcome === "yes";
+  if (c.category === "Weather") return `the high ${yes ? "is" : "isn't"} ${c.label}`;
+  if (c.category === "Sports" && /-M$/.test(c.marketId)) return `${c.label} ${yes ? "wins" : "doesn't win"}`;
+  // Gemini's contract labels read as statements ("Indianapolis scores more than 20.5 points").
+  return yes ? c.label : `this doesn't happen: “${c.label}”`;
+}
+
+export function EventResult({
+  sized,
+  profile,
+  loading,
+  trigger,
+}: {
+  sized: Extract<SizeResponse, { kind: "event" }>;
+  profile: RiskProfile;
+  loading: boolean;
+  /** Plain words for what makes it pay, e.g. "the Colts win". */
+  trigger: string;
+}) {
   const p = sized.proposal;
   const leg = p.legs[0];
   if (!leg) {
@@ -44,52 +69,45 @@ export function EventResult({ sized, profile, loading }: { sized: Extract<SizeRe
   }
   const s = p.scenarios.find((x) => x.exposure === "expected")!;
   const exposure = profile.exposureUsd.expected;
+  const money = (n: number) => (n < -0.5 ? `−${usd(-n, 0)}` : usd(Math.max(0, n), 0));
+  const Outcome = ({ title, without, withHedge }: { title: string; without: number; withHedge: number }) => (
+    <div className="rounded-xl border border-border p-4">
+      <p className="text-sm font-medium">{title}</p>
+      <div className="mt-3 flex items-baseline justify-between text-sm tabular-nums">
+        <span className="text-text-2">Without a hedge</span>
+        <span className={without < -0.5 ? "text-bad" : ""}>{money(without)}</span>
+      </div>
+      <div className="mt-1.5 flex items-baseline justify-between rounded-lg bg-accent-soft px-2 py-1.5 tabular-nums">
+        <span className="text-sm font-medium">With the hedge</span>
+        <span className={`text-lg font-semibold ${withHedge < -0.5 ? "text-bad" : withHedge > 0.5 ? "text-good" : ""}`}>{money(withHedge)}</span>
+      </div>
+    </div>
+  );
   return (
     <div className={`mt-6 border-t border-border pt-6 ${loading ? "opacity-60 transition-opacity" : ""}`}>
-      <StepHeading title="Your numbers" sub={`If ${lowerFirst(profile.condition)}, the market pays you. If not, you're out what you paid.`} />
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        <Stat label="You pay now" value={usd(p.totalCost)} note={`market prices it at ${pct(leg.limitPrice)}`} />
-        <Stat label="If it happens, you get" value={usd(p.maxPayout)} note="paid by Gemini" />
-        {Math.abs(s.ifTriggered - s.ifNotTriggered) < 1 ? (
-          <Stat label="Your cost either way" value={usd(Math.abs(s.ifNotTriggered))} note={`instead of $0 or ${usd(exposure, 0)}`} />
-        ) : (
-          <Stat label="If it happens, you're out" value={usd(Math.abs(s.ifTriggered))} note={`instead of ${usd(exposure, 0)}`} />
-        )}
-      </div>
-
-      <table className="mt-5 w-full text-sm tabular-nums">
-        <caption className="sr-only">Your net cost in each outcome</caption>
-        <thead className="text-left text-xs text-text-3">
-          <tr>
-            <th className="pb-2 font-normal" />
-            <th className="pb-2 text-right font-normal">If it happens</th>
-            <th className="pb-2 text-right font-normal">If it doesn&apos;t</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          <tr>
-            <td className="py-2 text-text-2">Without Hedgehog</td>
-            <td className="py-2 text-right">{usd(-exposure, 0)}</td>
-            <td className="py-2 text-right">{usd(0, 0)}</td>
-          </tr>
-          <tr>
-            <td className="py-2 font-medium">With Hedgehog</td>
-            <td className="py-2 text-right font-medium">{usd(s.ifTriggered, 0)}</td>
-            <td className="py-2 text-right font-medium">{usd(s.ifNotTriggered, 0)}</td>
-          </tr>
-        </tbody>
-      </table>
-      <p className="mt-2 text-xs text-text-3">
-        If the real cost lands at the low or high estimate, your net is{" "}
-        {p.scenarios.filter((x) => x.exposure !== "expected").map((x) => usd(x.ifTriggered, 0)).join(" or ")} when it happens. Costs exclude Gemini fees.
+      <p className="text-xl leading-snug sm:text-2xl">
+        <b className="font-semibold">Pay {usd(p.totalCost)} now.</b> If {trigger}, you get back <b className="font-semibold text-good">{usd(p.maxPayout)}</b>.
       </p>
+      <p className="mt-1 text-sm text-text-3">Gemini&apos;s market gives it about a {pct(leg.limitPrice)} chance, which is why it costs what it does.</p>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <Outcome title={`If ${trigger}`} without={-exposure} withHedge={s.ifTriggered} />
+        <Outcome title="If it doesn't" without={0} withHedge={s.ifNotTriggered} />
+      </div>
+      <p className="mt-2 text-xs text-text-3">Based on your expected cost of {usd(exposure, 0)}. Gemini&apos;s trading fees aren&apos;t included.</p>
 
       <details className="mt-4 rounded-xl border border-border px-4 py-3 text-sm">
-        <summary className="cursor-pointer font-medium">Exact order on Gemini</summary>
+        <summary className="cursor-pointer font-medium">Details: the exact order and the market&apos;s rules</summary>
         <p className="mt-2 tabular-nums">
-          Buy {qty(leg.quantity)} {leg.outcome.toUpperCase()} contracts on “{leg.contract.marketTitle}: {leg.contract.label}” at up to {usd(leg.limitPrice)} each. Each pays $1 if it resolves {leg.outcome.toUpperCase()}.
+          Buy {qty(leg.quantity)} {leg.outcome.toUpperCase()} contracts on &ldquo;{leg.contract.marketTitle}: {leg.contract.label}&rdquo; at up to {usd(leg.limitPrice)} each.
+          Each pays $1 if it resolves {leg.outcome.toUpperCase()}.
         </p>
-        {leg.contract.rulesText && <p className="mt-2 text-xs text-text-3">Rules: {leg.contract.rulesText.slice(0, 400)}{leg.contract.rulesText.length > 400 ? "…" : ""}</p>}
+        {leg.contract.rulesText && (
+          <p className="mt-2 text-xs text-text-3">
+            Rules: {leg.contract.rulesText.slice(0, 400)}
+            {leg.contract.rulesText.length > 400 ? "…" : ""}
+          </p>
+        )}
       </details>
 
       <ApprovePanel
@@ -104,6 +122,9 @@ export function EventResult({ sized, profile, loading }: { sized: Extract<SizeRe
   );
 }
 
+/** "a, b or c" */
+const listOf = (xs: string[]) => (xs.length < 2 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} or ${xs.at(-1)}`);
+
 export function PriceResult({ sized, loading }: { sized: Extract<SizeResponse, { kind: "price" }>; loading: boolean }) {
   const p = sized.proposal;
   const pos = sized.profile.position!;
@@ -111,36 +132,74 @@ export function PriceResult({ sized, loading }: { sized: Extract<SizeResponse, {
   if (!p.legs.length) {
     return <p className="mt-5 rounded-lg bg-warn-bg p-3 text-sm">Gemini doesn&apos;t list prices in that range for this date. Try a different range.</p>;
   }
-  const first = p.legs[0].contract.strike!.value!;
+  const strikes = p.legs.map((l) => l.contract.strike!.value!);
+  const first = rising ? Math.min(...strikes) : Math.max(...strikes);
+  const last = rising ? Math.max(...strikes) : Math.min(...strikes);
+  const name = sized.market.title.split(" price")[0].replace(/\s*\(.*?\)/, "");
+  const fmt = (v: number) => usd(v, v >= 20 ? 0 : 2);
+  const date = shortDate(sized.market.expiry);
+  const single = first === last;
+  const gap = Math.abs(first / sized.spot - 1);
+  const uncovered = [
+    ...(gap >= 0.01 ? [`the first ${pct(gap)} of a ${rising ? "rise" : "drop"}`] : []),
+    ...(single ? [] : [`anything ${rising ? "above" : "below"} ${fmt(last)}`]),
+    "Gemini's trading fees",
+  ];
+  const units = pos.quantity >= 10 ? Math.round(pos.quantity).toLocaleString("en-US") : qty(pos.quantity);
   return (
     <div className={`mt-6 border-t border-border pt-6 ${loading ? "opacity-60 transition-opacity" : ""}`}>
-      <StepHeading title="Your numbers" sub={`Settles ${shortDate(sized.market.expiry)}. The payout grows the further the price ${rising ? "rises" : "falls"}.`} />
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        <Stat label="You pay now" value={usd(p.totalCost)} />
-        <Stat label={`Starts paying ${rising ? "above" : "below"}`} value={usd(first, first >= 20 ? 0 : 2)} note={`${pos.asset} price`} />
-        <Stat label="Most you get back" value={usd(p.maxPayout)} />
-      </div>
-      <p className="mt-3 text-sm text-text-2 tabular-nums">
-        Sized for about {qty(pos.quantity)} {unitLabel(pos.asset)} of {pos.asset}. Every $1 {rising ? "rise" : "drop"} costs you about {usd(pos.quantity, 0)}.
+      <p className="text-xl leading-snug sm:text-2xl">
+        <b className="font-semibold">Pay {usd(p.totalCost)} now.</b> If {name.toLowerCase()} {rising ? "rises above" : "falls below"}{" "}
+        <b className="font-semibold">{fmt(first)}</b> by <b className="font-semibold">{date}</b>, you get back{single ? "" : " up to"}{" "}
+        <b className="font-semibold text-good">{usd(p.maxPayout)}</b>.
       </p>
-      <div className="mt-5">
-        <PayoffChart
-          data={sized.curve}
-          spot={sized.spot}
-          asset={pos.asset}
-          caption={`Your ${rising ? "extra cost" : "gain or loss"} at settlement compared with today's price, including what the hedge costs.`}
-        />
-      </div>
+      <p className="mt-1 text-sm text-text-3 tabular-nums">
+        Sized for about {units} {unitLabel(pos.asset)}: every $1 {rising ? "rise" : "drop"} costs you about {usd(pos.quantity, 0)}.
+      </p>
+
+      <WhatIf
+        curve={sized.curve}
+        spot={sized.spot}
+        asset={name.toLowerCase()}
+        payFrom={first}
+        // One level pays a fixed amount from there on, so the band runs to the end of the track.
+        payTo={single ? (rising ? sized.curve.at(-1)!.price : sized.curve[0].price) : last}
+        date={date}
+        rising={rising}
+      />
+
+      <p className="mt-3 text-sm text-text-2">
+        {single ? (
+          <>
+            Pays a fixed {usd(p.maxPayout)} if {name.toLowerCase()} ends {rising ? "above" : "below"} {fmt(first)}; it doesn&apos;t grow past that.
+          </>
+        ) : (
+          <>
+            Pays for {rising ? "rises" : "drops"} between {fmt(first)} and {fmt(last)}.
+          </>
+        )}{" "}
+        It won&apos;t cover {listOf(uncovered)}. It tracks the market price, not your exact bill.
+      </p>
+
       <details className="mt-4 rounded-xl border border-border px-4 py-3 text-sm">
-        <summary className="cursor-pointer font-medium">Exact orders on Gemini ({p.legs.length})</summary>
-        <ul className="mt-2 space-y-1 tabular-nums">
+        <summary className="cursor-pointer font-medium">For traders: payoff chart and exact orders</summary>
+        <div className="mt-3">
+          <PayoffChart
+            data={sized.curve}
+            spot={sized.spot}
+            asset={pos.asset}
+            caption={`Your ${rising ? "extra cost" : "gain or loss"} at settlement compared with today's price, including what the hedge costs.`}
+          />
+        </div>
+        <ul className="mt-3 space-y-1 tabular-nums">
           {p.legs.map((l) => (
             <li key={l.contract.symbol}>
-              Buy {qty(l.quantity)} {l.outcome.toUpperCase()} on “{l.contract.label}” at {usd(l.limitPrice)} = {usd(l.cost)}
+              Buy {qty(l.quantity)} {l.outcome.toUpperCase()} on &ldquo;{l.contract.label}&rdquo; at {usd(l.limitPrice)} = {usd(l.cost)}
             </li>
           ))}
         </ul>
       </details>
+
       <ApprovePanel
         legs={p.legs.map((l) => ({ marketId: l.contract.marketId, symbol: l.contract.symbol, outcome: l.outcome, quantity: l.quantity, limitPrice: l.limitPrice }))}
         totalCost={p.totalCost}

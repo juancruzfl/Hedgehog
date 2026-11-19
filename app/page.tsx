@@ -1,10 +1,15 @@
 import { swr } from "@/lib/cache";
-import Link from "next/link";
 import { GeminiLogo } from "@/components/GeminiLogo";
 import { usd } from "@/lib/format";
 import { buildBoard, type BoardCard } from "@/lib/landing/board";
 import { getVenue } from "@/lib/venues";
 import { MarketCarousel } from "./MarketCarousel";
+import { RiskTiles, type CoinRow } from "./RiskTiles";
+import { HowItWorks } from "./HowItWorks";
+import { SolanaPanel, type SealedHour } from "./SolanaPanel";
+import { Honest } from "./Honest";
+import { Faq } from "./Faq";
+import { HOUR, listBatches } from "@/lib/archive/store";
 
 export const revalidate = 60;
 
@@ -35,59 +40,55 @@ function steps(cards: BoardCard[]) {
   ];
 }
 
-const paths = [
-  {
-    href: "/crypto",
-    eyebrow: "For crypto holders",
-    title: "Know your coins' downside",
-    points: ["Paste a wallet or type what you hold", "See the daily odds of a 5%, 10% or 20% drop", "Cushion a fall in a few taps"],
-    example: "“I hold 20 SOL and 0.5 BTC.”",
-    cta: "Check my crypto",
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
-        <circle cx="12" cy="12" r="8.5" />
-        <path d="M9.5 9h4a1.75 1.75 0 0 1 0 3.5h-4m0 0h4.5a1.75 1.75 0 0 1 0 3.5H9.5M9.5 9v7M11 7.5V9m0 7v1.5" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    href: "/business",
-    eyebrow: "For small businesses",
-    title: "Turn a risky week into a known cost",
-    points: ["Describe a promo, fuel bill or weather worry", "We find the matching market and check the fine print", "See your cost either way before you commit"],
-    example: "“Half-price wings if the home team wins.”",
-    cta: "Reduce a business risk",
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden>
-        <path d="M3.5 9.5 5 4.5h14l1.5 5" />
-        <path d="M3.5 9.5h17" />
-        <path d="M5 12.5v7h14v-7M10 19.5v-4h4v4" />
-      </svg>
-    ),
-  },
-];
+const COIN_NAMES: Record<string, string> = { BTC: "Bitcoin", ETH: "Ethereum", SOL: "Solana" };
 
-const honest = [
-  { yes: true, text: "Finds the closest live market and tells you how close it really is" },
-  { yes: true, text: "Shows what you pay, what you get back and what isn't covered" },
-  { yes: true, text: "Says so plainly when no market fits your risk" },
-  { yes: false, text: "Never moves your crypto or asks for a seed phrase" },
-  { yes: false, text: "Never places an order without your approval" },
-];
+/** The crypto tile: each coin's price now and its −5/−10/−20% ladder, from the live board. */
+function coinRows(cards: BoardCard[]): CoinRow[] {
+  return cards
+    .filter((c) => c.category === "Crypto" && c.ladder?.length)
+    .map((c) => ({
+      asset: c.badge,
+      name: COIN_NAMES[c.badge] ?? c.badge,
+      spot: c.spot?.value ?? "",
+      by: new Date(c.closes).toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" }),
+      ladder: c.ladder!,
+    }));
+}
+
+/** How it works, last step: the latest hours sealed on Solana, shown as receipts. */
+function sealedHours(): SealedHour[] {
+  try {
+    return listBatches(10)
+      .filter((b) => b.signature)
+      .slice(0, 3)
+      .map((b) => {
+        const f = (ms: number, o: Intl.DateTimeFormatOptions) => new Date(ms).toLocaleString("en-US", { timeZone: "America/New_York", ...o });
+        return {
+          label: `${f(b.hourStart, { month: "short", day: "numeric", hour: "numeric" })}–${f(b.hourStart + HOUR, { hour: "numeric" })} ET`,
+          readings: b.count,
+          root: `${b.root.slice(0, 6)}…${b.root.slice(-4)}`,
+        };
+      });
+  } catch {
+    return [];
+  }
+}
 
 export default async function Home() {
   // Served from a server cache that refreshes in the background, so the page never waits on Gemini once warm.
   const cards = await swr("landing-board", 60_000, () => buildBoard(getVenue())).catch(() => []);
 
   return (
-    <main className="mx-auto max-w-6xl px-4 pb-16">
-      {/* Hero: one market, many risks */}
-      <section className="pt-8 text-center sm:pt-10">
+    <main>
+      <div className="mx-auto max-w-6xl px-4">
+      {/* Hero: one market, many risks. Fills the window below the nav (57px). */}
+      <section className="flex flex-col justify-center pb-6 pt-8 md:min-h-[calc(100svh-57px)] md:pt-4">
+        <div className="text-center">
         <p className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-text-2">
           {/* The one place the landing page names the market venue */}
           Powered by <GeminiLogo className="h-3.5 w-auto text-text" /> prediction markets
         </p>
-        <h1 className="mx-auto mt-5 max-w-4xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
+        <h1 className="mx-auto mt-5 max-w-4xl text-4xl font-medium leading-[1.05] tracking-[-0.025em] sm:text-6xl">
           Are the odds
           <br />
           in your favor?
@@ -95,101 +96,44 @@ export default async function Home() {
         <p className="mx-auto mt-3 max-w-2xl text-lg text-text-2">
           See how likely the things that could cost you are, and cushion the hit before it happens. Pick any risk to see the numbers.
         </p>
+        </div>
+        <div className="mt-4">
+          <MarketCarousel cards={cards} />
+        </div>
       </section>
 
-      <div className="mt-4">
-        <MarketCarousel cards={cards} />
-      </div>
-
-      {/* Where to start */}
-      <section className="mt-20" aria-labelledby="start-title">
+      {/* Where to start: three tiles, Ramp-style */}
+      <section className="flex flex-col justify-center py-16 md:min-h-svh" aria-labelledby="start-title">
         <div className="text-center">
-          <h2 id="start-title" className="text-3xl font-bold tracking-tight sm:text-4xl">
+          <h2 id="start-title" className="text-3xl font-medium tracking-[-0.02em] sm:text-[44px] sm:leading-tight">
             What could hurt you?
           </h2>
           <p className="mt-2 text-text-2">Pick where to start. It takes about a minute, and nothing happens without your OK.</p>
         </div>
-        <div className="mt-8 grid gap-4 md:grid-cols-2">
-          {paths.map((p) => (
-            <article key={p.href} className="flex flex-col rounded-2xl border border-border bg-surface p-6">
-              <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-soft text-accent">{p.icon}</span>
-                <p className="text-sm font-semibold text-text-2">{p.eyebrow}</p>
-              </div>
-              <h3 className="mt-4 text-2xl font-bold leading-tight">{p.title}</h3>
-              <ul className="mt-4 space-y-2.5">
-                {p.points.map((pt) => (
-                  <li key={pt} className="flex items-start gap-2.5 text-[15px]">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-good-soft text-xs font-bold text-good" aria-hidden>
-                      ✓
-                    </span>
-                    {pt}
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-5 rounded-xl bg-surface-2 px-4 py-3 text-sm text-text-2">
-                <span className="text-text-3">Example: </span>
-                {p.example}
-              </p>
-              <Link
-                href={p.href}
-                className="mt-5 rounded-xl bg-accent py-3 text-center font-semibold text-accent-ink transition hover:brightness-110 md:mt-auto"
-              >
-                {p.cta} →
-              </Link>
-            </article>
-          ))}
+        <div className="mt-10">
+          <RiskTiles coins={coinRows(cards)} />
         </div>
       </section>
 
       {/* How it works, with a real example */}
-      <section className="mt-20" aria-labelledby="how-title">
-        <h2 id="how-title" className="text-center text-3xl font-bold tracking-tight sm:text-4xl">
+      <section className="flex flex-col justify-center py-16 md:min-h-svh" aria-labelledby="how-title">
+        <h2 id="how-title" className="text-center text-3xl font-medium tracking-[-0.02em] sm:text-[44px] sm:leading-tight">
           How it works
         </h2>
         <p className="mt-2 text-center text-text-2">One real example, start to finish.</p>
-        <ol className="relative mt-10 grid gap-6 md:grid-cols-3">
-          <span className="absolute left-[16.6%] right-[16.6%] top-5 hidden h-px bg-border md:block" aria-hidden />
-          {steps(cards).map((s, k) => (
-            <li key={s.title} className="relative flex flex-col items-center text-center">
-              <span className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full bg-accent text-sm font-bold text-accent-ink">
-                {k + 1}
-              </span>
-              <h3 className="mt-4 text-lg font-bold">{s.title}</h3>
-              <p className="mt-1 max-w-xs text-sm text-text-2">{s.body}</p>
-              <p className="mt-4 w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm font-medium tabular-nums">{s.example}</p>
-            </li>
-          ))}
-        </ol>
+        <HowItWorks steps={steps(cards)} />
+
+        {/* Every price is checkable: the Solana archive, as the last part of how it works */}
+        <SolanaPanel hours={sealedHours()} />
       </section>
 
-      {/* Honest by design */}
-      <section className="mt-20 grid items-start gap-8 rounded-2xl border border-border bg-surface p-6 sm:p-8 lg:grid-cols-5" aria-labelledby="honest-title">
-        <div className="lg:col-span-2">
-          <h2 id="honest-title" className="text-2xl font-bold tracking-tight sm:text-3xl">
-            Honest by design
-          </h2>
-          <p className="mt-2 text-text-2">
-            A hedge softens a loss. It doesn&apos;t erase it, and it costs money up front. Hedgehog shows you all of that before you decide.
-          </p>
-        </div>
-        <ul className="space-y-3 lg:col-span-3">
-          {honest.map((h) => (
-            <li key={h.text} className="flex items-start gap-3 text-[15px]">
-              <span
-                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                  h.yes ? "bg-good-soft text-good" : "bg-bad-soft text-bad"
-                }`}
-              >
-                <span className="sr-only">{h.yes ? "Does: " : "Never: "}</span>
-                <span aria-hidden>{h.yes ? "✓" : "✕"}</span>
-              </span>
-              {h.text}
-            </li>
-          ))}
-        </ul>
-      </section>
+      </div>
 
+      {/* Honest by design: full-width band */}
+      <Honest />
+
+      {/* Questions people new to all this tend to have */}
+      <Faq />
     </main>
   );
 }
