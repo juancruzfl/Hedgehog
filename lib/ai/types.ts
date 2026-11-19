@@ -11,11 +11,14 @@ export interface MarketMatch {
   ruleMismatches: string[];
 }
 
-export interface ParsedRisk {
-  profile: RiskProfile;
-  /** Questions to ask when the description is missing something important. */
-  followUps: string[];
-}
+export type ParsedRisk =
+  | {
+      isRisk: true;
+      profile: RiskProfile;
+      /** Questions to ask when the description is missing something important. */
+      followUps: string[];
+    }
+  | { isRisk: false; profile: null; followUps: [] };
 
 export interface SearchPlan {
   categories: string[];

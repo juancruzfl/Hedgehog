@@ -27,5 +27,6 @@ export function aiErrorMessage(e: unknown): string {
   if (/429|rate.?limit/i.test(msg)) return "The AI provider is rate limiting requests. Try again in a moment.";
   if (/401|invalid api key|incorrect api key/i.test(msg)) return "The AI provider key is invalid.";
   if (/AI_MODEL|AI_API_KEY/.test(msg)) return msg;
+  if (/daily AI limit/.test(msg)) return "Today's AI budget is used up.";
   return `The AI step failed: ${msg}`;
 }
