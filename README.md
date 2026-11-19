@@ -117,6 +117,7 @@ npm run dev                    # http://localhost:3000
 | `HEDGE_EXECUTION` | `paper` (default) or `live` |
 | `MAX_HEDGE_USD` | Per-hedge spend cap enforced server-side (default 5000) |
 | `AI_API_KEY`, `AI_BASE_URL`, `AI_MODEL` | OpenRouter by default (`https://openrouter.ai/api/v1`); any OpenAI-compatible provider works. `npm run ai:check` verifies the key and model |
+| `AI_LIMIT_PER_HOUR`, `AI_DAILY_LIMIT` | Guardrails for the business AI. Defaults: 20 analyses per visitor per hour, 300 AI analyses a day in total, then the free basic matcher. Off-topic text (math, trivia, coding) is turned away before the AI or by its first call, and repeated identical requests are cached for 15 minutes |
 
 ```bash
 npm test             # 48 unit tests: sizer, forecast, normalizer, AI guardrails, fallback matcher, execution, settlement

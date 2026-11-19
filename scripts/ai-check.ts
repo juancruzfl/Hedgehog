@@ -49,6 +49,7 @@ async function main() {
     "I own a sports bar. Half-price wings all night if the home team wins on Sunday. We usually sell about 500 orders and the discount is $6 each.",
     new Date(),
   );
+  if (!parsed.isRisk) throw new Error("The AI marked the wings promo as not a risk. Check the isRisk prompt.");
   console.log(`\n✓ parseRisk in ${Date.now() - t0}ms: "${parsed.profile.condition}", cost if it happens ~$${parsed.profile.exposureUsd.expected}`);
   console.log("✓ searchPlan:", JSON.stringify(await ai.searchPlan(parsed.profile)));
 }

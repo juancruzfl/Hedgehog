@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { aiErrorMessage, aiOff, getAI } from "@/lib/ai";
+import { OFF_TOPIC_MESSAGE, screenInput, takeDailyAI, takeVisit, visitorId } from "@/lib/ai/guard";
 import { analyzeRisk, type StepEvent } from "@/lib/business/analyze";
 import { fallbackAnalyze } from "@/lib/business/fallback";
 import { shortDate, usd } from "@/lib/format";
@@ -48,13 +49,30 @@ export async function POST(req: NextRequest) {
         return controller.close();
       }
       const text = parsed.data.text;
+      const rejected = screenInput(text);
+      if (rejected) {
+        send({ type: "error", error: rejected });
+        return controller.close();
+      }
+      const visit = takeVisit(visitorId(req.headers));
+      if (!visit.ok) {
+        send({ type: "error", error: `You've run a lot of analyses in the last hour. Try again in ${visit.retryMin} minute${visit.retryMin === 1 ? "" : "s"}.` });
+        return controller.close();
+      }
       const venue = getVenue();
 
       let aiError: string;
       try {
+        if (!aiOff() && !takeDailyAI()) throw new Error("daily AI limit reached");
         const ai = getAI();
         step({ step: "understand", status: "active", detail: "Reading your description" });
-        const { profile, followUps } = await ai.parseRisk(text, new Date());
+        const parsedRisk = await ai.parseRisk(text, new Date());
+        if (!parsedRisk.isRisk) {
+          step({ step: "understand", status: "error", detail: "This doesn't describe a money risk" });
+          send({ type: "error", error: OFF_TOPIC_MESSAGE });
+          return controller.close();
+        }
+        const { profile, followUps } = parsedRisk;
         step({
           step: "understand",
           status: "done",

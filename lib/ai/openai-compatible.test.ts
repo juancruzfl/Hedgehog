@@ -46,6 +46,7 @@ describe("OpenAICompatibleProvider", () => {
   it("orders exposure estimates and builds a business RiskProfile", async () => {
     const ai = new OpenAICompatibleProvider(
       fakeClient({
+        isRisk: true,
         kind: "event_trigger",
         underlyingType: "sports",
         underlyingRef: "Indianapolis vs Houston",
@@ -62,9 +63,38 @@ describe("OpenAICompatibleProvider", () => {
       }),
       "test-model",
     );
-    const { profile: p } = await ai.parseRisk("Half-price wings if the Colts win", new Date());
+    const parsed = await ai.parseRisk("Half-price wings if the Colts win", new Date());
+    if (!parsed.isRisk) throw new Error("expected a risk");
+    const p = parsed.profile;
     expect(p.exposureUsd).toEqual({ low: 2400, expected: 3000, high: 3600 });
     expect(p.segment).toBe("business");
+  });
+
+  it("stops at the first call when the text isn't a money risk", async () => {
+    let calls = 0;
+    const client = {
+      chat: {
+        completions: {
+          create: async () => {
+            calls++;
+            return { choices: [{ message: { content: JSON.stringify({ isRisk: false, kind: "threshold", underlyingType: "crypto", underlyingRef: "", condition: "", exposureLow: 0, exposureExpected: 0, exposureHigh: 0, priceUnits: 0, windowStart: "", windowEnd: "", notes: "", headline: "", followUps: [] }) } }] };
+          },
+        },
+      },
+    } as never;
+    const ai = new OpenAICompatibleProvider(client, "m");
+    expect(await ai.parseRisk("Write me a poem about the ocean", new Date())).toEqual({ isRisk: false, profile: null, followUps: [] });
+    // Same text again within the cache window: no second paid call.
+    await ai.parseRisk("write me a poem about  the ocean", new Date());
+    expect(calls).toBe(1);
+  });
+
+  it("caps output tokens on every call", async () => {
+    const seen: number[] = [];
+    const client = { chat: { completions: { create: async (req: { max_tokens: number }) => (seen.push(req.max_tokens), { choices: [{ message: { content: '{"categories":[],"terms":[]}' } }] }) } } } as never;
+    await new OpenAICompatibleProvider(client, "m").searchPlan(profile);
+    expect(seen[0]).toBeGreaterThan(0);
+    expect(seen[0]).toBeLessThanOrEqual(2000);
   });
 
   it("rejects malformed model output", async () => {
@@ -94,7 +124,7 @@ describe("models without strict JSON schema support (e.g. some OpenRouter models
     } as never;
     const ai = new OpenAICompatibleProvider(client, "some/model");
     expect(await ai.searchPlan(p)).toEqual(plan);
-    expect(await ai.searchPlan(p)).toEqual(plan);
+    expect(await ai.searchPlan({ ...p, condition: "y" })).toEqual(plan);
     expect(formats).toEqual(["json_schema", "json_object", "json_object"]);
   });
 
