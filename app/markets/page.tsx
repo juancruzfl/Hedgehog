@@ -19,7 +19,7 @@ export default async function MarketsPage() {
         <div className="mt-6 grid grid-cols-2 items-start gap-2.5 sm:mt-8 sm:gap-3 lg:grid-cols-3 lg:gap-4">
           {cards.map((c) => (
             <FitScale key={c.lines[0]?.key ?? c.question} width={340} wideWidth={440} hideUntilFit>
-              <MarketCard m={c} />
+              <MarketCard m={c} uniform />
             </FitScale>
           ))}
         </div>

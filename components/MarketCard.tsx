@@ -61,8 +61,27 @@ export const closeLabel = (iso: string) =>
   `${new Date(iso).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} ET`;
 
 
-/** A market as the landing page shows it: question, chance, a chart of its levels and the price. */
-export function MarketCard({ m }: { m: MarketCardData }) {
+/**
+ * A stand-in history for a market Hedgehog hasn't charted yet: a gentle wander around each
+ * level's current chance, shown blurred behind a note. Built only from the market's own data
+ * (no clock, no randomness), so the server and the browser draw the same thing.
+ */
+function placeholderHistory(key: string, prob: number, closes: string) {
+  let seed = 0;
+  for (const ch of key) seed = (seed * 31 + ch.charCodeAt(0)) % 997;
+  const end = Date.parse(closes) || 0;
+  return Array.from({ length: 25 }, (_, i) => ({
+    ts: end - (24 - i) * 1800_000,
+    p: Math.min(0.99, Math.max(0.01, prob + 0.04 * Math.sin(i / 3 + seed) + 0.02 * Math.sin(i / 1.3 + seed / 7))),
+  }));
+}
+
+/**
+ * A market as the landing page shows it: question, chance, a chart of its levels and the price.
+ * `uniform`: every card the same height whatever its text (for grids): the question gets room
+ * for three lines, the figures a fixed row and the footer two lines.
+ */
+export function MarketCard({ m, uniform = false }: { m: MarketCardData; uniform?: boolean }) {
   const isGame = m.category === "Sports";
   const hasHistory = m.lines.some((l) => l.history.length >= 3);
   return (
@@ -76,7 +95,7 @@ export function MarketCard({ m }: { m: MarketCardData }) {
         )}
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium text-text-3">{m.tabLabel}</p>
-          <h2 className="text-xl font-semibold leading-snug sm:text-2xl">{m.question}</h2>
+          <h2 className={`text-xl font-semibold leading-snug sm:text-2xl ${uniform ? "line-clamp-3 min-h-[4.125em]" : ""}`}>{m.question}</h2>
         </div>
         <div className="hidden sm:block">
           <Countdown to={m.closes} label={isGame ? "Kickoff in" : "Closes in"} done={isGame ? "In play" : "Closed"} />
@@ -84,7 +103,7 @@ export function MarketCard({ m }: { m: MarketCardData }) {
       </div>
 
       {/* Current figure and the featured chance */}
-      <div className="mt-4 flex items-end justify-between gap-4">
+      <div className={`mt-4 flex items-end justify-between gap-4 ${uniform ? "h-[4.75rem] overflow-hidden" : ""}`}>
         <div>
           {m.spot ? (
             <>
@@ -100,7 +119,7 @@ export function MarketCard({ m }: { m: MarketCardData }) {
         </div>
         <div className="text-right">
           <p className="text-4xl font-medium tabular-nums tracking-tight text-accent">{Math.round(m.prob * 100)}%</p>
-          <p className="text-xs text-text-2">
+          <p className={`text-xs text-text-2 ${uniform ? "line-clamp-2" : ""}`}>
             {m.lead ?? "chance"} · {inWords(m.prob)}
           </p>
         </div>
@@ -111,12 +130,26 @@ export function MarketCard({ m }: { m: MarketCardData }) {
         {hasHistory ? (
           <MarketChart lines={m.lines.map((l) => ({ key: l.key, label: l.label, prob: l.prob, data: l.history, featured: l.featured }))} />
         ) : (
-          <p className="rounded-xl bg-surface-2 px-4 py-6 text-center text-sm text-text-2">Hedgehog starts charting this market once it has a few readings.</p>
+          // Same size as a real chart: a blurred stand-in with the note on top.
+          <div className="relative">
+            <div className="pointer-events-none select-none opacity-60 blur-[3px]" aria-hidden>
+              <MarketChart
+                lines={m.lines.map((l) => ({ key: l.key, label: l.label, prob: l.prob, data: placeholderHistory(l.key, l.prob, m.closes), featured: l.featured }))}
+              />
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center p-4">
+              <p className="max-w-[16rem] rounded-xl border border-border bg-surface/90 px-4 py-3 text-center text-sm text-text-2 shadow-sm">
+                Hedgehog starts charting this market once it has a few readings.
+              </p>
+            </div>
+          </div>
         )}
       </div>
 
       {/* Footer: close time, what it costs */}
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-border pt-3 text-xs text-text-2">
+      <div
+        className={`mt-3 flex border-t border-border pt-3 text-xs text-text-2 ${uniform ? "flex-col items-start gap-y-1.5" : "flex-wrap items-center justify-between gap-x-4 gap-y-2"}`}
+      >
         <span className="flex items-center gap-1.5">
           <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
             <rect x="2.5" y="3.5" width="11" height="10" rx="1.5" />
