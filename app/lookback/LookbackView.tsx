@@ -13,10 +13,10 @@ const signed = (n: number | null) => (n === null ? "—" : n === 0 ? usd(0) : `$
 
 function Box({ label, value, note, strong }: { label: string; value: string; note?: string; strong?: boolean }) {
   return (
-    <div className={`rounded-xl px-3 py-3 sm:px-4 ${strong ? "bg-accent-soft" : "bg-surface-2"}`}>
-      <p className="text-xs text-text-2">{label}</p>
-      <p className="mt-0.5 text-xl font-bold tabular-nums sm:text-2xl">{value}</p>
-      {note && <p className="text-xs leading-snug text-text-3">{note}</p>}
+    <div className={`min-w-0 rounded-xl px-2.5 py-2.5 sm:px-4 sm:py-3 ${strong ? "bg-accent-soft" : "bg-surface-2"}`}>
+      <p className="text-[11px] leading-tight text-text-2 sm:text-xs">{label}</p>
+      <p className="mt-0.5 whitespace-nowrap text-base font-bold tabular-nums min-[400px]:text-lg sm:text-2xl">{value}</p>
+      {note && <p className="text-[11px] leading-snug text-text-3 sm:text-xs">{note}</p>}
     </div>
   );
 }
@@ -88,79 +88,90 @@ function ShareButtons() {
   );
 }
 
-export function LookbackView({ r }: { r: LookbackResult }) {
+export function LookbackView({ r, example = false }: { r: LookbackResult; example?: boolean }) {
   const h = headline(r);
   const m = r.math;
   const isGame = r.event.category === "Sports";
   const settledText = r.resolution === null ? "Not settled yet" : r.resolution === "yes" ? cap(r.trigger) : cap(triggerPhrase(r.event.category, r.label, "not"));
 
   return (
-    <div className="space-y-6">
-      {/* The shareable summary */}
-      <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6" aria-labelledby="lb-title">
-        <p id="lb-title" className="text-sm font-medium text-text-2">
-          {h.title}
-        </p>
-        <p className={`mt-1 text-3xl font-bold tracking-tight sm:text-4xl ${h.tone === "good" ? "text-good" : ""}`}>{h.big}</p>
-        <p className="mt-2 max-w-2xl text-text-2">{h.line}</p>
-
-        <div className="mt-5 grid grid-cols-1 gap-2 min-[480px]:grid-cols-3">
-          <Box label="Without a hedge" value={signed(m.without)} note={r.resolution === null ? "once it settles" : "what the promo cost you"} />
-          <Box label="With the hedge" value={signed(m.withHedge)} note={`worst case was ${signed(m.worstWithHedge)}, known up front`} strong />
-          <Box label="Hedge cost" value={usd(m.hedgeCost)} note={`${m.contracts.toLocaleString("en-US")} contracts at ${usd(m.price, 2)}`} />
-        </div>
-
-        <div className="mt-5">
-          <ShareButtons />
+    <div className="space-y-4 sm:space-y-6">
+      {/* The answer, up front: the headline and the three numbers, beside the odds over time */}
+      <section className="rounded-2xl border border-border bg-surface p-5 sm:p-7" aria-labelledby="lb-title">
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-8">
+          <div className="min-w-0">
+            {example && <p className="mb-2 inline-block rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-semibold text-accent">A recent example</p>}
+            <p id="lb-title" className="text-sm font-medium text-text-2">
+              {h.title}
+            </p>
+            <p className={`mt-1 text-4xl font-bold tracking-tight sm:text-5xl ${h.tone === "good" ? "text-good" : ""}`}>{h.big}</p>
+            <p className="mt-3 max-w-xl text-text-2">{h.line}</p>
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              <Box label="Without a hedge" value={signed(m.without)} note={r.resolution === null ? "once it settles" : "what the promo cost"} />
+              <Box label="With the hedge" value={signed(m.withHedge)} note={`worst case ${signed(m.worstWithHedge)}, known up front`} strong />
+              <Box label="Hedge cost" value={usd(m.hedgeCost)} note={`${m.contracts.toLocaleString("en-US")} at ${usd(m.price, 2)}`} />
+            </div>
+            <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <ShareButtons />
+              {/* Phones: the controls are below the result */}
+              <a href="#try-your-own" className="text-sm font-medium text-accent sm:hidden">
+                Try your own ↓
+              </a>
+            </div>
+          </div>
+          <div className="min-w-0">
+            <p className="mb-2 text-sm font-medium">Chance that {triggerPhrase(r.event.category, r.label, "future")}, as the market saw it</p>
+            <LookbackChart data={r.series} boughtAt={r.boughtAt} cutoff={r.event.cutoff} cutoffLabel={isGame ? "Kickoff" : "10 AM"} />
+            <p className="mt-1 text-xs text-text-3">
+              The dot is the price the hedge would have been bought at ({whenLabel(r.when)}). Only prices from before {isGame ? "kickoff" : "10 AM ET that day"} count, so
+              there&apos;s no hindsight.
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* How the numbers came about */}
-      <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6" aria-labelledby="lb-how">
-        <h2 id="lb-how" className="text-xl font-bold tracking-tight">
-          How it would have worked
-        </h2>
-        <ol className="mt-3 space-y-2 text-sm">
-          <li>
-            <span className="font-semibold">1. Buy the hedge ({whenLabel(r.when)}).</span> On {etTime(r.boughtAt)}, Gemini&apos;s market gave &ldquo;{triggerPhrase(r.event.category, r.label, "future")}&rdquo; a{" "}
-            {r.chance === null ? "" : `${pct(r.chance)} `}chance. {m.contracts.toLocaleString("en-US")} YES contracts at {usd(m.price, 2)} each ={" "}
-            <span className="font-semibold">{usd(m.hedgeCost)}</span>.
-          </li>
-          <li>
-            <span className="font-semibold">2. {isGame ? "The game is played." : "The day plays out."}</span> Each contract pays $1 if {triggerPhrase(r.event.category, r.label, "future")}, so the
-            hedge pays back {usd(m.contracts)}: {m.contracts >= r.promoCost ? "the whole promo cost" : `nearly the whole ${usd(r.promoCost)} promo cost`}.
-          </li>
-          <li>
-            <span className="font-semibold">3. Gemini settles it.</span> {settledText}.{" "}
-            {r.resolution === null ? "Check back after the result is final." : `The hedge paid ${usd(m.payout!)}.`}
-          </li>
-        </ol>
-        <div className="mt-5">
-          <p className="mb-2 text-sm font-medium">Chance that {triggerPhrase(r.event.category, r.label, "future")}, as the market saw it</p>
-          <LookbackChart data={r.series} boughtAt={r.boughtAt} cutoff={r.event.cutoff} cutoffLabel={isGame ? "Kickoff" : "10 AM"} />
-          <p className="mt-1 text-xs text-text-3">
-            The dot is the price used. Only prices from before {isGame ? "kickoff" : "10 AM ET that day"} are used, so the look-back never uses hindsight. Costs exclude Gemini
-            trading fees. Data provided by Gemini, recorded by Hedgehog.
+      <div className="grid items-start gap-4 sm:gap-6 lg:grid-cols-2">
+        {/* How the numbers came about */}
+        <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6" aria-labelledby="lb-how">
+          <h2 id="lb-how" className="text-lg font-bold tracking-tight">
+            How it would have worked
+          </h2>
+          <ol className="mt-3 space-y-2.5 text-sm">
+            <li>
+              <span className="font-semibold">1. Buy the hedge ({whenLabel(r.when)}).</span> On {etTime(r.boughtAt)}, Gemini&apos;s market gave &ldquo;
+              {triggerPhrase(r.event.category, r.label, "future")}&rdquo; a {r.chance === null ? "" : `${pct(r.chance)} `}chance. {m.contracts.toLocaleString("en-US")} YES contracts at{" "}
+              {usd(m.price, 2)} each = <span className="font-semibold">{usd(m.hedgeCost)}</span>.
+            </li>
+            <li>
+              <span className="font-semibold">2. {isGame ? "The game is played." : "The day plays out."}</span> Each contract pays $1 if{" "}
+              {triggerPhrase(r.event.category, r.label, "future")}, so the hedge pays back {usd(m.contracts)}:{" "}
+              {m.contracts >= r.promoCost ? "the whole promo cost" : `nearly the whole ${usd(r.promoCost)} promo cost`}.
+            </li>
+            <li>
+              <span className="font-semibold">3. Gemini settles it.</span> {settledText}.{" "}
+              {r.resolution === null ? "Check back after the result is final." : `The hedge paid ${usd(m.payout!)}.`}
+            </li>
+          </ol>
+          <p className="mt-3 text-xs text-text-3">Costs exclude Gemini trading fees. Data provided by Gemini, recorded by Hedgehog.</p>
+        </section>
+
+        {/* The blockchain part: anyone can check the price wasn't made up */}
+        <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6" aria-labelledby="lb-check">
+          <h2 id="lb-check" className="text-lg font-bold tracking-tight">
+            Check it on Solana
+          </h2>
+          <p className="mb-4 mt-1 text-sm text-text-2">
+            The {usd(m.price, 2)} price comes from Hedgehog&apos;s odds archive. Every hour of readings is sealed with a fingerprint on Solana, so this number can be checked,
+            not just trusted. Your browser does the checking.
           </p>
-        </div>
-      </section>
-
-      {/* The blockchain part: anyone can check the price wasn't made up */}
-      <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6" aria-labelledby="lb-check">
-        <h2 id="lb-check" className="text-xl font-bold tracking-tight">
-          Check it yourself
-        </h2>
-        <p className="mb-4 mt-1 text-sm text-text-2">
-          The {usd(m.price, 2)} price comes from Hedgehog&apos;s odds archive. Every hour of readings is sealed with a fingerprint on Solana, so this number can be checked, not just
-          trusted. Your browser does the checking.
-        </p>
-        <CheckPrice symbol={r.symbol} ts={r.boughtAt} sealed={r.sealed} />
-        <p className="mt-4 text-xs text-text-3">
-          <a href="/archive" className="underline hover:text-text">
-            More about the odds archive
-          </a>
-        </p>
-      </section>
+          <CheckPrice symbol={r.symbol} ts={r.boughtAt} sealed={r.sealed} />
+          <p className="mt-4 text-xs text-text-3">
+            <a href="/archive" className="underline hover:text-text">
+              More about the odds archive
+            </a>
+          </p>
+        </section>
+      </div>
     </div>
   );
 }
