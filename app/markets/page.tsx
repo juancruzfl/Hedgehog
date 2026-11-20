@@ -1,3 +1,4 @@
+import { FitScale } from "@/components/FitScale";
 import { MarketCard } from "@/components/MarketCard";
 import { trendingMarkets } from "@/lib/markets/trending";
 
@@ -13,9 +14,13 @@ export default async function MarketsPage() {
       <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Trending markets</h1>
       <p className="mt-2 max-w-2xl text-text-2">The most-traded prediction markets on Gemini over the last 24 hours.</p>
       {cards.length ? (
-        <div className="mt-8 grid gap-4 lg:grid-cols-2">
+        // Four across on wide screens, three on phones; each card keeps the landing page's
+        // layout and is scaled to its column (drawn narrower on phones so it shrinks less).
+        <div className="mt-6 grid grid-cols-3 items-start gap-2 sm:mt-8 sm:gap-3 lg:grid-cols-4 lg:gap-4">
           {cards.map((c) => (
-            <MarketCard key={c.lines[0]?.key ?? c.question} m={c} />
+            <FitScale key={c.lines[0]?.key ?? c.question} width={340} wideWidth={440} hideUntilFit>
+              <MarketCard m={c} />
+            </FitScale>
           ))}
         </div>
       ) : (
