@@ -1,18 +1,14 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { GEMINI_CHANGED_EVENT, setAccount, useAccount } from "./useAccount";
 
 // Nav button for the user's Gemini account: "Connect Gemini account" until they sign in
-// with Gemini, then "Signed in" with a small menu (which account, sign out).
+// with Gemini, then "Signed in" with a small menu (which account, what they hedge, sign out).
 
-export const GEMINI_CHANGED_EVENT = "hedgehog:gemini-changed";
-
-interface Status {
-  connected: boolean;
-  env?: "sandbox" | "production";
-  account?: string | null;
-}
+export { GEMINI_CHANGED_EVENT };
 
 const NOTICES: Record<string, { kind: "good" | "bad"; text: string }> = {
   connected: { kind: "good", text: "Your Gemini account is connected." },
@@ -23,23 +19,11 @@ const NOTICES: Record<string, { kind: "good" | "bad"; text: string }> = {
 
 export function GeminiAccountButton() {
   const path = usePathname();
-  const [status, setStatus] = useState<Status | null>(null);
+  const router = useRouter();
+  const status = useAccount();
   const [menuOpen, setMenuOpen] = useState(false);
   const [notice, setNotice] = useState<keyof typeof NOTICES | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-
-  const refresh = useCallback(() => {
-    fetch("/api/auth/gemini/me", { cache: "no-store" })
-      .then((r) => r.json())
-      .then(setStatus)
-      .catch(() => setStatus({ connected: false }));
-  }, []);
-
-  useEffect(() => {
-    refresh();
-    window.addEventListener(GEMINI_CHANGED_EVENT, refresh);
-    return () => window.removeEventListener(GEMINI_CHANGED_EVENT, refresh);
-  }, [refresh]);
 
   // Coming back from Gemini: show how it went once, then tidy the address bar.
   useEffect(() => {
@@ -69,8 +53,8 @@ export function GeminiAccountButton() {
   async function signOut() {
     setMenuOpen(false);
     await fetch("/api/auth/gemini/logout", { method: "POST" }).catch(() => undefined);
-    setStatus({ connected: false });
-    window.dispatchEvent(new Event(GEMINI_CHANGED_EVENT));
+    setAccount({ connected: false, available: true });
+    router.push("/"); // the product's pages are for signed-in users
   }
 
   const n = notice ? NOTICES[notice] : null;
@@ -111,6 +95,9 @@ export function GeminiAccountButton() {
             {status.env === "sandbox" && <p className="mt-1 inline-block rounded-full bg-warn-bg px-2 py-0.5 text-[11px] font-medium text-warn">Test account (sandbox)</p>}
           </div>
           <div className="my-1 border-t border-border" />
+          <Link role="menuitem" href="/welcome" onClick={() => setMenuOpen(false)} className="block w-full rounded-lg px-3 py-2 text-left text-text hover:bg-surface-2">
+            Change what you hedge
+          </Link>
           <button role="menuitem" onClick={signOut} className="w-full rounded-lg px-3 py-2 text-left text-text hover:bg-surface-2">
             Sign out
           </button>

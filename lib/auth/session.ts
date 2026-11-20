@@ -5,6 +5,7 @@ import { DatabaseSync } from "node:sqlite";
 import type { NextRequest, NextResponse } from "next/server";
 import { GeminiApiError, GeminiClient } from "@/lib/venues/gemini/client";
 import { oauthConfig, refreshTokens, type GeminiEnv, type TokenSet } from "./gemini-oauth";
+import { parseRoles, type Role } from "./roles";
 
 // A browser session holding one connected Gemini account.
 // - The cookie carries only a random session id; the table stores its SHA-256, so a leaked
@@ -35,6 +36,9 @@ function sessionsDb(): DatabaseSync {
       scope TEXT NOT NULL
     );
   `);
+  // Added after launch: what the user came to hedge (lib/auth/roles.ts), "" until they pick.
+  const cols = db.prepare(`PRAGMA table_info(sessions)`).all() as { name: string }[];
+  if (!cols.some((c) => c.name === "roles")) db.exec(`ALTER TABLE sessions ADD COLUMN roles TEXT NOT NULL DEFAULT ''`);
   return db;
 }
 
@@ -74,6 +78,8 @@ export interface GeminiSession {
   env: GeminiEnv;
   account: string | null;
   tokens: TokenSet;
+  /** What they came to hedge; empty until they pick on /welcome. */
+  roles: Role[];
 }
 
 interface Row {
@@ -84,12 +90,13 @@ interface Row {
   refresh_enc: string;
   expires_at: number;
   scope: string;
+  roles: string;
 }
 
 export function createSession(env: GeminiEnv, tokens: TokenSet, account: string | null): string {
   const id = randomBytes(32).toString("base64url");
   sessionsDb()
-    .prepare(`INSERT INTO sessions VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
+    .prepare(`INSERT INTO sessions (id_hash, created_at, env, account, access_enc, refresh_enc, expires_at, scope) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
     .run(hashId(id), Date.now(), env, account, encrypt(tokens.accessToken), encrypt(tokens.refreshToken), tokens.expiresAt, tokens.scope);
   return id;
 }
@@ -103,6 +110,7 @@ function load(idHash: string): GeminiSession | null {
       env: row.env === "production" ? "production" : "sandbox",
       account: row.account,
       tokens: { accessToken: decrypt(row.access_enc), refreshToken: decrypt(row.refresh_enc), expiresAt: row.expires_at, scope: row.scope },
+      roles: parseRoles(row.roles),
     };
   } catch {
     return null; // SESSION_SECRET changed: treat as signed out
@@ -113,6 +121,10 @@ function saveTokens(idHash: string, t: TokenSet) {
   sessionsDb()
     .prepare(`UPDATE sessions SET access_enc = ?, refresh_enc = ?, expires_at = ?, scope = ? WHERE id_hash = ?`)
     .run(encrypt(t.accessToken), encrypt(t.refreshToken), t.expiresAt, t.scope, idHash);
+}
+
+export function setSessionRoles(idHash: string, roles: Role[]) {
+  sessionsDb().prepare(`UPDATE sessions SET roles = ? WHERE id_hash = ?`).run(roles.join(","), idHash);
 }
 
 export function deleteSession(idHash: string) {

@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   const s = await getSession(req);
   const res = NextResponse.json(
     s
-      ? { connected: true, env: s.env, account: s.account, scopes: s.tokens.scope.split(",") }
+      ? { connected: true, env: s.env, account: s.account, scopes: s.tokens.scope.split(","), roles: s.roles }
       : { connected: false, available: Boolean(oauthConfig()) },
   );
   res.headers.set("Cache-Control", "no-store");

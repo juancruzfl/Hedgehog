@@ -1,5 +1,5 @@
 // Runs once when the Next.js server starts.
-// 1. Warms the landing-page and game-day caches so even the first visitor doesn't wait.
+// 1. Warms the landing-page, game-day and trending-markets caches so even the first visitor doesn't wait.
 // 2. On the hosted deploy (one Railway service with one volume) runs the odds collector
 //    in-process so it shares the SQLite volume.
 export async function register() {
@@ -7,16 +7,18 @@ export async function register() {
 
   void (async () => {
     try {
-      const [{ swr }, { buildBoard, gameDayExample }, { getVenue }] = await Promise.all([
+      const [{ swr }, { buildBoard, gameDayExample }, { getVenue }, { trendingMarkets }] = await Promise.all([
         import("./lib/cache"),
         import("./lib/landing/board"),
         import("./lib/venues"),
+        import("./lib/markets/trending"),
       ]);
       await Promise.all([
         swr("landing-board", 60_000, () => buildBoard(getVenue())),
         swr("game-day-example", 5 * 60_000, () => gameDayExample(getVenue())),
+        trendingMarkets(),
       ]);
-      console.log("[cache] landing page and game-day example warmed");
+      console.log("[cache] landing page, game-day example and trending markets warmed");
     } catch (e) {
       console.error("[cache] warm-up failed:", (e as Error).message);
     }
