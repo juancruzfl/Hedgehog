@@ -14,6 +14,7 @@ export interface ApproveLeg {
 
 interface ExecResult {
   ok: boolean;
+  hedgeId?: string;
   mode?: "paper" | "live";
   problems?: string[];
   error?: string;
@@ -68,10 +69,16 @@ export function ApprovePanel({
         <p className="mt-1 text-sm text-text-2">
           {result.mode === "paper"
             ? "Recorded as a paper trade at live Gemini prices. No real money moved."
-            : "Orders sent to Gemini. Fills will show in My hedges."}
+            : "Orders sent to Gemini. Fills will show in My hedges."}{" "}
+          Hedgehog is sealing a receipt of it on Solana, so you can prove you hedged at these odds, at this time.
         </p>
-        <div className="mt-3 flex gap-3">
-          <Link href="/positions" className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink">See my hedges</Link>
+        <div className="mt-3 flex flex-wrap gap-3">
+          {result.hedgeId && (
+            <Link href={`/receipt/${result.hedgeId}`} className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-ink">
+              See my receipt
+            </Link>
+          )}
+          <Link href="/positions" className="rounded-lg border border-border px-4 py-2 text-sm font-medium">See my hedges</Link>
           {onDone && <button onClick={onDone} className="rounded-lg border border-border px-4 py-2 text-sm">Done</button>}
         </div>
       </div>

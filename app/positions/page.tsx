@@ -208,6 +208,9 @@ function HedgeRow({ h, o, tab }: { h: HedgeRecord; o?: HedgeOutcome; tab: Tab })
                 {h.segment === "business" ? "Business" : "Crypto"} · {legs.length || h.orders.length} order
                 {(legs.length || h.orders.length) === 1 ? "" : "s"} · approved {created(h.createdAt)}
               </span>
+              <Link href={`/receipt/${h.id}`} onClick={(e) => e.stopPropagation()} className="font-medium text-accent hover:underline">
+                Receipt
+              </Link>
             </p>
           </div>
         </div>

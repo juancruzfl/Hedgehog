@@ -4,7 +4,9 @@ import { askFor } from "@/lib/engine/sizer";
 import type { Contract } from "@/lib/types";
 import type { VenueAdapter } from "@/lib/venues/types";
 import { SIGN_IN_EXPIRED, isSignInExpired } from "@/lib/auth/session";
-import { addHedgeOrder, createHedge, setHedgeStatus } from "./store";
+import { insertSnapshot, rowFromContract, watchMarkets } from "@/lib/odds/store";
+import { buildReceipt } from "./receipt";
+import { addHedgeOrder, createHedge, saveReceipt, setHedgeStatus, type HedgeOrder } from "./store";
 
 // Places the orders for a hedge the user approved. The server never trusts the
 // client's numbers blindly: it re-reads live quotes, enforces a spend cap, and
@@ -82,15 +84,55 @@ export async function executeHedge(venue: VenueAdapter, hedge: ApprovedHedge, mo
   if (problems.length) return { ok: false as const, problems };
 
   const id = randomUUID();
+  const approvedAt = Date.now();
+  // The quotes this hedge was checked against become archive readings (sealed with their
+  // hour), and its markets keep being recorded until they settle.
+  const seen = hedge.legs.map((l) => rowFromContract(approvedAt, live.get(l.symbol)!));
+  try {
+    insertSnapshot(seen);
+    watchMarkets([...new Set(hedge.legs.map((l) => l.marketId))]);
+  } catch (e) {
+    console.error("[hedge] couldn't record the quotes it used:", (e as Error).message);
+  }
+  const totalCost = Math.round(hedge.legs.reduce((s, l) => s + l.quantity * asks.get(l.symbol)!, 0) * 100) / 100;
+  const maxPayout = hedge.legs.reduce((s, l) => s + l.quantity, 0);
+  const profileJson = JSON.stringify(hedge.profile ?? null);
+  const orders: HedgeOrder[] = [];
+  const record = (o: HedgeOrder) => {
+    orders.push(o);
+    addHedgeOrder(id, o);
+  };
+  // Receipt: written once orders are in, sealed on Solana in the background.
+  const issueReceipt = () => {
+    if (!orders.some((o) => o.status !== "rejected" && o.status !== "skipped")) return;
+    const { document, sha256 } = buildReceipt({
+      hedgeId: id,
+      approvedAt: new Date(approvedAt).toISOString(),
+      mode,
+      venue: venue.name,
+      segment: hedge.segment,
+      title: hedge.title,
+      profileJson,
+      orders,
+      totalCost,
+      maxPayout,
+      oddsSeen: seen,
+    });
+    saveReceipt(id, document, sha256);
+    if (process.env.ARCHIVE_ANCHOR === "1") {
+      void import("./seal").then(({ sealReceipt }) => sealReceipt(id)).catch((e) => console.error("[receipt]", (e as Error).message));
+    }
+  };
+
   createHedge({
     id,
     segment: hedge.segment,
     title: hedge.title,
     venue: venue.name,
     mode,
-    totalCost: Math.round(hedge.legs.reduce((s, l) => s + l.quantity * asks.get(l.symbol)!, 0) * 100) / 100,
-    maxPayout: hedge.legs.reduce((s, l) => s + l.quantity, 0),
-    profileJson: JSON.stringify(hedge.profile ?? null),
+    totalCost,
+    maxPayout,
+    profileJson,
     status: "placing",
   });
 
@@ -100,9 +142,10 @@ export async function executeHedge(venue: VenueAdapter, hedge: ApprovedHedge, mo
       const fillPrice = asks.get(l.symbol)!;
       const orderId = `paper-${randomUUID().slice(0, 8)}`;
       results.push({ symbol: l.symbol, status: "filled", orderId, fillPrice });
-      addHedgeOrder(id, { ...l, fillPrice, orderId, status: "filled", error: null });
+      record({ ...l, fillPrice, orderId, status: "filled", error: null });
     }
     setHedgeStatus(id, "placed");
+    issueReceipt();
     return { ok: true as const, hedgeId: id, mode, results, partial: false };
   }
 
@@ -111,21 +154,22 @@ export async function executeHedge(venue: VenueAdapter, hedge: ApprovedHedge, mo
   for (const l of hedge.legs) {
     if (failed) {
       results.push({ symbol: l.symbol, status: "skipped" });
-      addHedgeOrder(id, { ...l, fillPrice: null, orderId: null, status: "skipped", error: null });
+      record({ ...l, fillPrice: null, orderId: null, status: "skipped", error: null });
       continue;
     }
     try {
       const order = await venue.placeOrder({ symbol: l.symbol, side: "buy", outcome: l.outcome, quantity: l.quantity, limitPrice: l.limitPrice });
       results.push({ symbol: l.symbol, status: "placed", orderId: order.orderId, orderStatus: order.status });
-      addHedgeOrder(id, { ...l, fillPrice: order.avgExecutionPrice, orderId: order.orderId, status: order.status, error: null });
+      record({ ...l, fillPrice: order.avgExecutionPrice, orderId: order.orderId, status: order.status, error: null });
     } catch (e) {
       failed = true;
       const error = isSignInExpired(e) ? SIGN_IN_EXPIRED : (e as Error).message;
       results.push({ symbol: l.symbol, status: "rejected", error });
-      addHedgeOrder(id, { ...l, fillPrice: null, orderId: null, status: "rejected", error });
+      record({ ...l, fillPrice: null, orderId: null, status: "rejected", error });
     }
   }
   const placed = results.filter((r) => r.status === "placed").length;
   setHedgeStatus(id, failed ? (placed ? "partial" : "failed") : "placed");
+  issueReceipt();
   return { ok: true as const, hedgeId: id, mode, results, partial: failed && placed > 0 };
 }

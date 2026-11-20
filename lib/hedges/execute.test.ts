@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import type { Contract, Market, Order, OrderRequest } from "@/lib/types";
 import type { VenueAdapter } from "@/lib/venues/types";
 import { executeHedge, type ApprovedHedge } from "./execute";
-import { listHedges } from "./store";
+import { getReceipt, listHedges } from "./store";
+import { sha256, type ReceiptDocument } from "./receipt";
+import { historyForSymbol, watchedMarketIds } from "@/lib/odds/store";
 
 const contract = (noAsk: number | null, tradable = true): Contract => ({
   venue: "fake",
@@ -73,5 +75,32 @@ describe("executeHedge", () => {
     const r = await executeHedge(fakeVenue(contract(0.18), placed), hedge(0.2), "live");
     expect(r.ok).toBe(true);
     expect(placed[0]).toMatchObject({ side: "buy", outcome: "no", quantity: 100, limitPrice: 0.2 });
+  });
+
+  it("issues a receipt: the exact document, its SHA-256, and the quotes it was checked against", async () => {
+    const r = await executeHedge(fakeVenue(contract(0.18)), { ...hedge(0.2), profile: { promo: "half-price wings" } }, "paper");
+    if (!r.ok) throw new Error("expected ok");
+    const rec = getReceipt(r.hedgeId)!;
+    expect(rec.sha256).toBe(sha256(rec.document));
+    expect(rec.signature).toBeNull(); // sealing is off in tests
+    const doc = JSON.parse(rec.document) as ReceiptDocument;
+    expect(doc).toMatchObject({ type: "hedgehog-hedge-receipt", v: 1, hedgeId: r.hedgeId, mode: "paper", totalCost: 18, maxPayout: 100 });
+    expect(doc.termsSha256).toBe(sha256(JSON.stringify({ promo: "half-price wings" })));
+    expect(rec.document).not.toContain("half-price wings"); // terms only as a fingerprint
+    expect(doc.orders[0]).toMatchObject({ symbol: "GEMI-SOL-HI65", status: "filled", fillPrice: 0.18 });
+    // The quote it used went into the odds archive, and the market is now tracked.
+    const seen = doc.oddsSeen[0];
+    expect(historyForSymbol("GEMI-SOL-HI65").some((p) => p.ts === seen.ts)).toBe(true);
+    expect(watchedMarketIds()).toContain("SOL");
+  });
+
+  it("issues no receipt when nothing was placed", async () => {
+    const venue = fakeVenue(contract(0.18));
+    venue.placeOrder = async () => {
+      throw new Error("rejected");
+    };
+    const r = await executeHedge(venue, hedge(0.2), "live");
+    if (!r.ok) throw new Error("expected ok");
+    expect(getReceipt(r.hedgeId)).toBeNull();
   });
 });

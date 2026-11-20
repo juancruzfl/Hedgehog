@@ -23,6 +23,7 @@ interface Archive {
   totals: { readings: number; contracts: number; markets: number; since: number | null; hoursSealed: number };
   batches: Batch[];
   samples: Sample[];
+  kickoffs?: { ticker: string; title: string; startTime: number; readingTs: number; count: number; txUrl: string | null }[];
   error?: string;
 }
 interface Proof {
@@ -219,6 +220,36 @@ export default function ArchivePage() {
             </p>
             <VerifyBox samples={data.samples} />
           </section>
+
+          {/* Games: the odds right before play began, sealed at kickoff */}
+          {data.kickoffs && data.kickoffs.length > 0 && (
+            <section className="mt-8" aria-labelledby="kickoff-h">
+              <h2 id="kickoff-h" className="text-xl font-bold tracking-tight">
+                Sealed at kickoff
+              </h2>
+              <p className="mt-1 text-sm text-text-2">
+                When a tracked game starts, its markets&apos; last readings before play are sealed on their own, so anyone can see exactly what the odds were
+                before kickoff.
+              </p>
+              <ul className="mt-3 divide-y divide-border rounded-2xl border border-border bg-surface">
+                {data.kickoffs.map((k) => (
+                  <li key={k.ticker} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-3 text-sm">
+                    <span className="min-w-0">
+                      <span className="block font-medium">{k.title}</span>
+                      <span className="block text-xs text-text-3">
+                        Started {dateTime(k.startTime)} · {n(k.count)} readings from {dateTime(k.readingTs)}
+                      </span>
+                    </span>
+                    {k.txUrl && (
+                      <a href={k.txUrl} target="_blank" rel="noreferrer" className="shrink-0 font-medium text-accent hover:underline">
+                        ✓ Sealed ↗
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           <section className="mt-8" aria-labelledby="hours-h">
             <div className="flex flex-wrap items-end justify-between gap-2">

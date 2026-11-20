@@ -40,6 +40,12 @@ export interface GeminiEvent {
   contracts?: GeminiContract[];
   /** Game events nest child markets (spreads, totals, props). */
   events?: GeminiEvent[];
+  /** Games: when play starts, and the two sides. */
+  startTime?: string;
+  participants?: { name: string; abbreviation?: string; side?: string }[];
+  /** Dollar volume, all-time and over the last 24 hours (strings). */
+  volume?: string;
+  volume24h?: string;
 }
 
 const num = (v: string | null | undefined): number | null => {
