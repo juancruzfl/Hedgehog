@@ -15,6 +15,7 @@ const NOTICES: Record<string, { kind: "good" | "bad"; text: string }> = {
   cancelled: { kind: "bad", text: "Gemini sign-in was cancelled. Nothing was connected." },
   error: { kind: "bad", text: "Couldn't connect your Gemini account. Please try again." },
   "not-configured": { kind: "bad", text: "Gemini sign-in isn't set up on this server yet." },
+  required: { kind: "bad", text: "Connect your Gemini account to continue." },
 };
 
 export function GeminiAccountButton() {
@@ -23,14 +24,23 @@ export function GeminiAccountButton() {
   const status = useAccount();
   const [menuOpen, setMenuOpen] = useState(false);
   const [notice, setNotice] = useState<keyof typeof NOTICES | null>(null);
+  // Sent here from a page that needs sign-in: connecting goes back to that page.
+  const [returnTo, setReturnTo] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Coming back from Gemini: show how it went once, then tidy the address bar.
   useEffect(() => {
     const url = new URL(window.location.href);
+    if (url.searchParams.get("signin") === "required") {
+      url.searchParams.set("gemini", "required");
+      const next = url.searchParams.get("next");
+      if (next?.startsWith("/") && !next.startsWith("//")) setReturnTo(next);
+      url.searchParams.delete("signin");
+      url.searchParams.delete("next");
+    }
     const result = url.searchParams.get("gemini");
     if (!result) return;
-    if (result in NOTICES) setNotice(result);
+    if (result in NOTICES) setNotice(result as keyof typeof NOTICES);
     url.searchParams.delete("gemini");
     window.history.replaceState(null, "", url.pathname + url.search + url.hash);
     const t = setTimeout(() => setNotice(null), 6000);
@@ -81,7 +91,7 @@ export function GeminiAccountButton() {
         </button>
       ) : (
         <a
-          href={`/api/auth/gemini/login?next=${encodeURIComponent(path)}`}
+          href={`/api/auth/gemini/login?next=${encodeURIComponent(returnTo ?? path)}`}
           className="inline-flex items-center whitespace-nowrap rounded-lg bg-accent px-2.5 py-1.5 font-semibold text-accent-ink hover:brightness-110 sm:px-3.5"
         >
           <span className="sm:hidden">Connect</span>

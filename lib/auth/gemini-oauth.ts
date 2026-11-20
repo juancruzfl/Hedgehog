@@ -34,6 +34,14 @@ export function oauthConfig(): OAuthConfig | null {
   };
 }
 
+/**
+ * This site's public address. Behind a proxy (Railway) the request's own origin is the
+ * internal one (https://localhost:8080), so redirects use APP_URL when it's set.
+ */
+export function siteOrigin(requestOrigin: string): string {
+  return process.env.APP_URL?.replace(/\/+$/, "") || requestOrigin;
+}
+
 /** Where Gemini sends the user back. Must match the redirect URI registered on the app exactly. */
 export function redirectUri(origin: string): string {
   return process.env.GEMINI_OAUTH_REDIRECT_URI ?? `${process.env.APP_URL ?? origin}/api/auth/gemini/callback`;

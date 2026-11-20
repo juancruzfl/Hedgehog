@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { exchangeCode, oauthConfig, redirectUri, safeNext } from "@/lib/auth/gemini-oauth";
+import { exchangeCode, oauthConfig, redirectUri, safeNext, siteOrigin } from "@/lib/auth/gemini-oauth";
 import { STATE_COOKIE, clearStateCookie, createSession, setSessionCookie } from "@/lib/auth/session";
 import { GeminiClient } from "@/lib/venues/gemini/client";
 
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   } catch {}
   const next = safeNext(saved.next ?? null);
   const back = (status: string) => {
-    const res = NextResponse.redirect(new URL(`${next}${next.includes("?") ? "&" : "?"}gemini=${status}`, req.nextUrl.origin));
+    const res = NextResponse.redirect(new URL(`${next}${next.includes("?") ? "&" : "?"}gemini=${status}`, siteOrigin(req.nextUrl.origin)));
     clearStateCookie(res);
     return res;
   };
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   if (!code || !saved.nonce || p.get("state") !== saved.nonce) return back("error");
 
   try {
-    const tokens = await exchangeCode(cfg, code, redirectUri(req.nextUrl.origin));
+    const tokens = await exchangeCode(cfg, code, redirectUri(siteOrigin(req.nextUrl.origin)));
     // A name to show in the menu. Optional: the connection works without it.
     let account: string | null = null;
     try {
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     } catch {}
     const id = createSession(cfg.env, tokens, account);
     // Next: say what they came to hedge (crypto, business or both), then on to where they were.
-    const res = NextResponse.redirect(new URL(`/welcome?gemini=connected&next=${encodeURIComponent(next)}`, req.nextUrl.origin));
+    const res = NextResponse.redirect(new URL(`/welcome?gemini=connected&next=${encodeURIComponent(next)}`, siteOrigin(req.nextUrl.origin)));
     clearStateCookie(res);
     setSessionCookie(res, id);
     return res;

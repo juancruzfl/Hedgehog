@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { apiSignInRequired } from "@/lib/auth/guard";
 import { geminiClientFor } from "@/lib/auth/session";
 import { executionMode } from "@/lib/hedges/execute";
 import { paperPortfolio } from "@/lib/hedges/paper";
@@ -7,6 +8,8 @@ import { GeminiAdapter } from "@/lib/venues/gemini/adapter";
 import { getVenue } from "@/lib/venues";
 
 export async function GET(req: NextRequest) {
+  const denied = await apiSignInRequired(req);
+  if (denied) return denied;
   const mode = executionMode();
   const hedges = listHedges();
   try {
