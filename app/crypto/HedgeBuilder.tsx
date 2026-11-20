@@ -5,7 +5,8 @@ import { ApprovePanel } from "@/components/ApprovePanel";
 import { CoinIcon } from "@/components/CoinIcon";
 import { Sheet } from "@/components/Sheet";
 import { PayoffChart, type CurvePoint } from "@/components/charts";
-import { Segmented, Stat } from "@/components/ui";
+import { Stepper, WhatIf } from "@/components/HedgeControls";
+import { Segmented } from "@/components/ui";
 import type { LadderResult } from "@/lib/engine/sizer";
 import { pct, qty, shortDate, timeUntil, usd } from "@/lib/format";
 import type { RiskProfile } from "@/lib/types";
@@ -25,19 +26,6 @@ const LEVELS: Record<Exclude<Level, "custom">, { start: number; floor: number; l
   balanced: { start: 0.05, floor: 0.3, label: "Balanced" },
   strong: { start: 0.03, floor: 0.4, label: "Strong" },
 };
-
-const signed = (n: number) => (n > 0.5 ? `+${usd(n)}` : n < -0.5 ? `−${usd(Math.abs(n))}` : usd(0));
-/** Green for a gain, red for a loss, plain for about zero: the color always agrees with the sign. */
-const tone = (n: number) => (n > 0.5 ? "text-good" : n < -0.5 ? "text-bad" : "");
-
-/** Rows for "What happens if…": price up 10%, down 10/20/30%, read off the payoff curve. */
-function scenarios(curve: CurvePoint[], spot: number) {
-  return [0.1, -0.1, -0.2, -0.3].map((move) => {
-    const target = spot * (1 + move);
-    const p = curve.reduce((best, c) => (Math.abs(c.price - target) < Math.abs(best.price - target) ? c : best), curve[0]);
-    return { move, price: target, without: p.unhedged, with: p.hedged };
-  });
-}
 
 export function HedgeBuilder({ asset, quantity, marketId, onClose }: { asset: string; quantity: number; marketId: string; onClose: () => void }) {
   const [market, setMarket] = useState(marketId);
@@ -124,18 +112,22 @@ export function HedgeBuilder({ asset, quantity, marketId, onClose }: { asset: st
           />
           {level === "custom" && (
             <div className="mt-3 grid gap-4 rounded-xl bg-surface-2 p-4 sm:grid-cols-2">
-              <label className="text-sm">
-                <span className="text-text-2">
-                  Start paying after a drop of <b className="text-text">{Math.round(startDrop * 100)}%</b>
-                </span>
-                <input type="range" min={0.02} max={0.2} step={0.01} value={startDrop} onChange={(e) => setStartDrop(Math.min(Number(e.target.value), floorDrop - 0.05))} className="mt-2 w-full accent-[var(--accent)]" />
-              </label>
-              <label className="text-sm">
-                <span className="text-text-2">
-                  Keep paying down to <b className="text-text">−{Math.round(floorDrop * 100)}%</b>
-                </span>
-                <input type="range" min={0.1} max={0.5} step={0.01} value={floorDrop} onChange={(e) => setFloorDrop(Math.max(Number(e.target.value), startDrop + 0.05))} className="mt-2 w-full accent-[var(--accent)]" />
-              </label>
+              <Stepper
+                label="Start paying after a drop of"
+                value={Math.round(startDrop * 100)}
+                min={2}
+                max={Math.min(20, Math.round(floorDrop * 100) - 5)}
+                onChange={(v) => setStartDrop(v / 100)}
+                suffix="%"
+              />
+              <Stepper
+                label="Keep paying down to a drop of"
+                value={Math.round(floorDrop * 100)}
+                min={Math.max(10, Math.round(startDrop * 100) + 5)}
+                max={50}
+                onChange={(v) => setFloorDrop(v / 100)}
+                suffix="%"
+              />
             </div>
           )}
         </div>
@@ -150,66 +142,31 @@ export function HedgeBuilder({ asset, quantity, marketId, onClose }: { asset: st
             <p className="rounded-xl bg-warn-bg p-4 text-sm">Gemini doesn&apos;t list prices in that range for this date. Try another date or a different level.</p>
           ) : (
             <>
-              <div className="grid grid-cols-3 gap-2">
-                <Stat label="You pay now" value={usd(p.totalCost)} note={`${((p.totalCost / value) * 100).toFixed(1)}% of your ${asset}`} />
-                <Stat label="Starts paying below" value={usd(top!)} note={`${pct(1 - top! / preview.spot)} under today`} />
-                <Stat label="Most you get back" value={usd(p.maxPayout)} note={`if ${asset} ends near ${usd(p.floorPrice)}`} />
-              </div>
+              {/* The whole deal in one sentence */}
+              <p className="text-xl leading-snug sm:text-2xl">
+                <b className="font-semibold">Pay {usd(p.totalCost)} now.</b> If {asset} falls below <b className="font-semibold">{usd(top!)}</b> by{" "}
+                <b className="font-semibold">{shortDate(preview.market.expiry)}</b>, you get back up to{" "}
+                <b className="font-semibold text-good">{usd(p.maxPayout)}</b>.
+              </p>
+              <p className="mt-1 text-sm text-text-3">
+                That&apos;s about {((p.totalCost / value) * 100).toFixed(1)}% of the {usd(value)} your {asset} is worth today.
+              </p>
 
-              {/* What happens if… */}
-              <div className="mt-6">
-                <p className="text-sm font-semibold">What happens if {asset} ends at… on {shortDate(preview.market.expiry)}</p>
-                <div className="mt-2 overflow-hidden rounded-xl border border-border">
-                  <table className="w-full text-sm tabular-nums">
-                    <thead className="bg-surface-2 text-left text-xs text-text-2">
-                      <tr>
-                        <th className="px-3 py-2 font-medium">{asset} price</th>
-                        <th className="px-3 py-2 text-right font-medium">Without Hedgehog</th>
-                        <th className="px-3 py-2 text-right font-medium">With Hedgehog</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {scenarios(preview.curve, preview.spot).map((s) => (
-                        <tr key={s.move}>
-                          <td className="px-3 py-2.5">
-                            {usd(s.price)} <span className="text-text-3">({s.move > 0 ? "+" : "−"}{Math.abs(s.move * 100)}%)</span>
-                          </td>
-                          <td className={`px-3 py-2.5 text-right ${tone(s.without)}`}>{signed(s.without)}</td>
-                          <td className="px-3 py-2.5 text-right">
-                            {/* The number's color follows its own sign; how much the hedge helps is its own line. */}
-                            <span className={`font-semibold ${tone(s.with)}`}>{signed(s.with)}</span>
-                            {s.with > s.without + 0.5 && <span className="block text-xs font-medium text-good">{usd(s.with - s.without)} better</span>}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <p className="mt-2 text-xs text-text-3">
-                  Your gain or loss on {qty(quantity)} {asset}, including the {usd(p.totalCost)} you pay. If {asset} goes up, the hedge costs you that {usd(p.totalCost)}.
-                </p>
-              </div>
+              <WhatIf curve={preview.curve} spot={preview.spot} asset={asset} payFrom={top!} payTo={p.floorPrice} date={shortDate(preview.market.expiry)} />
 
-              <details className="mt-4 rounded-xl border border-border px-4 py-3">
-                <summary className="cursor-pointer text-sm font-medium">See the full picture</summary>
+              {/* The limits, said once */}
+              <p className="mt-3 text-sm text-text-2">
+                Pays for drops between {usd(top!)} and {usd(p.floorPrice)}. It won&apos;t cover the first {pct(1 - top! / preview.spot)} of a drop, anything
+                below {usd(p.floorPrice)}, or Gemini&apos;s trading fees.
+              </p>
+
+              {/* Everything a trader might want, out of everyone else's way */}
+              <details className="mt-4 rounded-xl border border-border px-4 py-3 text-sm">
+                <summary className="cursor-pointer font-medium">For traders: payoff chart and exact orders</summary>
                 <div className="mt-3">
                   <PayoffChart data={preview.curve} spot={preview.spot} asset={asset} />
                 </div>
-              </details>
-
-              <div className="mt-3 rounded-xl border border-border px-4 py-3 text-sm">
-                <p className="font-medium">What this doesn&apos;t cover</p>
-                <ul className="mt-1 list-disc space-y-0.5 pl-5 text-text-2">
-                  <li>The first part of a drop, from {usd(preview.spot)} down to {usd(top!)}.</li>
-                  <li>Losses below about {usd(p.floorPrice)}: the payout stops growing there.</li>
-                  <li>Prices between levels: the payout grows in steps, not smoothly.</li>
-                  <li>Gemini trading fees.</li>
-                </ul>
-              </div>
-
-              <details className="mt-3 rounded-xl border border-border px-4 py-3 text-sm">
-                <summary className="cursor-pointer font-medium">Exact orders on Gemini ({p.legs.length})</summary>
-                <table className="mt-2 w-full tabular-nums">
+                <table className="mt-4 w-full tabular-nums">
                   <thead className="text-left text-xs text-text-3">
                     <tr>
                       <th className="py-1 font-normal">Pays $1 if {asset} is below</th>
@@ -229,7 +186,10 @@ export function HedgeBuilder({ asset, quantity, marketId, onClose }: { asset: st
                     ))}
                   </tbody>
                 </table>
-                <p className="mt-2 text-xs text-text-3">Each is a &ldquo;NO&rdquo; on Gemini&apos;s &ldquo;{asset} at $X or above&rdquo; market, which pays $1 if the price ends below $X.</p>
+                <p className="mt-2 text-xs text-text-3">
+                  Each is a &ldquo;NO&rdquo; on Gemini&apos;s &ldquo;{asset} at $X or above&rdquo; market, which pays $1 if the price ends below $X. The payout grows in
+                  steps between these levels.
+                </p>
               </details>
 
               <ApprovePanel

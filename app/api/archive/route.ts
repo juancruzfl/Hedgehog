@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { archiveKeypair, cluster, explorerAddress, explorerTx } from "@/lib/archive/solana";
 import { archiveTotals, listBatches, sampleReadings } from "@/lib/archive/store";
+import { listKickoffSeals } from "@/lib/archive/kickoff-store";
 
 // GET: the archive at a glance: totals, every sealed hour with its Solana transaction,
 // and a few readings people can verify. Raw odds are not listed here (Gemini's market
@@ -18,6 +19,7 @@ export async function GET() {
         totals: { ...archiveTotals(), hoursSealed: batches.filter((b) => b.signature).length },
         batches: batches.map((b) => ({ ...b, txUrl: b.signature ? explorerTx(b.signature, b.cluster) : null })),
         samples: latestSealed ? sampleReadings(latestSealed.hourStart) : [],
+        kickoffs: listKickoffSeals(12).map((k) => ({ ...k, txUrl: k.signature ? explorerTx(k.signature, k.cluster) : null })),
       },
       { headers: { "Cache-Control": "no-store" } },
     );

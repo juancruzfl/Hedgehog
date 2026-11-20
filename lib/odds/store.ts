@@ -1,6 +1,7 @@
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import type { Contract } from "@/lib/types";
 
 // Odds history store. Gemini's API doesn't return price history for these markets,
 // so Hedgehog records its own snapshots (scripts/collect-odds.ts) for odds-over-time charts.
@@ -19,6 +20,22 @@ export interface OddsRow {
   yesAsk: number | null;
   last: number | null;
 }
+
+/** A reading row for one contract's quote at `ts`. */
+export const rowFromContract = (ts: number, c: Contract): OddsRow => ({
+  ts,
+  symbol: c.symbol,
+  marketId: c.marketId,
+  marketTitle: c.marketTitle,
+  category: c.category,
+  label: c.label,
+  strikeType: c.strike?.type ?? null,
+  strikeValue: c.strike?.value ?? null,
+  expiry: c.expiry,
+  yesBid: c.quote.yesBid,
+  yesAsk: c.quote.yesAsk,
+  last: c.quote.last,
+});
 
 const DB_PATH = process.env.ODDS_DB_PATH ?? path.join(process.cwd(), "data", "odds.sqlite");
 

@@ -302,6 +302,131 @@ export function ResultChart({ data, tone }: { data: { ts: number; value: number 
   );
 }
 
+export interface MarketLine {
+  key: string;
+  label: string;
+  prob: number; // chance now
+  data: { ts: number; p: number }[];
+  featured: boolean;
+}
+
+const MARKET_COLORS = ["var(--series-2)", "var(--series-1)"];
+const monoTick = { fill: C.text3, fontSize: 10.5, fontFamily: "var(--font-geist-mono), ui-monospace, monospace" };
+// Fixed geometry so the HTML pills on the right line up with the plot.
+const MC = { height: 248, top: 14, axis: 26, pillH: 24, gap: 4 };
+
+/**
+ * A market's levels over time, laid out like Gemini's market chart: one line per level,
+ * dashed guide lines, monospace axes, and each level's current chance in a pill on the right.
+ */
+export function MarketChart({ lines }: { lines: MarketLine[] }) {
+  // Wide enough for the longest label ("Indianapolis") in 11px mono, plus dot and percent.
+  const pillW = Math.min(150, 58 + Math.max(...lines.map((l) => l.label.replace(/^(Below|Above) /, "").length)) * 7);
+  const color = (k: number) => (lines[k].featured ? "var(--accent)" : MARKET_COLORS[lines.slice(0, k).filter((l) => !l.featured).length % 2]);
+  const rows = new Map<number, Record<string, number>>();
+  lines.forEach((l, k) => {
+    for (const d of l.data) {
+      const row = rows.get(d.ts) ?? { ts: d.ts };
+      row[`l${k}`] = d.p;
+      rows.set(d.ts, row);
+    }
+  });
+  const data = [...rows.values()].sort((a, b) => a.ts - b.ts);
+  const maxVal = Math.max(0.05, ...lines.flatMap((l) => [l.prob, ...l.data.map((d) => d.p)]));
+  const step = [0.05, 0.1, 0.2, 0.25].find((st) => Math.ceil((maxVal + 0.02) / st) <= 4) ?? 0.25;
+  const top = Math.min(1, Math.ceil((maxVal + 0.02) / step) * step);
+  const yTicks = Array.from({ length: Math.round(top / step) + 1 }, (_, i) => +(i * step).toFixed(2));
+  const t0 = data[0]?.ts ?? 0;
+  const t1 = data.at(-1)?.ts ?? 0;
+  const { ticks, stepH } = timeTicks(t0, t1);
+  const tickFmt = (ts: number) => {
+    const d = new Date(ts);
+    return stepH >= 24 || (d.getHours() === 0 && d.getMinutes() === 0)
+      ? d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+      : d.toLocaleTimeString("en-US", { hour: "numeric" });
+  };
+
+  // Pills sit at each line's current level, nudged apart so they never overlap.
+  const plotH = MC.height - MC.top - MC.axis;
+  const pills = lines
+    .map((l, k) => ({ l, k, y: MC.top + (1 - l.prob / top) * plotH - MC.pillH / 2 }))
+    .sort((a, b) => a.y - b.y);
+  for (let j = 1; j < pills.length; j++) pills[j].y = Math.max(pills[j].y, pills[j - 1].y + MC.pillH + MC.gap);
+  const overflow = (pills.at(-1)?.y ?? 0) + MC.pillH - (MC.height - MC.axis);
+  if (overflow > 0) pills.forEach((p) => (p.y -= overflow));
+
+  return (
+    <div className="relative w-full" style={{ height: MC.height }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} margin={{ top: MC.top, right: pillW + 8, bottom: 0, left: 0 }}>
+          <CartesianGrid stroke={C.grid} strokeDasharray="4 4" vertical={false} />
+          <XAxis
+            dataKey="ts"
+            type="number"
+            scale="time"
+            domain={[t0, t1]}
+            ticks={ticks}
+            tick={monoTick}
+            tickFormatter={tickFmt}
+            stroke={C.grid}
+            tickLine={false}
+            height={MC.axis}
+            interval="preserveStartEnd"
+            minTickGap={28}
+          />
+          <YAxis tick={monoTick} tickFormatter={(v) => pct(v)} axisLine={false} tickLine={false} width={40} domain={[0, top]} ticks={yTicks} />
+          <Tooltip
+            cursor={{ stroke: C.text3, strokeWidth: 1 }}
+            content={({ active, payload }) => {
+              const row = payload?.[0]?.payload as Record<string, number> | undefined;
+              if (!active || !row) return null;
+              return (
+                <TooltipBox>
+                  <div className="mb-1 text-text-3">{dateTime(row.ts)}</div>
+                  {lines.map((l, k) =>
+                    row[`l${k}`] === undefined ? null : (
+                      <div key={l.key} className="flex items-center gap-2">
+                        <span className="inline-block h-2 w-2 rounded-full" style={{ background: color(k) }} />
+                        {l.label}: <span className="font-medium">{pct(row[`l${k}`], 1)}</span>
+                      </div>
+                    ),
+                  )}
+                </TooltipBox>
+              );
+            }}
+          />
+          {lines.map((l, k) => (
+            <Line
+              key={l.key}
+              type="monotone"
+              dataKey={`l${k}`}
+              stroke={color(k)}
+              strokeWidth={l.featured ? 2.25 : 1.5}
+              strokeOpacity={l.featured ? 1 : 0.85}
+              dot={false}
+              activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface)" }}
+              connectNulls
+              isAnimationActive={false}
+            />
+          ))}
+        </LineChart>
+      </ResponsiveContainer>
+      {pills.map(({ l, k, y }) => (
+        <div
+          key={l.key}
+          className={`absolute right-0 flex items-center gap-1.5 rounded-md border bg-surface px-2 font-mono text-[11px] tabular-nums ${l.featured ? "border-accent" : "border-border"}`}
+          style={{ top: y, width: pillW, height: MC.pillH }}
+          title={`${l.label}: ${pct(l.prob, 1)} chance`}
+        >
+          <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: color(k) }} aria-hidden />
+          <span className="min-w-0 truncate text-text-2">{l.label.replace(/^(Below|Above) /, "")}</span>
+          <span className="ml-auto font-semibold text-text">{pct(l.prob)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /**
  * Past-promo look-back: the chance the promo would kick in, over the record. A dot marks the
  * price the hedge would have been bought at; a dashed line marks when it started counting.

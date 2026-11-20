@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { OddsSparkline } from "@/components/charts";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { BusinessIcon } from "@/components/BusinessIcon";
+import { CoinIcon } from "@/components/CoinIcon";
+import { MarketChart } from "@/components/charts";
 import { usd } from "@/lib/format";
 import type { BoardCard } from "@/lib/landing/board";
 import type { RiskUse } from "@/lib/landing/uses";
@@ -28,12 +30,6 @@ function inWords(p: number): string {
   return `about 1 in ${Math.round(1 / p)}`;
 }
 
-/** The question already says "by <date>", so keep only the extra context, in words. */
-function context(subtitle: string): string {
-  const rest = subtitle.replace(/^by [^·]+·\s*/, "");
-  return rest.replace(/^market expects ~/, "Market expects about ").replace(/ now$/, " today").replace(/^\$/, "It's $");
-}
-
 // Desktop positions for the four floating risk widgets (corners of the stage), and
 // where each connector line meets them (in % of the stage, matching the widget corner).
 const SPOTS = [
@@ -43,34 +39,155 @@ const SPOTS = [
   { pos: "right-6 bottom-0", line: { x: 76, y: 80 }, delay: "-3.6s" },
 ];
 
+/** Gemini-style countdown to the close: "01 : 14 : 26" over DAYS HRS MINS. */
+function Countdown({ to, label }: { to: string; label: string }) {
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    setNow(Date.now());
+    const t = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(t);
+  }, []);
+  const left = now === null ? null : Math.max(0, Date.parse(to) - now);
+  const parts = left === null ? ["--", "--", "--"] : [left / 86_400_000, (left / 3_600_000) % 24, (left / 60_000) % 60].map((n) => String(Math.floor(n)).padStart(2, "0"));
+  return (
+    <div className="shrink-0 text-right" aria-label={`${label} ${parts[0]} days ${parts[1]} hours ${parts[2]} minutes`}>
+      <p className="text-[10px] uppercase tracking-wide text-text-3">{label}</p>
+      <div className="mt-0.5 flex gap-2 font-mono tabular-nums">
+        {parts.map((v, k) => (
+          <div key={k} className="text-center">
+            <p className="text-base font-semibold leading-none">{v}</p>
+            <p className="mt-1 text-[9px] uppercase text-text-3">{["Days", "Hrs", "Mins"][k]}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const closeLabel = (iso: string) =>
+  `${new Date(iso).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} ET`;
+
 function MarketCard({ m }: { m: BoardCard }) {
-  const pct = Math.round(m.prob * 100);
+  const isGame = m.category === "Sports";
+  const hasHistory = m.lines.some((l) => l.history.length >= 3);
   return (
     <div className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
-      <div className="flex items-center gap-2 text-xs">
-        <span className="rounded-full bg-accent-soft px-2.5 py-1 font-semibold text-accent">{m.tabLabel}</span>
+      {/* Header: icon, question, countdown */}
+      <div className="flex items-start gap-3">
+        {["BTC", "ETH", "SOL"].includes(m.badge) ? (
+          <CoinIcon asset={m.badge} size="lg" />
+        ) : (
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-text text-[11px] font-bold tracking-wide text-surface">{m.badge}</span>
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-medium text-text-3">{m.tabLabel}</p>
+          <h2 className="text-xl font-semibold leading-snug sm:text-2xl">{m.question}</h2>
+        </div>
+        <div className="hidden sm:block">
+          <Countdown to={m.closes} label={isGame ? "Kickoff in" : "Closes in"} />
+        </div>
       </div>
-      <h2 className="mt-3 text-xl font-bold leading-snug sm:text-2xl">{m.question}</h2>
-      <p className="mt-1 text-sm text-text-2">{context(m.subtitle)}</p>
 
-      <div className="mt-4 flex items-end justify-between gap-3">
+      {/* Current figure and the featured chance */}
+      <div className="mt-4 flex items-end justify-between gap-4">
         <div>
-          <p className="text-5xl font-extrabold tabular-nums tracking-tight text-accent">{pct}%</p>
-          <p className="mt-1 text-sm text-text-2">chance · {inWords(m.prob)}</p>
+          {m.spot ? (
+            <>
+              <p className="text-xs text-text-3">{m.spot.label}</p>
+              <p className="text-lg font-semibold tabular-nums">{m.spot.value}</p>
+            </>
+          ) : (
+            <>
+              <p className="text-xs text-text-3">Kickoff</p>
+              <p className="text-lg font-semibold">{closeLabel(m.closes)}</p>
+            </>
+          )}
         </div>
-        {m.history.length >= 3 && <OddsSparkline data={m.history.map((h) => ({ ts: h.ts, probBelow: h.p }))} />}
+        <div className="text-right">
+          <p className="text-4xl font-medium tabular-nums tracking-tight text-accent">{Math.round(m.prob * 100)}%</p>
+          <p className="text-xs text-text-2">chance · {inWords(m.prob)}</p>
+        </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-        <div className="rounded-xl bg-surface-2 px-3 py-2">
-          <p className="text-xs text-text-2">Costs today</p>
-          <p className="font-bold tabular-nums">{m.cost !== null ? `${Math.round(m.cost * 100)}¢ per $1` : "—"}</p>
+      {/* Chart: each level's chance over time, current chance pinned on the right */}
+      <div className="mt-3">
+        {hasHistory ? (
+          <MarketChart lines={m.lines.map((l) => ({ key: l.key, label: l.label, prob: l.prob, data: l.history, featured: l.featured }))} />
+        ) : (
+          <p className="rounded-xl bg-surface-2 px-4 py-6 text-center text-sm text-text-2">Hedgehog starts charting this market once it has a few readings.</p>
+        )}
+      </div>
+
+      {/* Footer: close time, what it costs */}
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-border pt-3 text-xs text-text-2">
+        <span className="flex items-center gap-1.5">
+          <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+            <rect x="2.5" y="3.5" width="11" height="10" rx="1.5" />
+            <path d="M2.5 6.5h11M5.5 2v3M10.5 2v3" />
+          </svg>
+          {isGame ? "Settles after the game" : `Closes ${closeLabel(m.closes)}`}
+        </span>
+        <span className="tabular-nums">
+          Costs <b className="text-text">{m.cost !== null ? `${Math.round(m.cost * 100)}¢` : "—"}</b> per $1 · pays <b className="text-text">$1</b> if it happens
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/** A tiny line of the featured level's chance over time, with the current reading as a dot. */
+function Sparkline({ data, prob }: { data: { ts: number; p: number }[]; prob: number }) {
+  const W = 300;
+  const H = 52;
+  const pts = data.length >= 2 ? data : [{ ts: 0, p: prob }, { ts: 1, p: prob }];
+  const t0 = pts[0].ts;
+  const t1 = pts.at(-1)!.ts || 1;
+  const hi = Math.min(1, Math.max(...pts.map((d) => d.p), prob) + 0.05);
+  const lo = Math.max(0, Math.min(...pts.map((d) => d.p), prob) - 0.05);
+  const x = (ts: number) => ((ts - t0) / (t1 - t0 || 1)) * (W - 6);
+  const y = (p: number) => 4 + (1 - (p - lo) / (hi - lo || 1)) * (H - 8);
+  const line = pts.map((d) => `${x(d.ts).toFixed(1)},${y(d.p).toFixed(1)}`).join(" ");
+  const end = { x: x(pts.at(-1)!.ts), y: y(prob) };
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="h-[52px] w-full" preserveAspectRatio="none" aria-hidden>
+      <polygon points={`0,${H} ${line} ${end.x},${H}`} fill="var(--accent)" opacity={0.08} />
+      <polyline points={line} fill="none" stroke="var(--accent)" strokeWidth={1.5} vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+      <circle cx={end.x} cy={end.y} r={3} fill="var(--accent)" />
+    </svg>
+  );
+}
+
+/** The market card for phones: question, chance, a sparkline and the price, small enough for the risks to sit around it. */
+function MiniMarketCard({ m }: { m: BoardCard }) {
+  const featured = m.lines.find((l) => l.featured) ?? m.lines[0];
+  return (
+    <div className="rounded-2xl border border-border bg-surface p-3.5 shadow-[0_8px_24px_-12px_rgba(12,10,8,0.18)]">
+      <div className="flex items-start gap-2.5">
+        {["BTC", "ETH", "SOL"].includes(m.badge) ? (
+          <CoinIcon asset={m.badge} />
+        ) : (
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-text text-[9px] font-bold tracking-wide text-surface">{m.badge}</span>
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-medium text-text-3">{m.tabLabel}</p>
+          <h2 className="line-clamp-2 text-[15px] font-semibold leading-snug">{m.question}</h2>
         </div>
-        <div className="rounded-xl bg-surface-2 px-3 py-2">
-          <p className="text-xs text-text-2">If it happens</p>
-          <p className="font-bold">Pays $1 each</p>
+        <div className="shrink-0 text-right">
+          <p className="text-[26px] font-medium leading-none tabular-nums tracking-tight text-accent">{Math.round(m.prob * 100)}%</p>
+          <p className="mt-1 text-[10px] text-text-2">{inWords(m.prob)}</p>
         </div>
       </div>
+      {featured && featured.history.length >= 3 && (
+        <div className="mt-2">
+          <Sparkline data={featured.history} prob={featured.prob} />
+        </div>
+      )}
+      <p className="mt-2 flex justify-between gap-2 border-t border-border pt-2 text-[11px] tabular-nums text-text-2">
+        <span className="truncate">{m.spot ? `${m.spot.label} ${m.spot.value}` : `Kickoff ${closeLabel(m.closes)}`}</span>
+        <span className="shrink-0">
+          Costs <b className="text-text">{m.cost !== null ? `${Math.round(m.cost * 100)}¢` : "—"}</b> · pays <b className="text-text">$1</b>
+        </span>
+      </p>
     </div>
   );
 }
@@ -91,6 +208,7 @@ function RiskWidget({
   onLeave: () => void;
 }) {
   const stake = cost !== null ? Math.max(1, Math.round(u.payout * cost)) : null;
+  // A payout slip: who it's for and what sets it off on top, the deal below a perforated line.
   return (
     <Link
       href={u.href}
@@ -98,19 +216,208 @@ function RiskWidget({
       onMouseLeave={onLeave}
       onFocus={onEnter}
       onBlur={onLeave}
-      className={`block rounded-2xl border bg-surface/75 p-4 backdrop-blur-sm transition duration-200 ${
-        active ? "scale-[1.03] border-accent bg-surface" : "border-border"
+      className={`group relative block overflow-hidden rounded-2xl border bg-surface transition duration-200 ${
+        active ? "scale-[1.03] border-accent" : "border-border"
       } ${dim ? "opacity-45" : "opacity-100"}`}
     >
-      <p className="font-semibold">{u.who}</p>
-      <p className="text-sm text-text-2">{u.risk}</p>
+      <div className="px-4 pb-3 pt-4">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
+            <BusinessIcon who={u.who} />
+          </span>
+          <p className="min-w-0 flex-1 truncate font-semibold">{u.who}</p>
+          <span className="text-accent transition group-hover:translate-x-0.5" aria-hidden>
+            →
+          </span>
+        </div>
+        <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-accent">{u.trigger}</p>
+        <p className="mt-0.5 text-sm leading-snug text-text-2">{u.risk}</p>
+      </div>
       {stake !== null && (
-        <p className="mt-2 text-sm tabular-nums">
-          Put in <b>{usd(stake)}</b> → get <b>{usd(u.payout)}</b> back
-        </p>
+        <div className="relative border-t border-dashed border-border px-4 py-3">
+          {/* Ticket notches where the slip "tears" */}
+          <span className="absolute -left-[7px] -top-[7px] h-3.5 w-3.5 rounded-full border border-border bg-background" aria-hidden />
+          <span className="absolute -right-[7px] -top-[7px] h-3.5 w-3.5 rounded-full border border-border bg-background" aria-hidden />
+          <div className="flex items-end gap-3 tabular-nums">
+            <div>
+              <p className="text-[11px] text-text-3">Put in</p>
+              <p className="text-lg font-semibold leading-tight">{usd(stake)}</p>
+            </div>
+            <span className="pb-0.5 text-text-3" aria-hidden>
+              →
+            </span>
+            <div>
+              <p className="text-[11px] text-text-3">Get back</p>
+              <p className="text-lg font-semibold leading-tight text-good">{usd(u.payout)}</p>
+            </div>
+          </div>
+        </div>
       )}
-      <p className="mt-2 text-sm font-semibold text-accent">See my numbers →</p>
+      <span className="sr-only">See my numbers</span>
     </Link>
+  );
+}
+
+// Phone stage: the desktop widgets (designed 250px wide) scaled to just under half the
+// screen, staggered like the desktop corners (offsets in design px, so they scale too).
+const PHONE_SPOTS = [
+  { offset: "mt-0", delay: SPOTS[0].delay },
+  { offset: "mt-7", delay: SPOTS[1].delay },
+  { offset: "ml-3 mt-3", delay: SPOTS[2].delay },
+  { offset: "mr-3", delay: SPOTS[3].delay },
+];
+
+/**
+ * The desktop stage at phone size: the market in the middle, the same risk widgets scaled
+ * down at its four corners, and a dashed line from the market to each. Line ends are
+ * measured, since card and widget heights change with the market.
+ */
+function PhoneStage({
+  m,
+  uses,
+  activeWidget,
+  setActiveWidget,
+}: {
+  m: BoardCard;
+  uses: RiskUse[];
+  activeWidget: string | null;
+  setActiveWidget: (w: string | null) => void;
+}) {
+  const stage = useRef<HTMLDivElement>(null);
+  const card = useRef<HTMLDivElement>(null);
+  const spots = useRef<(HTMLDivElement | null)[]>([]);
+  const [zoom, setZoom] = useState(0.68);
+  const [geo, setGeo] = useState<{ w: number; h: number; c: { x: number; y: number }; ends: { x: number; y: number }[] } | null>(null);
+
+  useLayoutEffect(() => {
+    const el = stage.current;
+    if (!el) return;
+    const measure = () => {
+      const s = el.getBoundingClientRect();
+      setZoom(Math.min(1, (s.width * 0.48) / 250));
+      const c = card.current!.getBoundingClientRect();
+      // Each line meets its widget at the inner corner nearest the market, as on desktop.
+      const ends = spots.current.slice(0, uses.length).map((d, k) => {
+        const r = d!.getBoundingClientRect();
+        const left = k % 2 === 0;
+        const top = k < 2;
+        return { x: (left ? r.right - 12 : r.left + 12) - s.left, y: (top ? r.bottom - 6 : r.top + 6) - s.top };
+      });
+      setGeo({ w: s.width, h: s.height, c: { x: c.left + c.width / 2 - s.left, y: c.top + c.height / 2 - s.top }, ends });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [uses.length]);
+
+  const widget = (k: number) =>
+    uses[k] && (
+      <div ref={(d) => void (spots.current[k] = d)} style={{ zoom }} className={`w-[250px] ${PHONE_SPOTS[k].offset}`}>
+        <div className="hh-float" style={{ animationDelay: PHONE_SPOTS[k].delay }}>
+          <RiskWidget
+            u={uses[k]}
+            cost={m.cost}
+            dim={activeWidget !== null && activeWidget !== uses[k].who}
+            active={activeWidget === uses[k].who}
+            onEnter={() => setActiveWidget(uses[k].who)}
+            onLeave={() => setActiveWidget(null)}
+          />
+        </div>
+      </div>
+    );
+
+  return (
+    <div ref={stage} className="relative">
+      {geo && (
+        <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox={`0 0 ${geo.w} ${geo.h}`} aria-hidden>
+          {geo.ends.map((e, k) => (
+            <line
+              key={k}
+              x1={geo.c.x}
+              y1={geo.c.y}
+              x2={e.x}
+              y2={e.y}
+              stroke={activeWidget === uses[k]?.who ? "var(--accent)" : "var(--border)"}
+              strokeWidth={1.5}
+              strokeDasharray="4 4"
+            />
+          ))}
+        </svg>
+      )}
+      <div className="relative z-20 flex items-start justify-between">
+        {widget(0)}
+        {widget(1)}
+      </div>
+      <div ref={card} className="relative z-10 mx-auto my-6 w-[84%] max-w-[420px]">
+        <MiniMarketCard m={m} />
+      </div>
+      <div className="relative z-20 flex items-start justify-between">
+        {widget(2)}
+        {widget(3)}
+      </div>
+    </div>
+  );
+}
+
+/** One market and the risks it covers, floating around it. */
+function Slide({
+  m,
+  activeWidget,
+  setActiveWidget,
+}: {
+  m: BoardCard;
+  activeWidget: string | null;
+  setActiveWidget: (w: string | null) => void;
+}) {
+  const uses = m.uses.slice(0, 4);
+  return (
+    <>
+      {/* Desktop: market in the middle, risks floating around it */}
+      <div className="relative hidden h-[550px] lg:block">
+        <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+          {SPOTS.slice(0, uses.length).map((s, k) => (
+            <line
+              key={k}
+              x1={50}
+              y1={50}
+              x2={s.line.x}
+              y2={s.line.y}
+              stroke={activeWidget === uses[k].who ? "var(--accent)" : "var(--border)"}
+              strokeWidth={activeWidget === uses[k].who ? 2 : 1.5}
+              strokeDasharray="4 4"
+              vectorEffect="non-scaling-stroke"
+            />
+          ))}
+        </svg>
+        <div className="absolute left-1/2 top-1/2 z-10 w-[540px] -translate-x-1/2 -translate-y-1/2">
+          <MarketCard m={m} />
+        </div>
+        {uses.map((u, k) => (
+          <div key={u.who} className={`absolute z-20 w-[250px] ${SPOTS[k].pos}`}>
+            <div className="hh-float" style={{ animationDelay: SPOTS[k].delay }}>
+              <RiskWidget
+                u={u}
+                cost={m.cost}
+                dim={activeWidget !== null && activeWidget !== u.who}
+                active={activeWidget === u.who}
+                onEnter={() => setActiveWidget(u.who)}
+                onLeave={() => setActiveWidget(null)}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Phones / tablets: the same stage, sized down */}
+      <div className="lg:hidden">
+        <PhoneStage m={m} uses={uses} activeWidget={activeWidget} setActiveWidget={setActiveWidget} />
+      </div>
+
+      <p className="mt-3 text-xs text-text-3">
+        Live market: &ldquo;{m.marketName}&rdquo;. Example amounts; your numbers depend on your own costs.
+      </p>
+    </>
   );
 }
 
@@ -141,9 +448,7 @@ export function MarketCarousel({ cards }: { cards: BoardCard[] }) {
     return () => clearTimeout(t);
   }, [i, paused, featured.length]);
 
-  const m = featured[i];
-  if (!m) return null;
-  const uses = m.uses.slice(0, 4);
+  if (!featured[i]) return null;
 
   return (
     <section aria-roledescription="carousel" aria-label="Live markets and the risks they cover" className={paused ? "hh-paused" : ""}>
@@ -155,67 +460,21 @@ export function MarketCarousel({ cards }: { cards: BoardCard[] }) {
           if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHovering(false);
         }}
       >
-        {/* Stage */}
-        <div key={m.id} className="hh-slide-in" aria-live={paused ? "polite" : "off"}>
-          {/* Desktop: market in the middle, risks floating around it */}
-          <div className="relative hidden h-[480px] lg:block">
-            <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-              {SPOTS.slice(0, uses.length).map((s, k) => (
-                <line
-                  key={k}
-                  x1={50}
-                  y1={50}
-                  x2={s.line.x}
-                  y2={s.line.y}
-                  stroke={activeWidget === uses[k].who ? "var(--accent)" : "var(--border)"}
-                  strokeWidth={activeWidget === uses[k].who ? 2 : 1.5}
-                  strokeDasharray="4 4"
-                  vectorEffect="non-scaling-stroke"
-                />
-              ))}
-            </svg>
-            <div className="absolute left-1/2 top-1/2 z-10 w-[380px] -translate-x-1/2 -translate-y-1/2">
-              <MarketCard m={m} />
+        {/* Stage: every slide sits in the same grid cell, so the stage is always as tall as the
+            tallest one and nothing below it moves when the market rotates. */}
+        <div className="grid grid-cols-1">
+          {featured.map((f, k) => (
+            <div
+              key={f.id}
+              className={`[grid-area:1/1] ${k === i ? "hh-slide-in" : "invisible"}`}
+              aria-hidden={k !== i}
+              inert={k !== i}
+              aria-live={k === i && paused ? "polite" : "off"}
+            >
+              <Slide m={f} activeWidget={k === i ? activeWidget : null} setActiveWidget={setActiveWidget} />
             </div>
-            {uses.map((u, k) => (
-              <div key={u.who} className={`absolute z-20 w-[270px] ${SPOTS[k].pos}`}>
-                <div className="hh-float" style={{ animationDelay: SPOTS[k].delay }}>
-                  <RiskWidget
-                    u={u}
-                    cost={m.cost}
-                    dim={activeWidget !== null && activeWidget !== u.who}
-                    active={activeWidget === u.who}
-                    onEnter={() => setActiveWidget(u.who)}
-                    onLeave={() => setActiveWidget(null)}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Mobile / tablet: market, then its risks */}
-          <div className="lg:hidden">
-            <MarketCard m={m} />
-            <p className="mt-5 text-sm font-semibold text-text-2">Who this market can help</p>
-            <div className="mt-2 grid gap-2 sm:grid-cols-2">
-              {uses.map((u) => (
-                <RiskWidget
-                  key={u.who}
-                  u={u}
-                  cost={m.cost}
-                  dim={activeWidget !== null && activeWidget !== u.who}
-                  active={activeWidget === u.who}
-                  onEnter={() => setActiveWidget(u.who)}
-                  onLeave={() => setActiveWidget(null)}
-                />
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
-
-        <p className="mt-3 text-xs text-text-3">
-          Live market: &ldquo;{m.marketName}&rdquo;. Example amounts; your numbers depend on your own costs.
-        </p>
       </div>
     </section>
   );

@@ -24,9 +24,11 @@ interface Archive {
   totals: { readings: number; contracts: number; markets: number; since: number | null; hoursSealed: number };
   batches: Batch[];
   samples: Sample[];
+  kickoffs?: { ticker: string; title: string; startTime: number; readingTs: number; count: number; txUrl: string | null }[];
   error?: string;
 }
 const n = (x: number) => x.toLocaleString("en-US");
+const PAGE = 12;
 const odds = (r: ArchiveReading) => {
   const mid = r.yesBid !== null && r.yesAsk !== null ? (r.yesBid + r.yesAsk) / 2 : (r.last ?? r.yesAsk ?? r.yesBid);
   return mid === null ? "—" : `${Math.round(mid * 100)}%`;
@@ -60,8 +62,8 @@ function VerifyBox({ samples }: { samples: Sample[] }) {
   if (!samples.length) return <p className="text-sm text-text-2">Readings can be checked here once the first hour is sealed on Solana.</p>;
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-      <div>
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+      <div className="min-w-0">
         <p className="text-sm font-medium">1. Pick a reading</p>
         <ul className="mt-2 divide-y divide-border rounded-xl border border-border">
           {samples.map((s) => (
@@ -87,7 +89,7 @@ function VerifyBox({ samples }: { samples: Sample[] }) {
         </ul>
       </div>
 
-      <div>
+      <div className="min-w-0">
         <p className="text-sm font-medium">2. Check it against Solana</p>
         {!proof && !busy && !error && <p className="mt-2 text-sm text-text-2">Pick any reading. Your browser does the checking, not Hedgehog.</p>}
         {busy && <p className="mt-2 text-sm text-text-2">Checking…</p>}
@@ -101,6 +103,8 @@ function VerifyBox({ samples }: { samples: Sample[] }) {
 export default function ArchivePage() {
   const [data, setData] = useState<Archive | null>(null);
   const [failed, setFailed] = useState(false);
+  // Sealed hours: the latest few, more on request.
+  const [shown, setShown] = useState(PAGE);
   useEffect(() => {
     fetch("/api/archive")
       .then((r) => r.json())
@@ -124,20 +128,26 @@ export default function ArchivePage() {
 
       {data && t && !data.error && (
         <>
-          <section className="mt-8 grid grid-cols-2 gap-2 rounded-2xl border border-border bg-surface p-3 sm:grid-cols-4" aria-label="Archive totals">
-            {[
-              ["Readings recorded", n(t.readings), t.since ? `since ${dateTime(t.since)}` : ""],
-              ["Contracts", n(t.contracts), `in ${n(t.markets)} markets`],
-              ["Hours sealed on Solana", n(t.hoursSealed), data.cluster === "devnet" ? "Solana devnet" : "Solana mainnet"],
-              ["Cost per seal", "< $0.001", "one small transaction an hour"],
-            ].map(([label, value, note]) => (
-              <div key={label} className="rounded-xl bg-surface-2 px-3 py-3 sm:px-4">
-                <p className="text-xs text-text-2">{label}</p>
-                <p className="mt-0.5 text-xl font-bold tabular-nums sm:text-2xl">{value}</p>
-                <p className="text-xs text-text-3">{note}</p>
-              </div>
-            ))}
-          </section>
+          {/* The archive at a glance: one line instead of a row of boxes */}
+          <p className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-text-2" aria-label="Archive totals">
+            <span>
+              <b className="font-semibold text-text tabular-nums">{n(t.readings)}</b> readings
+            </span>
+            <span aria-hidden>·</span>
+            <span>
+              <b className="font-semibold text-text tabular-nums">{n(t.markets)}</b> markets
+            </span>
+            <span aria-hidden>·</span>
+            <span>
+              <b className="font-semibold text-text tabular-nums">{n(t.hoursSealed)}</b> hours sealed on {data.cluster === "devnet" ? "Solana devnet" : "Solana"}
+            </span>
+            {t.since && (
+              <>
+                <span aria-hidden>·</span>
+                <span>since {dateTime(t.since)}</span>
+              </>
+            )}
+          </p>
 
           <section className="mt-8 rounded-2xl border border-border bg-surface p-5 sm:p-6" aria-labelledby="verify-h">
             <h2 id="verify-h" className="text-xl font-bold tracking-tight">
@@ -148,6 +158,36 @@ export default function ArchivePage() {
             </p>
             <VerifyBox samples={data.samples} />
           </section>
+
+          {/* Games: the odds right before play began, sealed at kickoff */}
+          {data.kickoffs && data.kickoffs.length > 0 && (
+            <section className="mt-8" aria-labelledby="kickoff-h">
+              <h2 id="kickoff-h" className="text-xl font-bold tracking-tight">
+                Sealed at kickoff
+              </h2>
+              <p className="mt-1 text-sm text-text-2">
+                When a tracked game starts, its markets&apos; last readings before play are sealed on their own, so anyone can see exactly what the odds were
+                before kickoff.
+              </p>
+              <ul className="mt-3 divide-y divide-border rounded-2xl border border-border bg-surface">
+                {data.kickoffs.map((k) => (
+                  <li key={k.ticker} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-3 text-sm">
+                    <span className="min-w-0">
+                      <span className="block font-medium">{k.title}</span>
+                      <span className="block text-xs text-text-3">
+                        Started {dateTime(k.startTime)} · {n(k.count)} readings from {dateTime(k.readingTs)}
+                      </span>
+                    </span>
+                    {k.txUrl && (
+                      <a href={k.txUrl} target="_blank" rel="noreferrer" className="shrink-0 font-medium text-accent hover:underline">
+                        ✓ Sealed ↗
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           <section className="mt-8" aria-labelledby="hours-h">
             <div className="flex flex-wrap items-end justify-between gap-2">
@@ -165,19 +205,22 @@ export default function ArchivePage() {
                 <table className="w-full text-sm tabular-nums">
                   <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-text-3">
                     <tr>
-                      <th className="px-4 py-2.5 font-semibold">Hour</th>
-                      <th className="px-4 py-2.5 text-right font-semibold">Readings</th>
-                      <th className="px-4 py-2.5 font-semibold">Fingerprint</th>
-                      <th className="px-4 py-2.5 font-semibold">On Solana</th>
+                      <th className="px-3 py-2.5 font-semibold sm:px-4">Hour</th>
+                      <th className="px-3 py-2.5 sm:px-4 text-right font-semibold">Readings</th>
+                      <th className="hidden px-3 py-2.5 sm:px-4 font-semibold sm:table-cell">Fingerprint</th>
+                      <th className="px-3 py-2.5 sm:px-4 font-semibold">On Solana</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {data.batches.map((b) => (
+                    {data.batches.slice(0, shown).map((b) => (
                       <tr key={b.hourStart}>
-                        <td className="whitespace-nowrap px-4 py-2.5">{hourLabel(b.hourStart)}</td>
-                        <td className="px-4 py-2.5 text-right">{n(b.count)}</td>
-                        <td className="px-4 py-2.5 font-mono text-xs">{short(b.root)}</td>
-                        <td className="whitespace-nowrap px-4 py-2.5">
+                        <td className="px-3 py-2.5 sm:px-4">
+                          <span className="sm:whitespace-nowrap">{hourLabel(b.hourStart)}</span>
+                          <span className="mt-0.5 block font-mono text-[11px] text-text-3 sm:hidden">{short(b.root)}</span>
+                        </td>
+                        <td className="px-3 py-2.5 sm:px-4 text-right">{n(b.count)}</td>
+                        <td className="hidden px-3 py-2.5 sm:px-4 font-mono text-xs sm:table-cell">{short(b.root)}</td>
+                        <td className="whitespace-nowrap px-3 py-2.5 sm:px-4">
                           {b.txUrl ? (
                             <a href={b.txUrl} target="_blank" rel="noreferrer" className="font-medium text-accent hover:underline">
                               ✓ Sealed ↗
@@ -192,6 +235,16 @@ export default function ArchivePage() {
                     ))}
                   </tbody>
                 </table>
+                {shown < data.batches.length && (
+                  <div className="border-t border-border px-4 py-3 text-center">
+                    <button onClick={() => setShown((x) => x + PAGE)} className="text-sm font-medium text-accent hover:underline">
+                      Load {Math.min(PAGE, data.batches.length - shown)} earlier hours
+                    </button>
+                    <span className="ml-2 text-xs text-text-3">
+                      showing {shown} of {data.batches.length}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </section>
