@@ -167,3 +167,10 @@ export function receiptStatuses(): Map<string, { sealed: boolean }> {
   const rows = hedgesDb().prepare(`SELECT hedge_id AS id, signature FROM hedge_receipts`).all() as { id: string; signature: string | null }[];
   return new Map(rows.map((r) => [r.id, { sealed: !!r.signature }]));
 }
+
+/** The latest receipts recorded on Solana: when and the fingerprint only (for public display). */
+export function latestSealedReceipts(limit = 3): { hedgeId: string; sha256: string; sealedAt: number }[] {
+  return hedgesDb()
+    .prepare(`SELECT hedge_id AS hedgeId, sha256, sealed_at AS sealedAt FROM hedge_receipts WHERE signature IS NOT NULL ORDER BY sealed_at DESC LIMIT ?`)
+    .all(limit) as unknown as { hedgeId: string; sha256: string; sealedAt: number }[];
+}

@@ -6,10 +6,12 @@ import { getVenue } from "@/lib/venues";
 import { MarketCarousel } from "./MarketCarousel";
 import { RiskTiles, type CoinRow } from "./RiskTiles";
 import { HowItWorks } from "./HowItWorks";
-import { SolanaPanel, type SealedHour } from "./SolanaPanel";
+import { SolanaPanel, type Seal } from "./SolanaPanel";
 import { Honest } from "./Honest";
 import { Faq } from "./Faq";
 import { HOUR, listBatches } from "@/lib/archive/store";
+import { listKickoffSeals } from "@/lib/archive/kickoff-store";
+import { latestSealedReceipts } from "@/lib/hedges/store";
 
 export const revalidate = 60;
 
@@ -55,23 +57,35 @@ function coinRows(cards: BoardCard[]): CoinRow[] {
     }));
 }
 
-/** How it works, last step: the latest hours sealed on Solana, shown as receipts. */
-function sealedHours(): SealedHour[] {
+/**
+ * How it works, last step: recent seals on Solana, one of each kind when there is one (a
+ * hedge receipt, a kickoff, an hour of odds), topped up with the latest hours. Hedge
+ * receipts show only when and their fingerprint, never what was hedged.
+ */
+function recentSeals(): Seal[] {
+  const f = (ms: number, o: Intl.DateTimeFormatOptions) => new Date(ms).toLocaleString("en-US", { timeZone: "America/New_York", ...o });
+  const short = (h: string) => `${h.slice(0, 6)}…${h.slice(-4)}`;
+  const seals: Seal[] = [];
   try {
-    return listBatches(10)
-      .filter((b) => b.signature)
-      .slice(0, 3)
-      .map((b) => {
-        const f = (ms: number, o: Intl.DateTimeFormatOptions) => new Date(ms).toLocaleString("en-US", { timeZone: "America/New_York", ...o });
-        return {
-          label: `${f(b.hourStart, { month: "short", day: "numeric", hour: "numeric" })}–${f(b.hourStart + HOUR, { hour: "numeric" })} ET`,
-          readings: b.count,
-          root: `${b.root.slice(0, 6)}…${b.root.slice(-4)}`,
-        };
+    const [r] = latestSealedReceipts(1);
+    if (r) seals.push({ kind: "hedge", label: `${f(r.sealedAt, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} ET`, detail: "An approved hedge", fingerprint: short(r.sha256) });
+  } catch {}
+  try {
+    const [k] = listKickoffSeals(1);
+    if (k) seals.push({ kind: "kickoff", label: k.title, detail: `${k.count.toLocaleString("en-US")} readings before the start`, fingerprint: short(k.root) });
+  } catch {}
+  try {
+    for (const b of listBatches(10).filter((x) => x.signature)) {
+      if (seals.length >= 3) break;
+      seals.push({
+        kind: "hour",
+        label: `${f(b.hourStart, { month: "short", day: "numeric", hour: "numeric" })}–${f(b.hourStart + HOUR, { hour: "numeric" })} ET`,
+        detail: `${b.count.toLocaleString("en-US")} readings`,
+        fingerprint: short(b.root),
       });
-  } catch {
-    return [];
-  }
+    }
+  } catch {}
+  return seals;
 }
 
 export default async function Home() {
@@ -124,7 +138,7 @@ export default async function Home() {
         <HowItWorks steps={steps(cards)} />
 
         {/* Every price is checkable: the Solana archive, as the last part of how it works */}
-        <SolanaPanel hours={sealedHours()} />
+        <SolanaPanel seals={recentSeals()} />
       </section>
 
       </div>

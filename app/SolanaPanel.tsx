@@ -1,14 +1,18 @@
 import Link from "next/link";
 
-// "And every price is checkable": the odds archive panel, in Solana's colors (near-black,
+// "And it's all checkable": what Hedgehog seals on Solana (each hour of odds, the odds at
+// each game's kickoff, and a receipt for every hedge), in Solana's colors (near-black,
 // purple → green gradient) with a few twinkling sparkles and a light sweep over the newest
-// sealed hour. Motion stops for reduced-motion users (globals.css).
+// seal. Motion stops for reduced-motion users (globals.css).
 
-export interface SealedHour {
-  label: string;
-  readings: number;
-  root: string;
+export interface Seal {
+  kind: "hour" | "kickoff" | "hedge";
+  label: string; // "Nov 20, 4–5 AM ET", "Minnesota vs Oklahoma State", "Nov 20, 12:03 AM ET"
+  detail: string; // "4,913 readings", "Odds at kickoff · 6 readings", "Approved hedge"
+  fingerprint: string; // shortened hash
 }
+
+const KIND: Record<Seal["kind"], string> = { hour: "Hour of odds", kickoff: "Odds at kickoff", hedge: "Hedge receipt" };
 
 const SOL_GRADIENT = "linear-gradient(90deg, #9945FF 0%, #19FB9B 100%)";
 
@@ -32,28 +36,29 @@ function Sparkle({ size, color }: { size: number; color: string }) {
   );
 }
 
-function Receipts({ hours }: { hours: SealedHour[] }) {
-  if (!hours.length) return <p className="text-sm text-white/70">The first hour is sealed shortly after recording starts.</p>;
+function Receipts({ seals }: { seals: Seal[] }) {
+  if (!seals.length) return <p className="text-sm text-white/70">The first hour is sealed shortly after recording starts.</p>;
   return (
     <ul className="relative mx-auto flex w-full max-w-[360px] flex-col gap-3">
-      {hours.map((h, k) => (
+      {seals.map((h, k) => (
         <li
-          key={h.label}
+          key={h.kind + h.label}
           // Gradient border: a 1px gradient frame around a dark card.
           className="rounded-xl p-px"
           style={{ background: SOL_GRADIENT, opacity: 1 - k * 0.25, transform: `scale(${1 - k * 0.03})` }}
         >
           <div className="relative overflow-hidden rounded-[11px] bg-[#16121f] px-4 py-3">
             {k === 0 && <span className="hh-sweep pointer-events-none absolute inset-y-0 -left-1/3 w-1/3" aria-hidden />}
-            <div className="flex items-center justify-between gap-2 text-[13px]">
-              <span className="font-medium text-white">{h.label}</span>
-              <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold text-[#0e0b16]" style={{ background: SOL_GRADIENT }}>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-white/50">{KIND[h.kind]}</p>
+            <div className="mt-0.5 flex items-center justify-between gap-2 text-[13px]">
+              <span className="min-w-0 truncate font-medium text-white">{h.label}</span>
+              <span className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold text-[#0e0b16]" style={{ background: SOL_GRADIENT }}>
                 ✓ Sealed on Solana
               </span>
             </div>
             <p className="mt-1 flex justify-between font-mono text-[11px] text-white/55">
-              <span>{h.readings.toLocaleString("en-US")} readings</span>
-              <span>{h.root}</span>
+              <span className="truncate">{h.detail}</span>
+              <span className="shrink-0 pl-2">{h.fingerprint}</span>
             </p>
           </div>
         </li>
@@ -62,7 +67,7 @@ function Receipts({ hours }: { hours: SealedHour[] }) {
   );
 }
 
-export function SolanaPanel({ hours }: { hours: SealedHour[] }) {
+export function SolanaPanel({ seals }: { seals: Seal[] }) {
   return (
     <div className="relative mt-10 overflow-hidden rounded-2xl bg-[#0e0b16] p-5 sm:mt-14 text-white sm:p-8">
       {/* Soft glows in the two Solana colors */}
@@ -76,23 +81,22 @@ export function SolanaPanel({ hours }: { hours: SealedHour[] }) {
 
       <div className="relative grid items-center gap-8 md:grid-cols-2">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-white/60">And every price is checkable</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-white/60">And it&apos;s all checkable</p>
           <h3 className="mt-2 text-2xl font-medium tracking-[-0.02em]">
-            Recorded every 5 minutes,{" "}
+            The odds, every kickoff and your hedge,{" "}
             <span className="bg-clip-text text-transparent" style={{ backgroundImage: SOL_GRADIENT }}>
               sealed on Solana
-            </span>{" "}
-            every hour
+            </span>
           </h3>
           <p className="mt-2 text-white/70">
-            Gemini shows today&apos;s odds but keeps no history. Hedgehog records it and puts a fingerprint of each hour on Solana, so anyone can check a price
-            hasn&apos;t been changed since.
+            Gemini shows today&apos;s odds but keeps no history. Hedgehog records them every 5 minutes and seals each hour, seals each game&apos;s odds the
+            moment it kicks off, and gives every hedge you approve a receipt sealed right then. Anyone can check none of it was changed afterward.
           </p>
           <Link href="/archive" className="group mt-4 inline-block text-sm font-medium text-[#19FB9B]">
             See the odds archive <span className="inline-block transition group-hover:translate-x-0.5">→</span>
           </Link>
         </div>
-        <Receipts hours={hours} />
+        <Receipts seals={seals} />
       </div>
     </div>
   );

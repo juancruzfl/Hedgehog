@@ -102,7 +102,8 @@ const FAQS: { q: string; a: React.ReactNode }[] = [
       <>
         You don&apos;t have to do anything. Every hour, Hedgehog takes a fingerprint of all the prices it recorded and stamps it onto Solana, a public
         record that nobody can edit afterward, a bit like a notarized timestamp. It means anyone can check that a price Hedgehog showed you is the real one
-        from that moment and hasn&apos;t been changed since.
+        from that moment and hasn&apos;t been changed since. Hedgehog also seals each game&apos;s odds the moment it kicks off, and every hedge you approve
+        gets its own sealed receipt with a Verify button, so you can prove you hedged at those odds, at that time.
       </>
     ),
   },
