@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { apiSignInRequired } from "@/lib/auth/guard";
 import { z } from "zod";
 import { impliedMedian } from "@/lib/business/analyze";
 import { buildDownsideLadder, buildUpsideLadder, payoffCurve, sizeEventHedge } from "@/lib/engine/sizer";
@@ -18,6 +19,8 @@ const Body = z.object({
 
 // Deterministic sizing against live prices. No AI; safe to call on every slider move.
 export async function POST(req: NextRequest) {
+  const denied = await apiSignInRequired(req);
+  if (denied) return denied;
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   const b = parsed.data;

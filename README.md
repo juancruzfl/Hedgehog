@@ -43,6 +43,8 @@ Hedgehog has two sign-in modes (`lib/auth/mode.ts`):
 
 Roles (crypto, business or both) are stored on the session (`lib/auth/roles.ts`, `POST /api/account/roles`).
 
+**Protected pages.** `/markets`, `/crypto`, `/business` and `/positions` need a signed-in session with at least one role. `middleware.ts` (Node runtime) checks the session before anything renders: signed out goes to the landing page with "Connect your Gemini account to continue" and returns to the same page after connecting; signed in without roles goes to `/welcome`. Each page's layout repeats the check, and the API routes behind them (placing hedges, positions, the business analysis) return 401 without a session (`lib/auth/guard.ts`). The landing page, past promos, the archive, hedge receipts and the legal pages stay public. Redirects use `APP_URL`, since behind Railway's proxy the request's own address is internal.
+
 ## How it uses the Gemini Prediction Markets API
 
 | Endpoint | Used for |

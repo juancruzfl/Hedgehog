@@ -174,7 +174,11 @@ async function fresh(s: GeminiSession): Promise<GeminiSession | null> {
 
 /** The signed-in Gemini session for this request, refreshed if its access token is about to expire. */
 export async function getSession(req: NextRequest): Promise<GeminiSession | null> {
-  const id = req.cookies.get(SESSION_COOKIE)?.value;
+  return sessionFromCookie(req.cookies.get(SESSION_COOKIE)?.value);
+}
+
+/** The same, from the session cookie's value (server components read it with cookies()). */
+export async function sessionFromCookie(id: string | undefined): Promise<GeminiSession | null> {
   if (!id) return null;
   const s = load(hashId(id));
   return s ? fresh(s) : null;

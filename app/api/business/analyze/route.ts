@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
+import { apiSignInRequired } from "@/lib/auth/guard";
 import { aiErrorMessage, aiOff, getAI } from "@/lib/ai";
 import { OFF_TOPIC_MESSAGE, screenInput, takeDailyAI, takeVisit, visitorId } from "@/lib/ai/guard";
 import { analyzeRisk, type StepEvent } from "@/lib/business/analyze";
@@ -36,6 +37,8 @@ const Body = z.object({ text: z.string().trim().min(10).max(2000) });
  * Uses the AI provider; if it's unavailable, falls back to Hedgehog's basic matcher.
  */
 export async function POST(req: NextRequest) {
+  const denied = await apiSignInRequired(req);
+  if (denied) return denied;
   const parsed = Body.safeParse(await req.json().catch(() => null));
   const encoder = new TextEncoder();
 

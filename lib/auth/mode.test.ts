@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { NextRequest } from "next/server";
+import { apiSignInRequired } from "./guard";
 import { signInMode } from "./mode";
 import { SESSION_COOKIE, createSandboxSession, geminiClientFor, getSession } from "./session";
 
@@ -39,5 +40,15 @@ describe("sandbox sign-in (OAuth approval pending)", () => {
     const id = createSandboxSession(null);
     vi.stubEnv("GEMINI_SIGN_IN", "");
     expect(await getSession(reqWith(id))).toBeNull();
+  });
+
+  it("API routes behind the product pages need a signed-in session", async () => {
+    const id = createSandboxSession(null);
+    const withCookie = reqWith(id);
+    const without = reqWith();
+    expect(await apiSignInRequired(withCookie)).toBeNull();
+    const denied = (await apiSignInRequired(without))!;
+    expect(denied.status).toBe(401);
+    expect(await denied.json()).toMatchObject({ needsConnect: true });
   });
 });

@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { apiSignInRequired } from "@/lib/auth/guard";
 import { SIGN_IN_EXPIRED, geminiClientFor, isSignInExpired } from "@/lib/auth/session";
 import { ApprovedHedge, executeHedge, executionMode } from "@/lib/hedges/execute";
 import { GeminiAdapter } from "@/lib/venues/gemini/adapter";
@@ -6,6 +7,8 @@ import { getVenue } from "@/lib/venues";
 
 // POST: place the orders for a hedge the user explicitly approved.
 export async function POST(req: NextRequest) {
+  const denied = await apiSignInRequired(req);
+  if (denied) return denied;
   const parsed = ApprovedHedge.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid hedge", issues: parsed.error.issues }, { status: 400 });
   // Live orders go to the signed-in user's own Gemini account; paper fills need no account.
