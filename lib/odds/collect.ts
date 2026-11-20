@@ -8,7 +8,15 @@ import type { Market } from "@/lib/types";
 import { upsertGames } from "@/lib/archive/kickoff-store";
 import { isCoreMarket, pickGames, withParent } from "./sports";
 
-const categories = () => (process.env.ODDS_CATEGORIES ?? "Crypto,Commodities,Weather").split(",");
+const categories = () => (process.env.ODDS_CATEGORIES ?? "Crypto,Commodities,Weather,Sports").split(",");
+
+/**
+ * Sports has hundreds of child markets per game (spreads, totals, props). Only the game
+ * winner (moneyline, ticker ending "-M") is recorded for every game: it's what promos are
+ * tied to, and it's what the past-promo look-back needs. Other game markets are recorded
+ * once someone looks at them (the watch list).
+ */
+export const keepCollected = (m: Market): boolean => m.category !== "Sports" || /-M$/.test(m.id);
 const client = () => GeminiClient.fromEnv();
 
 /** Every active event in a category, raw (volume and start time live on the event). */
@@ -26,7 +34,7 @@ async function fetchEvents(category: string): Promise<GeminiEvent[]> {
   return out;
 }
 
-const fetchAll = async (category: string): Promise<Market[]> => (await fetchEvents(category)).flatMap(toMarkets);
+const fetchAll = async (category: string): Promise<Market[]> => (await fetchEvents(category)).flatMap(toMarkets).filter(keepCollected);
 
 /**
  * Sports games worth recording before anyone opens them (lib/odds/sports.ts), as markets

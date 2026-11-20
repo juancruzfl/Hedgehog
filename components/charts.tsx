@@ -6,6 +6,7 @@ import {
   CartesianGrid,
   Line,
   LineChart,
+  ReferenceDot,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -422,6 +423,67 @@ export function MarketChart({ lines }: { lines: MarketLine[] }) {
           <span className="ml-auto font-semibold text-text">{pct(l.prob)}</span>
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Past-promo look-back: the chance the promo would kick in, over the record. A dot marks the
+ * price the hedge would have been bought at; a dashed line marks when it started counting.
+ */
+export function LookbackChart({
+  data,
+  boughtAt,
+  cutoff,
+  cutoffLabel,
+}: {
+  data: { ts: number; yes: number }[];
+  boughtAt: number;
+  cutoff: number;
+  cutoffLabel: string;
+}) {
+  const bought = data.find((p) => p.ts === boughtAt);
+  const t0 = data[0]?.ts ?? 0;
+  const t1 = data.at(-1)?.ts ?? 0;
+  const { ticks, stepH } = timeTicks(t0, t1);
+  const tickFmt = (ts: number) => {
+    const d = new Date(ts);
+    return stepH >= 24 || (d.getHours() === 0 && d.getMinutes() === 0)
+      ? d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+      : d.toLocaleTimeString("en-US", { hour: "numeric" });
+  };
+  return (
+    <div className="h-56 w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} margin={{ top: 18, right: 16, bottom: 4, left: 0 }}>
+          <CartesianGrid stroke={C.grid} vertical={false} />
+          <XAxis dataKey="ts" type="number" scale="time" domain={[t0, t1]} ticks={ticks} tick={axisTick} tickFormatter={tickFmt} stroke={C.grid} interval="preserveStartEnd" minTickGap={24} />
+          <YAxis tick={axisTick} tickFormatter={(v) => pct(v)} stroke={C.grid} width={44} domain={[0, 1]} ticks={[0, 0.25, 0.5, 0.75, 1]} />
+          {cutoff >= t0 && cutoff <= t1 && (
+            <ReferenceLine
+              x={cutoff}
+              stroke={C.text3}
+              strokeDasharray="3 4"
+              label={{ value: cutoffLabel, position: "insideTopRight", fill: "var(--text-2)", fontSize: 11 }}
+            />
+          )}
+          <Tooltip
+            cursor={{ stroke: C.text3, strokeWidth: 1 }}
+            content={({ active, payload }) => {
+              const p = payload?.[0]?.payload as { ts: number; yes: number } | undefined;
+              if (!active || !p) return null;
+              return (
+                <TooltipBox>
+                  <div className="text-text-3">{dateTime(p.ts)}</div>
+                  <div className="font-medium">{pct(p.yes, 1)} chance</div>
+                </TooltipBox>
+              );
+            }}
+          />
+          <Line type="monotone" dataKey="yes" stroke={C.accent} strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface)" }} isAnimationActive={false} />
+          {bought && <ReferenceDot x={bought.ts} y={bought.yes} r={6} fill={C.accent} stroke="var(--surface)" strokeWidth={2} />}
+        </LineChart>
+      </ResponsiveContainer>
     </div>
   );
 }
