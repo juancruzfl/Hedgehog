@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 
 /**
  * Popup used for building a hedge. Opens as soon as it mounts and closes via ✕, Esc or a click
- * on the backdrop. It's centered on desktop and a bottom sheet on phones. The header stays
+ * on the backdrop. It's centered on every screen size. The header stays
  * put while the body scrolls, and the page behind it doesn't move.
  */
 export function Sheet({
@@ -47,7 +47,7 @@ export function Sheet({
       }}
       // A click that lands on the dialog element itself (not its content) is the backdrop.
       onClick={(e) => e.target === e.currentTarget && onClose()}
-      className="hh-sheet fixed inset-x-0 bottom-0 top-auto m-0 flex max-h-[92dvh] w-full max-w-none flex-col overflow-hidden rounded-t-2xl border border-border bg-surface p-0 text-text sm:inset-0 sm:m-auto sm:max-h-[min(88dvh,60rem)] sm:w-[min(52rem,calc(100vw-3rem))] sm:rounded-2xl"
+      className="hh-sheet fixed inset-0 m-auto flex h-fit max-h-[calc(100svh-2rem)] w-[calc(100vw-1.5rem)] max-w-none flex-col overflow-hidden rounded-2xl border border-border bg-surface p-0 text-text sm:max-h-[min(calc(100svh-3rem),60rem)] sm:w-[min(52rem,calc(100vw-3rem))]"
     >
       <header className="flex items-start gap-3 border-b border-border px-5 py-4 sm:px-6">
         {icon}

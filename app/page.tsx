@@ -93,7 +93,7 @@ export default async function Home() {
           <br />
           in your favor?
         </h1>
-        <p className="mx-auto mt-3 max-w-2xl text-lg text-text-2">
+        <p className="mx-auto mt-3 max-w-2xl text-base text-text-2 sm:text-lg">
           See how likely the things that could cost you are, and cushion the hit before it happens. Pick any risk to see the numbers.
         </p>
         </div>
@@ -103,20 +103,20 @@ export default async function Home() {
       </section>
 
       {/* Where to start: three tiles, Ramp-style */}
-      <section className="flex flex-col justify-center py-16 md:min-h-svh" aria-labelledby="start-title">
+      <section className="flex flex-col justify-center py-12 md:min-h-svh md:py-16" aria-labelledby="start-title">
         <div className="text-center">
           <h2 id="start-title" className="text-3xl font-medium tracking-[-0.02em] sm:text-[44px] sm:leading-tight">
             What could hurt you?
           </h2>
           <p className="mt-2 text-text-2">Pick where to start. It takes about a minute, and nothing happens without your OK.</p>
         </div>
-        <div className="mt-10">
+        <div className="mt-6 sm:mt-10">
           <RiskTiles coins={coinRows(cards)} />
         </div>
       </section>
 
       {/* How it works, with a real example */}
-      <section className="flex flex-col justify-center py-16 md:min-h-svh" aria-labelledby="how-title">
+      <section className="flex flex-col justify-center py-12 md:min-h-svh md:py-16" aria-labelledby="how-title">
         <h2 id="how-title" className="text-center text-3xl font-medium tracking-[-0.02em] sm:text-[44px] sm:leading-tight">
           How it works
         </h2>

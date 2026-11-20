@@ -83,12 +83,15 @@ function Row({
       <button
         onClick={onToggle}
         aria-expanded={open}
-        className={`grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-4 text-left transition hover:bg-surface-2/60 ${COLS} ${open ? "bg-surface-2/50" : ""}`}
+        className={`grid w-full grid-cols-[minmax(0,1fr)_auto_1rem] items-center gap-3 px-4 py-3.5 text-left md:gap-4 md:px-5 md:py-4 transition hover:bg-surface-2/60 ${COLS} ${open ? "bg-surface-2/50" : ""}`}
       >
         <span className="min-w-0">
           <span className="block font-medium">{title}</span>
           <span className="block truncate text-xs text-text-3">{sub}</span>
-          <span className="mt-1 flex flex-wrap gap-1.5 md:hidden">{match}</span>
+          <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 md:hidden">
+            {match}
+            <span className="text-xs tabular-nums text-text-2">{odds}</span>
+          </span>
         </span>
         <span className="hidden md:block">{match}</span>
         <span className="hidden text-right text-sm tabular-nums text-text-2 md:block">{odds}</span>
@@ -100,21 +103,21 @@ function Row({
             </span>
           ))}
         </span>
-        <span className="hidden justify-end md:flex">
+        <span className="flex justify-end">
           <Chevron open={open} />
         </span>
       </button>
-      {open && <div className="border-t border-border bg-surface-2/40 px-5 py-5 sm:px-6">{children}</div>}
+      {open && <div className="border-t border-border bg-surface-2/40 px-4 py-5 sm:px-6">{children}</div>}
     </div>
   );
 }
 
 function Header({ first }: { first: string }) {
   return (
-    <div className={`hidden gap-4 border-b border-border bg-surface-2 px-5 py-2 text-xs text-text-3 md:grid ${COLS}`}>
+    <div className={`grid grid-cols-[minmax(0,1fr)_auto_1rem] gap-3 border-b border-border bg-surface-2 px-4 py-2 text-xs text-text-3 md:gap-4 md:px-5 ${COLS}`}>
       <span>{first}</span>
-      <span>Match</span>
-      <span className="text-right">Market odds</span>
+      <span className="hidden md:block">Match</span>
+      <span className="hidden text-right md:block">Market odds</span>
       <span className="text-right">You pay</span>
       <span />
     </div>

@@ -249,12 +249,12 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
         className={`transition-opacity ease-out motion-reduce:transition-none ${phase === "finishing" ? "opacity-0" : "opacity-100"}`}
         style={{ transitionDuration: `${FADE_MS}ms`, transitionDelay: phase === "finishing" ? "500ms" : "0ms" }}
       >
-        <div className="hh-fade-in flex min-h-[calc(100dvh-4rem)] flex-col items-center justify-center py-10">
+        <div className="hh-fade-in flex min-h-[calc(100svh-4rem)] flex-col items-center pb-10 pt-8 sm:justify-center sm:py-10">
           <p className="text-sm font-semibold text-accent">Working on your risk</p>
-          <blockquote className="mt-2 max-w-2xl text-center text-text-2">
+          <blockquote className="mt-2 max-w-2xl text-center text-[15px] text-text-2 sm:text-base">
             &ldquo;{text.trim().length > 180 ? text.trim().slice(0, 180) + "…" : text.trim()}&rdquo;
           </blockquote>
-          <div className="mt-10 w-full max-w-2xl">
+          <div className="mt-6 w-full max-w-2xl sm:mt-10">
             <FocusSteps steps={steps} />
           </div>
         </div>
@@ -337,7 +337,7 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
         {/* A clear way back to the chat box, with what they typed still in it */}
         <button
           onClick={() => editRisk()}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-border bg-surface px-3.5 py-2 text-sm font-semibold text-text shadow-sm hover:border-accent hover:text-accent"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-1.5 text-[13px] font-semibold text-text shadow-sm hover:border-accent hover:text-accent sm:px-3.5 sm:py-2 sm:text-sm"
         >
           <svg
             viewBox="0 0 24 24"
@@ -355,7 +355,7 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
           Edit my risk
         </button>
       </div>
-      <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl [@media(max-height:800px)]:text-3xl">
+      <h1 className="mt-3 text-[28px] font-bold leading-tight tracking-tight sm:mt-1 sm:text-4xl [@media(max-height:800px)]:sm:text-3xl">
         {profile.headline ?? profile.condition}
       </h1>
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-text-2">
@@ -493,7 +493,7 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
           followUps={followUps}
         />
       ) : (
-        <div className="py-8">
+        <div className="py-6 sm:py-8">
           {header}
           <h2 className="mb-3 mt-8 text-sm font-semibold text-text-2">
             {analysis.type === "event" ? `${analysis.matches.length} way${analysis.matches.length > 1 ? "s" : ""} to hedge it` : "Your option"}

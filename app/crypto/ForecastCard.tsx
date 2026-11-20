@@ -127,15 +127,15 @@ export function ForecastCard({
             <p className="text-sm font-semibold">Smaller and bigger drops</p>
             <ul className="mt-2 min-h-[5.25rem] space-y-2.5">
               {ladder.map((p) => (
-                <li key={p.symbol} className="grid grid-cols-[7.5rem_1fr_3rem] items-center gap-3 text-sm sm:grid-cols-[9rem_1fr_3rem_5rem]">
-                  <span className="tabular-nums">
+                <li key={p.symbol} className="grid grid-cols-[7.25rem_1fr_2.25rem_4.5rem] items-center gap-2 text-sm sm:grid-cols-[9rem_1fr_3rem_5rem] sm:gap-3">
+                  <span className="whitespace-nowrap tabular-nums">
                     −{pct(p.drop)} <span className="text-text-3">· {usd(p.strike)}</span>
                   </span>
                   <span className="h-2.5 overflow-hidden rounded-full bg-surface-2" aria-hidden>
                     <span className="block h-full rounded-full bg-accent" style={{ width: `${Math.max(2, p.probBelow * 100)}%` }} />
                   </span>
                   <span className="text-right font-semibold tabular-nums">{pct(p.probBelow)}</span>
-                  <span className="hidden text-right text-text-2 tabular-nums sm:block">−{usd(p.lossAtStrike)}</span>
+                  <span className="text-right text-text-2 tabular-nums">−{usd(p.lossAtStrike)}</span>
                 </li>
               ))}
               {ladder.length < 2 && <li className="text-sm text-text-3">Gemini lists only this price level for this date.</li>}

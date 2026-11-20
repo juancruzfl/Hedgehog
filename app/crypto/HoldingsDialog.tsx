@@ -246,7 +246,7 @@ export function HoldingsDialog({
         onClose();
       }}
       aria-labelledby="holdings-title"
-      className="m-auto w-[min(640px,calc(100vw-2rem))] max-h-[calc(100vh-2rem)] overflow-y-auto rounded-2xl border border-border bg-surface p-0 text-text"
+      className="m-auto w-[min(640px,calc(100vw-2rem))] max-h-[calc(100svh-2rem)] overflow-y-auto rounded-2xl border border-border bg-surface p-0 text-text"
     >
       <div className="p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">

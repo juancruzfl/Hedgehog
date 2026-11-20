@@ -50,7 +50,8 @@ export interface StageItem {
  * A header, one card and a chip row, pinned together as one view. Scrolling doesn't
  * move the view; it swaps the card in place (current slides up and out, next slides up
  * in). After the last card the page continues normally. Phones/short windows and a
- * single item get a normal layout. Used by the crypto markets and business options.
+ * single item get a normal layout, and phones get the same header, card and chip row with a
+ * tap on a chip switching the card (no scroll-jacking on touch screens).
  */
 export function PinnedStage({
   header,
@@ -75,6 +76,7 @@ export function PinnedStage({
   const stage = useRef<HTMLDivElement>(null);
   const inner = useRef(new Map<string, HTMLDivElement>());
   const [index, setIndex] = useState(0);
+  const [tab, setTab] = useState(0); // phones: the card picked with the chips
   const [fit, setFit] = useState<Record<string, { scale: number; maxH: number }>>({});
   const [rowTop, setRowTop] = useState<number | null>(null);
   const [uniformH, setUniformH] = useState<number | null>(null);
@@ -225,6 +227,38 @@ export function PinnedStage({
   const cardEls = useMemo(() => items.map((_, i) => renderCard(i, true)), [items, renderCard]);
   const jumpRef = useRef(jumpTo);
   jumpRef.current = jumpTo;
+
+  // Phones: the desktop view without the pinning: header for the card on screen, the chip
+  // row, then that one card. The chips sit above the card so they're in reach.
+  if (!pinned && n > 1) {
+    const t = Math.min(tab, n - 1);
+    return (
+      <div className="pt-6">
+        {typeof header === "function" ? header(t) : header}
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <nav aria-label="Switch card" className="flex flex-wrap items-center gap-2">
+            {items.map((it, i) => (
+              <button
+                key={it.key}
+                onClick={() => setTab(i)}
+                aria-current={i === t}
+                aria-label={`Show ${it.label}`}
+                className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
+                  i === t ? "border-accent bg-surface text-text" : "border-border bg-surface/60 text-text-3 hover:text-text"
+                }`}
+              >
+                {it.chip}
+              </button>
+            ))}
+          </nav>
+          {status && <span className="text-xs text-text-3">{status}</span>}
+        </div>
+        <div key={items[t].key} className="hh-swap-in mt-4">
+          {renderCard(t, true)}
+        </div>
+      </div>
+    );
+  }
 
   if (!pinned) {
     return (

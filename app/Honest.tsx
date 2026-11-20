@@ -75,18 +75,18 @@ const ITEMS: { text: string; color: string; icon: React.ReactNode }[] = [
 
 export function Honest() {
   return (
-    <section className="flex flex-col justify-center bg-surface-2 py-20 md:min-h-svh" aria-labelledby="honest-title">
+    <section className="flex flex-col justify-center bg-surface-2 py-14 md:min-h-svh md:py-20" aria-labelledby="honest-title">
       <div className="mx-auto w-full max-w-5xl px-4">
         <h2 id="honest-title" className="text-center text-3xl font-medium tracking-[-0.02em] sm:text-[44px] sm:leading-tight">
           Honest by design
         </h2>
-        <p className="mx-auto mt-4 max-w-2xl text-center text-lg text-text-2">
+        <p className="mx-auto mt-4 max-w-2xl text-center text-base text-text-2 sm:text-lg">
           A hedge softens a loss. It doesn&apos;t erase it, and it costs money up front. Hedgehog shows you all of that before you decide.
         </p>
-        <ul className="mt-12 grid gap-4 md:grid-cols-2">
+        <ul className="mt-8 grid grid-cols-2 gap-3 md:mt-12 md:gap-4">
           {ITEMS.map((it) => (
-            <li key={it.text} className="flex items-center gap-4 rounded-lg border border-border bg-surface px-6 py-5 text-[17px]">
-              <svg viewBox="0 0 24 24" className="h-8 w-8 shrink-0" style={{ color: it.color }} aria-hidden {...P}>
+            <li key={it.text} className="flex flex-col items-start gap-3 rounded-lg border border-border bg-surface p-4 text-sm leading-snug md:flex-row md:items-center md:gap-4 md:px-6 md:py-5 md:text-[17px] md:leading-normal">
+              <svg viewBox="0 0 24 24" className="h-7 w-7 shrink-0 md:h-8 md:w-8" style={{ color: it.color }} aria-hidden {...P}>
                 {it.icon}
               </svg>
               {it.text}
