@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { GeminiAccountButton } from "@/components/GeminiAccountButton";
-import { Logo } from "@/components/Logo";
+import { NavMascot } from "@/components/NavMascot";
 
 const links = [
   { href: "/crypto", label: "Crypto" },
@@ -16,9 +16,9 @@ export function Nav() {
   return (
     <header className={`border-b border-border bg-background ${path === "/" ? "" : "sticky top-0 z-20"}`}>
       <nav className="mx-auto flex max-w-6xl items-center gap-0.5 px-4 py-3 text-sm sm:gap-1">
-        {/* The logo alone (no wordmark); the link is named for screen readers */}
+        {/* Wordmark with the hedgehog to its right; it rolls into place on the first visit */}
         <Link href="/" className="-my-1 mr-2 flex items-center sm:mr-4" aria-label="hedgehog home">
-          <Logo className="h-10 w-10 text-text" />
+          <NavMascot />
         </Link>
         {/* Everything else sits on the right */}
         <div className="ml-auto flex items-center gap-0.5 sm:gap-1">
