@@ -7,15 +7,20 @@ import { Logo } from "@/components/Logo";
 import { useAccount } from "@/components/useAccount";
 import { ROLE_INFO } from "@/lib/auth/roles";
 
-// Signed out: just the wordmark and "Connect Gemini account". Signed in: the parts of the
-// app for what they hedge (Crypto, Business or both, picked on /welcome) plus My hedges, and
-// the logo goes to the product's home (trending markets).
+// Everyone: Past promos (the look-back, open to all) and the Gemini button. Signed in: the
+// parts of the app for what they hedge (Crypto, Business or both, picked on /welcome) plus
+// My hedges, and the logo goes to the product's home (trending markets).
 export function Nav() {
   const path = usePathname();
   const account = useAccount();
   const roles = account?.connected ? (account.roles ?? []) : [];
   const ready = account?.connected && roles.length > 0;
-  const links = ready ? [...roles.map((r) => ({ href: ROLE_INFO[r].href, label: ROLE_INFO[r].nav })), { href: "/positions", label: "My hedges" }] : [];
+  // Shorter labels on phones so the bar never pushes the page wider than the screen.
+  const links: { href: string; label: string; short?: string }[] = [
+    ...(ready ? roles.map((r) => ({ href: ROLE_INFO[r].href, label: ROLE_INFO[r].nav })) : []),
+    { href: "/lookback", label: "Past promos", short: "Past" },
+    ...(ready ? [{ href: "/positions", label: "My hedges", short: "Mine" }] : []),
+  ];
 
   return (
     <header className={`border-b border-border bg-background ${path === "/" ? "" : "sticky top-0 z-20"}`}>
@@ -34,7 +39,14 @@ export function Nav() {
               aria-current={path.startsWith(l.href) ? "page" : undefined}
               className={`whitespace-nowrap rounded-lg px-1.5 py-1.5 min-[400px]:px-2 sm:px-3 ${path.startsWith(l.href) ? "bg-surface-2 font-medium text-text" : "text-text-2 hover:text-text"}`}
             >
-              {l.label}
+              {l.short ? (
+                <>
+                  <span className="sm:hidden">{l.short}</span>
+                  <span className="hidden sm:inline">{l.label}</span>
+                </>
+              ) : (
+                l.label
+              )}
             </Link>
           ))}
           {/* Signed in but hasn't said what they hedge yet (e.g. left the picker): a way back to it */}
