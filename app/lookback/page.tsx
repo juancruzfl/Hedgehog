@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { lookback, parseLookbackParams, pastEvents } from "@/lib/lookback/data";
-import { LookbackForm } from "./LookbackForm";
+import { featuredExample, lookback, parseLookbackParams, pastEvents } from "@/lib/lookback/data";
+import { LookbackControls } from "./LookbackControls";
 import { LookbackView } from "./LookbackView";
 import { headline } from "./copy";
 
@@ -15,7 +15,7 @@ export async function generateMetadata({ searchParams }: { searchParams: SP }): 
   const sp = await searchParams;
   const q = parseLookbackParams(sp);
   const base: Metadata = {
-    title: "Past promos · Hedgehog",
+    title: "Were the odds in your favor? · Hedgehog",
     description: "See what hedging a past promo would have saved, using odds recorded by Hedgehog and sealed on Solana.",
   };
   if (!q) return base;
@@ -35,32 +35,33 @@ export async function generateMetadata({ searchParams }: { searchParams: SP }): 
 export default async function LookbackPage({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams;
   const events = await pastEvents().catch(() => []);
-  const q = parseLookbackParams(sp);
-  const result = q ? await lookback(q).catch((e) => ({ error: (e as Error).message })) : null;
+  const asked = parseLookbackParams(sp);
+  // Nothing picked yet: open on a ready-made example instead of an empty form.
+  const featured = asked ? null : await featuredExample().catch(() => null);
+  const q = asked ?? featured?.q ?? null;
+  const result = asked ? await lookback(asked).catch((e) => ({ error: (e as Error).message })) : (featured?.r ?? null);
 
   return (
-    <main className="mx-auto max-w-6xl px-4 pb-16 pt-10">
-      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">What would a hedge have saved?</h1>
+    <main className="mx-auto max-w-6xl px-4 pb-16 pt-8 sm:pt-10">
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Were the odds in your favor?</h1>
       <p className="mt-2 max-w-3xl text-text-2">
-        Pick a promo you ran on a past game or a hot or cold day. Hedgehog looks up the odds it recorded at the time and Gemini&apos;s final result,
-        and shows what offsetting it would have cost and paid back. Every price comes from Hedgehog&apos;s archive, sealed on Solana, so you can check it.
+        See what hedging a promo on a past game or a hot or cold day would have cost and paid back, at the odds Hedgehog recorded at the time. Every price is
+        sealed on Solana, so you can check it.
       </p>
 
-      <div className="mt-8 grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)]">
-        <LookbackForm events={events} initial={q} />
-        <div className="min-w-0">
-          {!result && (
-            <div className="rounded-2xl border border-dashed border-border bg-surface p-6 text-sm text-text-2">
-              <p className="font-medium text-text">How it works</p>
-              <ol className="mt-2 list-decimal space-y-1 pl-5">
-                <li>Pick the game or day your promo depended on, and what would have made it kick in.</li>
-                <li>Say what the promo cost you (or would have) when it kicked in.</li>
-                <li>Hedgehog sizes a hedge that pays that cost back, priced at the odds recorded back then.</li>
-              </ol>
-            </div>
-          )}
+      {/* Phones: the answer first, the controls under it. Wider screens: controls across the top. */}
+      <div className="mt-6 flex flex-col gap-4 sm:mt-8 sm:gap-6">
+        <div className="order-2 sm:order-1">
+          <LookbackControls events={events} initial={q} />
+        </div>
+        <div className="order-1 min-w-0 sm:order-2">
           {result && "error" in result && <p className="rounded-xl bg-bad-soft px-4 py-3 text-sm text-bad">{result.error}</p>}
-          {result && !("error" in result) && <LookbackView r={result} />}
+          {result && !("error" in result) && <LookbackView r={result} example={!asked} />}
+          {!result && (
+            <p className="rounded-2xl border border-dashed border-border bg-surface p-6 text-sm text-text-2">
+              Pick a game or day above to see what a hedge would have done.
+            </p>
+          )}
         </div>
       </div>
     </main>

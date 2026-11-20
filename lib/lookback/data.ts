@@ -160,3 +160,25 @@ export function parseLookbackParams(sp: Record<string, string | string[] | undef
     promo: one("promo").replace(/\s+/g, " ").trim().slice(0, 60),
   };
 }
+
+/**
+ * The page's opening example, so it makes its case before anyone touches a control: the most
+ * recent game where hedging a $3,000 half-price-wings promo the day before would have paid
+ * off, or else the most recent result on record. Cached for ten minutes.
+ */
+export function featuredExample(): Promise<{ q: LookbackQuery; r: LookbackResult } | null> {
+  return swr("lookback-featured", 10 * 60_000, async () => {
+    const games = (await pastEvents()).filter((e) => e.category === "Sports").slice(0, 10);
+    let fallback: { q: LookbackQuery; r: LookbackResult } | null = null;
+    for (const e of games) {
+      for (const c of e.contracts) {
+        const q: LookbackQuery = { marketId: e.id, symbol: c.symbol, promoCost: 3000, when: "day", promo: "Half-price wings" };
+        const r = await lookback(q).catch(() => null);
+        if (!r || "error" in r) continue;
+        if (r.resolution === "yes" && (r.math.saved ?? 0) > 0) return { q, r };
+        fallback ??= { q, r };
+      }
+    }
+    return fallback;
+  });
+}
