@@ -1,10 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
   <!-- Greyish-white tile (the page color) with the black hedgehog, the same on light and dark tabs -->
   <rect width="64" height="64" rx="14" fill="#f2f3f5"/>
-  <g transform="translate(32 32) scale(0.86) translate(-32 -34)">
-    <path d="M9.46 40.85 L2.30 37.94 L9.18 34.56 L3.54 29.71 L11.31 28.56 L7.84 22.33 L15.60 23.53 L14.70 16.64 L21.55 20.06 L23.33 13.30 L28.48 18.55 L32.73 12.70 L35.59 19.17 L41.81 14.91 L42.05 21.85 C46.05 23.35 53 33 57.5 39 C59 41 57.5 43.5 54.5 43.5 C52 43.5 51.5 46 50 49 C46 55.5 38 57 30 57 C19 57 8.96 50 9.46 40.85 Z" stroke="#000000" stroke-width="4.6" stroke-linejoin="round" stroke-linecap="round"/>
-    <path d="M23 57v3.5M38 57v3.5" stroke="#000000" stroke-width="4.6" stroke-linecap="round"/>
-    <circle cx="47" cy="37" r="2.9" fill="#000000"/>
-    <circle cx="57.6" cy="39.4" r="3" fill="#000000"/>
+  <g transform="translate(32 32) scale(0.8) translate(-32 -30.5)">
+    <path d="M18.76 44.74 L8.46 43.41 L11.01 33.78 L6.30 29.61 L12.88 22.65 L9.72 14.97 L18.69 13.66 L19.25 4.22 L27.24 8.65 L32.00 0.40 L36.76 8.65 L44.75 4.22 L45.31 13.66 L54.28 14.97 L51.12 22.65 L57.70 29.61 L52.99 33.78 L55.54 43.41 L45.24 44.74 L40 48 L24 48 Z" fill="#f2f3f5" stroke="#000000" stroke-width="3.6" stroke-linejoin="round"/>
+    <circle cx="20.8" cy="15.4" r="4.2" fill="#f2f3f5" stroke="#000000" stroke-width="3"/>
+    <circle cx="43.2" cy="15.4" r="4.2" fill="#f2f3f5" stroke="#000000" stroke-width="3"/>
+    <path d="M32 12C42.2 12 48.4 18.4 48.4 26.2C48.4 30.6 46.6 33.6 44.8 35.4C47.6 39.4 48.6 44.6 48 49.4C47.2 55 41.6 57.2 32 57.2C22.4 57.2 16.8 55 16 49.4C15.4 44.6 16.4 39.4 19.2 35.4C17.4 33.6 15.6 30.6 15.6 26.2C15.6 18.4 21.8 12 32 12Z" fill="#f2f3f5" stroke="#000000" stroke-width="3.6"/>
+    <circle cx="25.6" cy="24.6" r="3.4" fill="#000000"/>
+    <circle cx="38.4" cy="24.6" r="3.4" fill="#000000"/>
+    <circle cx="26.8" cy="23.4" r="1.1" fill="#f2f3f5"/>
+    <circle cx="39.6" cy="23.4" r="1.1" fill="#f2f3f5"/>
+    <ellipse cx="32" cy="28.6" rx="1.8" ry="1.4" fill="#000000"/>
+    <path d="M29.2 30.6c.7 1.4 2.8 1.4 2.8-.4 0 1.8 2.1 1.8 2.8.4" stroke="#000000" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M21 40.4c-.4 3.6.9 6.4 3.5 7.1M43 40.4c.4 3.6-.9 6.4-3.5 7.1M22.6 56.6c0 2.6 1.6 4 3.8 4s3.8-1.4 3.8-3.6M41.4 56.6c0 2.6-1.6 4-3.8 4s-3.8-1.4-3.8-3.6" stroke="#000000" stroke-width="3" stroke-linecap="round"/>
   </g>
 </svg>

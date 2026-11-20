@@ -18,9 +18,10 @@ export function Nav() {
   return (
     <header className={`border-b border-border bg-background ${path === "/" ? "" : "sticky top-0 z-20"}`}>
       <nav className="mx-auto flex max-w-6xl items-center gap-0.5 px-4 py-3 text-sm sm:gap-1">
-        <Link href="/" className="mr-2 flex items-center gap-2 font-bold tracking-tight sm:mr-4" aria-label="hedgehog home">
-          <span className="hidden text-base sm:inline">hedgehog</span>
-          <Logo className="h-8 w-8 text-text" />
+        {/* Wordmark with the hedgehog to its right (the wordmark is hidden on phones) */}
+        <Link href="/" className="-my-1 mr-2 flex items-center gap-2 sm:mr-4" aria-label="hedgehog home">
+          <span className="hidden text-base font-bold tracking-tight sm:inline">hedgehog</span>
+          <Logo className="h-10 w-10 text-text" />
         </Link>
         {/* Everything else sits on the right */}
         <div className="ml-auto flex items-center gap-0.5 sm:gap-1">
