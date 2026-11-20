@@ -40,21 +40,3 @@ export function Logo({ className = "", strokeWidth = 2.8 }: { className?: string
     </svg>
   );
 }
-
-/** The hedgehog curled up into a spiky ball (for the nav's roll animation). */
-export const HEDGEHOG_BALL =
-  "M32.00 13.00 L38.73 6.89 L41.50 15.55 L50.38 13.62 L48.45 22.50 L57.11 25.27 L51.00 32.00 L57.11 38.73 L48.45 41.50 L50.38 50.38 L41.50 48.45 L38.73 57.11 L32.00 51.00 L25.27 57.11 L22.50 48.45 L13.62 50.38 L15.55 41.50 L6.89 38.73 L13.00 32.00 L6.89 25.27 L15.55 22.50 L13.62 13.62 L22.50 15.55 L25.27 6.89 Z";
-
-export function HedgehogBall({ className = "", strokeWidth = 2.8 }: { className?: string; strokeWidth?: number }) {
-  const fill = "var(--background, #fff)";
-  return (
-    <svg viewBox="0 0 64 64" className={className} aria-hidden fill="none">
-      <g transform="translate(32 32) scale(0.92) translate(-32 -32)">
-        <path d={HEDGEHOG_BALL} fill={fill} stroke="currentColor" strokeWidth={strokeWidth} strokeLinejoin="round" />
-        {/* the tucked-in face: a curve and the tip of the nose, so the spin shows */}
-        <path d="M22.5 37.5c3.5 5 15.5 5 19 0" stroke="currentColor" strokeWidth={strokeWidth * 0.85} strokeLinecap="round" />
-        <ellipse cx="32" cy="35" rx="2.2" ry="1.7" fill="currentColor" />
-      </g>
-    </svg>
-  );
-}

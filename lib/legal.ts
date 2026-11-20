@@ -25,6 +25,4 @@ export const LEGAL_PAGES = [
 export const STORAGE_KEYS = {
   holdings: "hedgehog.holdings.v1",
   notice: "hedgehog.storage-notice.v1",
-  /** sessionStorage: the nav animation already played this visit. */
-  introSeen: "hedgehog.intro-seen.v1",
 } as const;

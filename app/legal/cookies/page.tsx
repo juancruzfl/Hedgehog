@@ -54,14 +54,6 @@ export default function CookiesPage() {
             <td>So the notice doesn&apos;t show again</td>
             <td>Until you clear site data</td>
           </tr>
-          <tr>
-            <td>
-              <code>{STORAGE_KEYS.introSeen}</code>
-            </td>
-            <td>That the logo animation already played</td>
-            <td>So it plays once per visit, not on every page load</td>
-            <td>Until you close the tab (session storage)</td>
-          </tr>
         </tbody>
       </table>
       </div>
