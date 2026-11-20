@@ -1,18 +1,18 @@
-// Hedgehog logo: a front-facing hedgehog drawn as a black line icon (transparent inside),
-// with a crown of spikes, round chipmunk-style cheek pouches tucking into a small chin,
-// two eyes and a nose.
-// Drawn on a 64x64 grid. Color comes from `currentColor` (the nav uses the text color).
+// Hedgehog logo: a chubby, round hedgehog seen side-on (facing right), drawn as a line icon
+// with a row of spikes along its back, a pointed snout with a round nose, an eye and two
+// little feet. Drawn on a 64x64 grid. Color comes from `currentColor` (the nav uses the text color).
 
 export const HEDGEHOG_PATH =
-  "M10.48 35.95 L4.75 33.12 L10.14 29.83 L5.75 25.58 L12.08 23.94 L9.48 18.7 L16.08 18.89 L15.55 13.21 L21.73 15.2 L23.32 9.66 L28.46 13.25 L32 8.44 L35.54 13.25 L40.68 9.66 L42.27 15.2 L48.45 13.21 L47.92 18.89 L54.52 18.7 L51.92 23.94 L58.25 25.58 L53.86 29.83 L59.25 33.12 L53.52 35.95 C59.52 37.95 56.82 54.95 39 55.45 C36.5 55.75 34.5 58.45 32 58.45 C29.5 58.45 27.5 55.75 25 55.45 C7.18 54.95 4.48 37.95 10.48 35.95 Z";
+  "M9.46 40.85 L2.30 37.94 L9.18 34.56 L3.54 29.71 L11.31 28.56 L7.84 22.33 L15.60 23.53 L14.70 16.64 L21.55 20.06 L23.33 13.30 L28.48 18.55 L32.73 12.70 L35.59 19.17 L41.81 14.91 L42.05 21.85 C46.05 23.35 53 33 57.5 39 C59 41 57.5 43.5 54.5 43.5 C52 43.5 51.5 46 50 49 C46 55.5 38 57 30 57 C19 57 8.96 50 9.46 40.85 Z";
 
 export function Logo({ className = "", strokeWidth = 3.4 }: { className?: string; strokeWidth?: number }) {
   return (
     <svg viewBox="0 0 64 64" className={className} aria-hidden fill="none">
       <path d={HEDGEHOG_PATH} stroke="currentColor" strokeWidth={strokeWidth} strokeLinejoin="round" strokeLinecap="round" />
-      <circle cx="24.5" cy="37.5" r="2.4" fill="currentColor" />
-      <circle cx="39.5" cy="37.5" r="2.4" fill="currentColor" />
-      <ellipse cx="32" cy="50" rx="3" ry="2.3" fill="currentColor" />
+      {/* feet */}
+      <path d="M23 57v3.5M38 57v3.5" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" />
+      <circle cx="47" cy="37" r="2.4" fill="currentColor" />
+      <circle cx="57.6" cy="39.4" r="2.6" fill="currentColor" />
     </svg>
   );
 }
