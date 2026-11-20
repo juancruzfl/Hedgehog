@@ -61,7 +61,7 @@ const ITEMS: { text: string; color: string; icon: React.ReactNode }[] = [
     ),
   },
   {
-    text: "Every price is recorded and sealed on Solana, so you can check it",
+    text: "Every price, and every hedge you approve, is sealed on Solana so you can check it",
     color: "#9945FF",
     // Seal badge with a check
     icon: (
