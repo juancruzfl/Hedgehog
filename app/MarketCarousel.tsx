@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { BusinessIcon } from "@/components/BusinessIcon";
 import { CoinIcon } from "@/components/CoinIcon";
-import { MarketChart } from "@/components/charts";
+import { closeLabel, inWords, MarketCard } from "@/components/MarketCard";
 import { usd } from "@/lib/format";
 import type { BoardCard } from "@/lib/landing/board";
 import type { RiskUse } from "@/lib/landing/uses";
@@ -22,13 +22,6 @@ function pickFeatured(cards: BoardCard[]): BoardCard[] {
   return out;
 }
 
-/** "about 1 in 3" / "a coin flip": odds people can picture. */
-function inWords(p: number): string {
-  if (p >= 0.45 && p <= 0.55) return "about a coin flip";
-  if (p > 0.55) return p > 0.8 ? "very likely" : "more likely than not";
-  if (p < 0.03) return "very unlikely";
-  return `about 1 in ${Math.round(1 / p)}`;
-}
 
 // Desktop positions for the four floating risk widgets (corners of the stage), and
 // where each connector line meets them (in % of the stage, matching the widget corner).
@@ -39,101 +32,6 @@ const SPOTS = [
   { pos: "right-6 bottom-0", line: { x: 76, y: 80 }, delay: "-3.6s" },
 ];
 
-/** Gemini-style countdown to the close: "01 : 14 : 26" over DAYS HRS MINS. */
-function Countdown({ to, label }: { to: string; label: string }) {
-  const [now, setNow] = useState<number | null>(null);
-  useEffect(() => {
-    setNow(Date.now());
-    const t = setInterval(() => setNow(Date.now()), 30_000);
-    return () => clearInterval(t);
-  }, []);
-  const left = now === null ? null : Math.max(0, Date.parse(to) - now);
-  const parts = left === null ? ["--", "--", "--"] : [left / 86_400_000, (left / 3_600_000) % 24, (left / 60_000) % 60].map((n) => String(Math.floor(n)).padStart(2, "0"));
-  return (
-    <div className="shrink-0 text-right" aria-label={`${label} ${parts[0]} days ${parts[1]} hours ${parts[2]} minutes`}>
-      <p className="text-[10px] uppercase tracking-wide text-text-3">{label}</p>
-      <div className="mt-0.5 flex gap-2 font-mono tabular-nums">
-        {parts.map((v, k) => (
-          <div key={k} className="text-center">
-            <p className="text-base font-semibold leading-none">{v}</p>
-            <p className="mt-1 text-[9px] uppercase text-text-3">{["Days", "Hrs", "Mins"][k]}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-const closeLabel = (iso: string) =>
-  `${new Date(iso).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} ET`;
-
-function MarketCard({ m }: { m: BoardCard }) {
-  const isGame = m.category === "Sports";
-  const hasHistory = m.lines.some((l) => l.history.length >= 3);
-  return (
-    <div className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
-      {/* Header: icon, question, countdown */}
-      <div className="flex items-start gap-3">
-        {["BTC", "ETH", "SOL"].includes(m.badge) ? (
-          <CoinIcon asset={m.badge} size="lg" />
-        ) : (
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-text text-[11px] font-bold tracking-wide text-surface">{m.badge}</span>
-        )}
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium text-text-3">{m.tabLabel}</p>
-          <h2 className="text-xl font-semibold leading-snug sm:text-2xl">{m.question}</h2>
-        </div>
-        <div className="hidden sm:block">
-          <Countdown to={m.closes} label={isGame ? "Kickoff in" : "Closes in"} />
-        </div>
-      </div>
-
-      {/* Current figure and the featured chance */}
-      <div className="mt-4 flex items-end justify-between gap-4">
-        <div>
-          {m.spot ? (
-            <>
-              <p className="text-xs text-text-3">{m.spot.label}</p>
-              <p className="text-lg font-semibold tabular-nums">{m.spot.value}</p>
-            </>
-          ) : (
-            <>
-              <p className="text-xs text-text-3">Kickoff</p>
-              <p className="text-lg font-semibold">{closeLabel(m.closes)}</p>
-            </>
-          )}
-        </div>
-        <div className="text-right">
-          <p className="text-4xl font-medium tabular-nums tracking-tight text-accent">{Math.round(m.prob * 100)}%</p>
-          <p className="text-xs text-text-2">chance · {inWords(m.prob)}</p>
-        </div>
-      </div>
-
-      {/* Chart: each level's chance over time, current chance pinned on the right */}
-      <div className="mt-3">
-        {hasHistory ? (
-          <MarketChart lines={m.lines.map((l) => ({ key: l.key, label: l.label, prob: l.prob, data: l.history, featured: l.featured }))} />
-        ) : (
-          <p className="rounded-xl bg-surface-2 px-4 py-6 text-center text-sm text-text-2">Hedgehog starts charting this market once it has a few readings.</p>
-        )}
-      </div>
-
-      {/* Footer: close time, what it costs */}
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-border pt-3 text-xs text-text-2">
-        <span className="flex items-center gap-1.5">
-          <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-            <rect x="2.5" y="3.5" width="11" height="10" rx="1.5" />
-            <path d="M2.5 6.5h11M5.5 2v3M10.5 2v3" />
-          </svg>
-          {isGame ? "Settles after the game" : `Closes ${closeLabel(m.closes)}`}
-        </span>
-        <span className="tabular-nums">
-          Costs <b className="text-text">{m.cost !== null ? `${Math.round(m.cost * 100)}¢` : "—"}</b> per $1 · pays <b className="text-text">$1</b> if it happens
-        </span>
-      </div>
-    </div>
-  );
-}
 
 /** A tiny line of the featured level's chance over time, with the current reading as a dot. */
 function Sparkline({ data, prob }: { data: { ts: number; p: number }[]; prob: number }) {

@@ -33,7 +33,9 @@ export async function GET(req: NextRequest) {
       account = a.users?.[0]?.name ?? a.account?.accountName ?? null;
     } catch {}
     const id = createSession(cfg.env, tokens, account);
-    const res = back("connected");
+    // Next: say what they came to hedge (crypto, business or both), then on to where they were.
+    const res = NextResponse.redirect(new URL(`/welcome?gemini=connected&next=${encodeURIComponent(next)}`, req.nextUrl.origin));
+    clearStateCookie(res);
     setSessionCookie(res, id);
     return res;
   } catch (e) {

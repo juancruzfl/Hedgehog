@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   const s = await getSession(req);
   const cfg = oauthConfig();
   if (s) {
-    if (cfg) await revokeToken(cfg, s.tokens.refreshToken);
+    if (cfg && s.kind === "oauth") await revokeToken(cfg, s.tokens.refreshToken);
     deleteSession(s.idHash);
   }
   const res = NextResponse.json({ connected: false });

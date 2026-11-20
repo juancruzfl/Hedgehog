@@ -1,12 +1,23 @@
 import { randomBytes } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { authorizeUrl, oauthConfig, redirectUri, safeNext } from "@/lib/auth/gemini-oauth";
-import { setStateCookie } from "@/lib/auth/session";
+import { signInMode } from "@/lib/auth/mode";
+import { createSandboxSession, setSessionCookie, setStateCookie } from "@/lib/auth/session";
 
 // GET: send the user to Gemini to sign in and approve Hedgehog's access.
 // `next` is where to land afterwards (a path on this site only).
 export async function GET(req: NextRequest) {
   const next = safeNext(req.nextUrl.searchParams.get("next"));
+
+  // OAuth approval pending: sign in to Hedgehog's shared Gemini sandbox account instead.
+  // Everyone shares this account, so it gets a generic name: the account's real name is its
+  // owner's login (an email) and must not be shown to visitors.
+  if (signInMode() === "sandbox-key") {
+    const res = NextResponse.redirect(new URL(`/welcome?gemini=connected&next=${encodeURIComponent(next)}`, req.nextUrl.origin));
+    setSessionCookie(res, createSandboxSession("Hedgehog demo account"));
+    return res;
+  }
+
   const cfg = oauthConfig();
   if (!cfg) return NextResponse.redirect(new URL(`${next}${next.includes("?") ? "&" : "?"}gemini=not-configured`, req.nextUrl.origin));
 
