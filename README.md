@@ -105,30 +105,43 @@ The crypto flow reads a wallet **read-only** over Solana JSON-RPC (`getBalance`,
 
 ## Architecture
 
+One Next.js app: React pages, API routes and a background odds collector, sharing two SQLite files.
+
 ```
-          Crypto front door                     Business front door
-   (Solana wallet / Gemini / typed)       (plain English → AI interpretation)
-                    │                                    │
-                    └──────────────►  RiskProfile  ◄─────┘
-                                          │
-                         ┌────────── Hedging engine ──────────┐
-                         │ forecast · market matching · sizer │  ← deterministic money math
-                         └──────────────────┬─────────────────┘
-                                            │
-                         VenueAdapter  ──►  GeminiAdapter  (Kalshi etc. can plug in)
-                                            │
-                approval → re-validate → paper or live order → receipt sealed on Solana
+ Browser (React pages)                       Server (API routes + lib/)                          Outside
+ ─────────────────────                       ──────────────────────────                          ───────
+ Landing · /markets · /welcome  ─────────►   auth/    sessions, OAuth, sandbox, roles   ◄─────►  Gemini API
+ /crypto · /business            ─────────►   ai/      interprets risk (no money math)   ◄─────►  OpenRouter (LLM)
+ /positions · /receipt/[id]     ─────────►   engine/  forecast + sizer (all the math)
+ /lookback · /archive           ─────────►   hedges/  approve → re-check → order → receipt
+   │                                         odds/    collector + sports tracking        ─────►  odds.sqlite
+   │ verifies proofs itself                  archive/ Merkle seals (hours, kickoffs)     ─────►  Solana devnet (Memo)
+   └──────────── Solana public RPC ◄──────   hedgehog.sqlite: hedges, receipts, sessions
 ```
 
-- `lib/engine/sizer.ts`: all money math (event hedges, downside/upside strike ladders, payoff curves). Pure and unit-tested.
-- `lib/ai/`: `AIProvider` interface; one OpenAI-compatible implementation (OpenRouter by default, so any model works). If a model doesn't support strict JSON schemas it falls back to JSON mode automatically. **The AI interprets; it never sizes or places orders**, and it can only pick from real candidate contracts.
-- `lib/business/fallback.ts`: if the AI is unavailable, a basic matcher still handles game-day promos and fuel/metal costs, and the page says it was used.
-- `lib/auth/`: Gemini OAuth, sessions, sandbox sign-in and roles.
-- `lib/venues/`: venue-agnostic types; `gemini/` client, normalizer and adapter.
-- `lib/hedges/`: approval, re-validation, paper execution, settlement, receipts and their sealing.
-- `lib/odds/`, `lib/archive/`: the collector, sports tracking, the archive store, Merkle proofs, hourly and kickoff seals, and browser-side verification.
-- `lib/markets/`, `lib/lookback/`, `lib/landing/`: trending markets, the past-promos look-back, and the landing page's live board.
-- `lib/holdings/`, `lib/chain/`: Solana wallet reading, Gemini balances, live prices (Gemini's public ticker, Hyperliquid as a fallback).
+**The layers**
+
+1. **Pages** (`app/`): server components fetch data; client components handle interaction (market carousel, role picker, look-back controls, hedge popups). The nav reads the signed-in account from one shared store (`components/useAccount.ts`).
+2. **Venue layer** (`lib/venues/`): everything market-related goes through a `VenueAdapter` (list, get, order, positions). `gemini/` is the implementation: a client that signs requests (HMAC-SHA384 or the user's OAuth token) and serializes them so nonces stay ordered, and a normalizer that turns Gemini events into Hedgehog's `Market`/`Contract` types. Another exchange could plug in as another adapter.
+3. **Engine** (`lib/engine/`, `lib/forecast/`): pure, tested code with no AI. `forecast` turns price markets into "chance of a 5/10/20% drop by date X"; `sizer` computes every hedge (contract count for events, strike ladders for prices, payoff curves).
+4. **Two front doors, one `RiskProfile`**:
+   - Crypto: holdings (typed, Solana wallet, or Gemini import) → forecast → cushion level → ladder.
+   - Business: plain English → the AI parses a `RiskProfile`, plans a search, and ranks real candidate contracts with match quality and fine print (`lib/ai/`, `lib/business/`) → the sizer prices it. For price risks (fuel, metals) the market comes from a fixed table, not an AI search; if the AI is unavailable, a rule-based matcher covers game-day promos and fuel/metal costs.
+5. **Hedging** (`lib/hedges/`): the shared approval panel → the server re-reads live prices, the spend cap and tradability → paper fill or live limit order → the hedge and its receipt are stored, and the receipt is sealed on Solana in the background. Settlement comes from Gemini's own resolution; **My hedges** shows live results.
+6. **Odds history and proofs** (`lib/odds/`, `lib/archive/`): the collector snapshots markets every 5 minutes (crypto, commodities, weather, the busiest and customer-team games, anything looked at or hedged). Hours and kickoffs are sealed as Merkle roots, hedges as receipt hashes. The Merkle code runs in Node and the browser, so `/archive`, `/receipt/[id]` and `/lookback` verify against Solana without trusting Hedgehog.
+7. **Accounts** (`lib/auth/`): OAuth with tokens encrypted at rest (the cookie holds only a random id, stored as a hash), the sandbox sign-in mode, and roles on the session.
+8. **Built on the history**: `/lookback` prices past promos from archived pre-game odds (`lib/lookback/`), `/markets` ranks Gemini by 24-hour volume (`lib/markets/`), and the landing board builds its rotating cards from live markets and recorded charts (`lib/landing/`).
+
+**Background work and performance.** The collector runs every 5 minutes, in the web process (`ENABLE_COLLECTOR=1`) or as `npm run collect`. Each run snapshots odds and tracked games, then seals kickoffs, finished hours and pending receipts one after another (they share one wallet). Slow lookups use a stale-while-revalidate cache (`lib/cache.ts`), warmed at startup (`instrumentation.ts`): the landing board, trending markets, the look-back example and NFL listings. Listing every Gemini market takes about 7 seconds, so no visitor waits on it.
+
+**Principles**
+
+- **The AI interprets; code decides money.** It can only pick from real contracts Hedgehog fetched, and every amount comes from the sizer.
+- **Nothing happens without approval,** and the server re-checks everything before trading.
+- **Honest labels:** exact vs. partial matches, stand-in markets, practice trades, the sandbox account, devnet.
+- **Checkable, not just trusted:** prices and hedges carry proofs anyone can verify against Solana from their own browser.
+
+**Stack:** Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Recharts · zod · SQLite via Node 22's `node:sqlite` · the `openai` SDK against OpenRouter · `@solana/web3.js` (Memo program, devnet) · Web Crypto for in-browser proofs · Vitest · Railway.
 
 ### Paper vs. live trading
 
