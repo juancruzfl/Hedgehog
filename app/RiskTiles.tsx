@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { BusinessIcon } from "@/components/BusinessIcon";
 import { CoinIcon } from "@/components/CoinIcon";
+import { FitScale } from "@/components/FitScale";
 import { usd } from "@/lib/format";
 
 // "What could hurt you?": two tiles, one per way in. A title and a line of text on top,
@@ -19,8 +20,8 @@ export interface CoinRow {
 
 function Tile({ href, title, body, cta, children }: { href: string; title: string; body: string; cta: string; children: React.ReactNode }) {
   return (
-    <div className="flex min-h-[500px] flex-col overflow-hidden rounded-2xl bg-surface-2 lg:min-h-[560px]">
-      <div className="px-6 pt-6 sm:px-8 sm:pt-8">
+    <div className="flex flex-col overflow-hidden rounded-2xl bg-surface-2 lg:min-h-[560px]">
+      <div className="px-5 pt-5 sm:px-8 sm:pt-8">
         <h3 className="text-xl font-medium">
           <Link href={href} className="hover:underline">
             {title}
@@ -31,7 +32,10 @@ function Tile({ href, title, body, cta, children }: { href: string; title: strin
           {cta} <span className="inline-block transition group-hover:translate-x-0.5">→</span>
         </Link>
       </div>
-      <div className="flex flex-1 items-center justify-center px-4 pb-8 pt-6 sm:px-8">{children}</div>
+      <div className="flex flex-1 items-center justify-center px-4 pb-5 pt-5 sm:px-8 sm:pb-8 sm:pt-6">
+        {/* The desktop widget, scaled down on phones rather than reflowed */}
+        <FitScale width={420}>{children}</FitScale>
+      </div>
     </div>
   );
 }
@@ -51,7 +55,7 @@ function DropLadder({ coins }: { coins: CoinRow[] }) {
       return { ...l, chance: cap };
     });
   return (
-    <div className="w-full max-w-[420px] rounded-2xl bg-surface p-6 shadow-[0_1px_2px_rgba(12,10,8,0.06)]">
+    <div className="w-full rounded-2xl bg-surface p-6 shadow-[0_1px_2px_rgba(12,10,8,0.06)]">
       <div className="flex gap-2" role="tablist" aria-label="Coin">
         {coins.map((c) => (
           <button
@@ -108,7 +112,7 @@ function WeekPlanner() {
   const worst = EVENTS.reduce((s, e) => s + e.worst, 0);
   const marked = new Set(EVENTS.map((e) => e.day));
   return (
-    <div className="w-full max-w-[420px] rounded-2xl bg-surface p-6 shadow-[0_1px_2px_rgba(12,10,8,0.06)]">
+    <div className="w-full rounded-2xl bg-surface p-6 shadow-[0_1px_2px_rgba(12,10,8,0.06)]">
       <p className="text-base font-medium">Your week</p>
       <div className="mt-3 grid grid-cols-7 gap-1.5 text-center text-xs">
         {WEEK.map((d, k) => (
@@ -150,7 +154,7 @@ function WeekPlanner() {
 
 export function RiskTiles({ coins }: { coins: CoinRow[] }) {
   return (
-    <div className="grid gap-5 lg:grid-cols-2">
+    <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
       <Tile href="/crypto" title="Know your coins' downside" body="Paste a wallet or type what you hold. See how likely a 5%, 10% or 20% drop is before the day or week ends." cta="Check my crypto">
         <DropLadder coins={coins} />
       </Tile>

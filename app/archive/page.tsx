@@ -92,8 +92,8 @@ function VerifyBox({ samples }: { samples: Sample[] }) {
   if (!samples.length) return <p className="text-sm text-text-2">Readings can be checked here once the first hour is sealed on Solana.</p>;
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-      <div>
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+      <div className="min-w-0">
         <p className="text-sm font-medium">1. Pick a reading</p>
         <ul className="mt-2 divide-y divide-border rounded-xl border border-border">
           {samples.map((s) => (
@@ -119,7 +119,7 @@ function VerifyBox({ samples }: { samples: Sample[] }) {
         </ul>
       </div>
 
-      <div>
+      <div className="min-w-0">
         <p className="text-sm font-medium">2. Check it against Solana</p>
         {!proof && !busy && !error && <p className="mt-2 text-sm text-text-2">Pick any reading. Your browser does the checking, not Hedgehog.</p>}
         {busy && <p className="mt-2 text-sm text-text-2">Checking…</p>}
@@ -236,19 +236,22 @@ export default function ArchivePage() {
                 <table className="w-full text-sm tabular-nums">
                   <thead className="border-b border-border text-left text-xs uppercase tracking-wide text-text-3">
                     <tr>
-                      <th className="px-4 py-2.5 font-semibold">Hour</th>
-                      <th className="px-4 py-2.5 text-right font-semibold">Readings</th>
-                      <th className="px-4 py-2.5 font-semibold">Fingerprint</th>
-                      <th className="px-4 py-2.5 font-semibold">On Solana</th>
+                      <th className="px-3 py-2.5 font-semibold sm:px-4">Hour</th>
+                      <th className="px-3 py-2.5 sm:px-4 text-right font-semibold">Readings</th>
+                      <th className="hidden px-3 py-2.5 sm:px-4 font-semibold sm:table-cell">Fingerprint</th>
+                      <th className="px-3 py-2.5 sm:px-4 font-semibold">On Solana</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
                     {data.batches.slice(0, shown).map((b) => (
                       <tr key={b.hourStart}>
-                        <td className="whitespace-nowrap px-4 py-2.5">{hourLabel(b.hourStart)}</td>
-                        <td className="px-4 py-2.5 text-right">{n(b.count)}</td>
-                        <td className="px-4 py-2.5 font-mono text-xs">{short(b.root)}</td>
-                        <td className="whitespace-nowrap px-4 py-2.5">
+                        <td className="px-3 py-2.5 sm:px-4">
+                          <span className="sm:whitespace-nowrap">{hourLabel(b.hourStart)}</span>
+                          <span className="mt-0.5 block font-mono text-[11px] text-text-3 sm:hidden">{short(b.root)}</span>
+                        </td>
+                        <td className="px-3 py-2.5 sm:px-4 text-right">{n(b.count)}</td>
+                        <td className="hidden px-3 py-2.5 sm:px-4 font-mono text-xs sm:table-cell">{short(b.root)}</td>
+                        <td className="whitespace-nowrap px-3 py-2.5 sm:px-4">
                           {b.txUrl ? (
                             <a href={b.txUrl} target="_blank" rel="noreferrer" className="font-medium text-accent hover:underline">
                               ✓ Sealed ↗

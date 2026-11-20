@@ -123,7 +123,7 @@ const FAQS: { q: string; a: React.ReactNode }[] = [
 
 export function Faq() {
   return (
-    <section className="py-24" aria-labelledby="faq-title">
+    <section className="py-14 md:py-24" aria-labelledby="faq-title">
       <div className="mx-auto max-w-6xl px-4">
         <h2 id="faq-title" className="text-center text-3xl font-medium tracking-[-0.02em] sm:text-[44px] sm:leading-tight">
           Frequently asked questions
@@ -131,7 +131,7 @@ export function Faq() {
         <div className="mt-12 border-b border-border">
           {FAQS.map((f) => (
             <details key={f.q} className="group border-t border-border">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-5 text-[17px] [&::-webkit-details-marker]:hidden">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-4 text-base md:py-5 md:text-[17px] [&::-webkit-details-marker]:hidden">
                 {f.q}
                 <span
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border text-text transition group-hover:border-text-3"

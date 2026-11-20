@@ -64,7 +64,7 @@ function Receipts({ hours }: { hours: SealedHour[] }) {
 
 export function SolanaPanel({ hours }: { hours: SealedHour[] }) {
   return (
-    <div className="relative mt-14 overflow-hidden rounded-2xl bg-[#0e0b16] p-6 text-white sm:p-8">
+    <div className="relative mt-10 overflow-hidden rounded-2xl bg-[#0e0b16] p-5 sm:mt-14 text-white sm:p-8">
       {/* Soft glows in the two Solana colors */}
       <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[#9945FF] opacity-25 blur-3xl" aria-hidden />
       <div className="pointer-events-none absolute -bottom-24 -right-16 h-72 w-72 rounded-full bg-[#19FB9B] opacity-20 blur-3xl" aria-hidden />

@@ -79,14 +79,14 @@ export function FocusSteps({ steps }: { steps: StepState[] }) {
         const label = STEP_LABELS[s.id];
         if (i === focus) {
           return (
-            <li key={s.id} className="hh-swap-in rounded-3xl border border-border bg-surface p-6 shadow-sm sm:p-8">
+            <li key={s.id} className="hh-swap-in rounded-3xl border border-border bg-surface p-5 shadow-sm sm:p-8">
               <div className="flex items-center gap-4">
                 <span className="scale-150">
                   <Marker status={s.status === "idle" ? "active" : s.status} />
                 </span>
-                <p className="ml-1 text-2xl font-bold tracking-tight sm:text-3xl">{label.title}</p>
+                <p className="ml-1 text-xl font-bold tracking-tight sm:text-3xl">{label.title}</p>
               </div>
-              <p className={`mt-3 text-lg ${s.status === "error" ? "text-bad" : "text-text-2"}`}>{s.detail ?? label.idle}</p>
+              <p className={`mt-2 text-base sm:mt-3 sm:text-lg ${s.status === "error" ? "text-bad" : "text-text-2"}`}>{s.detail ?? label.idle}</p>
             </li>
           );
         }
@@ -156,8 +156,9 @@ const HOW: { id: StepId; icon: React.ReactNode; body: string }[] = [
 export function HowItWorksTip() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
-  // Where the panel goes: under the icon, kept 16px inside the screen edges.
-  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  // Where the panel goes: under the icon, kept 16px inside the screen edges. On phones it's
+  // a card centered on the screen, like the other popups.
+  const [pos, setPos] = useState<{ top: number; left: number; width: number; maxHeight: number; phone: boolean } | null>(null);
   useLayoutEffect(() => {
     if (!open || !ref.current) return;
     const place = () => {
@@ -165,7 +166,8 @@ export function HowItWorksTip() {
       const vw = document.documentElement.clientWidth;
       const width = Math.min(416, vw - 32);
       const left = Math.min(Math.max(b.left + b.width / 2 - width / 2, 16), vw - 16 - width);
-      setPos({ top: b.bottom, left, width });
+      const phone = vw < 640;
+      setPos({ top: b.bottom, left, width, phone, maxHeight: phone ? window.innerHeight - 32 : Math.max(160, window.innerHeight - b.bottom - 16) });
     };
     place();
     window.addEventListener("resize", place);
@@ -210,15 +212,28 @@ export function HowItWorksTip() {
           <rect x="6.75" y="6.5" width="2.5" height="7" rx="1.25" />
         </svg>
       </button>
+      {open && pos?.phone && (
+        // Dims the page like the other popups; a tap on it closes the card.
+        <span className="fixed inset-0 z-30 bg-[rgb(21_24_29/0.28)] backdrop-blur-[6px]" onClick={() => setOpen(false)} aria-hidden />
+      )}
       {open && (
         <div
           id="how-it-works"
           role="dialog"
           aria-label="How Hedgehog works"
-          className="hh-swap-in fixed z-30 pt-3 text-left text-base font-normal tracking-normal"
-          style={pos ? { top: pos.top, left: pos.left, width: pos.width } : { visibility: "hidden" }}
+          className={`hh-swap-in fixed z-30 text-left text-base font-normal tracking-normal ${pos?.phone ? "" : "pt-3"}`}
+          style={
+            !pos
+              ? { visibility: "hidden" }
+              : pos.phone
+                ? { inset: 0, margin: "auto", width: pos.width, height: "fit-content" }
+                : { top: pos.top, left: pos.left, width: pos.width }
+          }
         >
-          <div className="rounded-2xl border border-border bg-surface p-5 shadow-lg shadow-black/10">
+          <div
+            className="overflow-y-auto overscroll-contain rounded-2xl border border-border bg-surface p-5 shadow-lg shadow-black/10"
+            style={pos ? { maxHeight: pos.phone ? pos.maxHeight : pos.maxHeight - 12 } : undefined}
+          >
             <p className="font-semibold">How Hedgehog works</p>
             <ol className="mt-3 space-y-3">
               {HOW.map((h) => (

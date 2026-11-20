@@ -54,6 +54,10 @@
   --font-mono: var(--font-geist-mono);
 }
 
+html, body {
+  overflow-x: clip;
+}
+
 body {
   background: var(--background);
   color: var(--text);
@@ -113,7 +117,7 @@ input, select, textarea {
 .legal th, .legal td { border: 1px solid var(--border); padding: 0.5rem 0.65rem; text-align: left; vertical-align: top; }
 .legal th { background: var(--surface-2); color: var(--text); font-weight: 600; }
 
-/* Hedge popup: slides up on phones, fades and lifts on desktop */
+/* Hedge popup: fades and lifts into place */
 @keyframes hh-sheet-up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes hh-fade { from { opacity: 0; } to { opacity: 1; } }
 .hh-sheet[open] { animation: hh-sheet-up 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
