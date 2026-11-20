@@ -39,6 +39,18 @@ function hedgesDb(): DatabaseSync {
       error TEXT,
       created_at INTEGER NOT NULL
     );
+    -- One receipt per hedge: the exact document that was fingerprinted, and where its
+    -- fingerprint was recorded on Solana (null until sealed).
+    CREATE TABLE IF NOT EXISTS hedge_receipts (
+      hedge_id TEXT PRIMARY KEY,
+      document TEXT NOT NULL,
+      sha256 TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      cluster TEXT,
+      signature TEXT,
+      sealed_at INTEGER,
+      error TEXT
+    );
   `);
   return db;
 }
@@ -110,4 +122,48 @@ export function listHedges(): HedgeRecord[] {
       error: (o.error as string) ?? null,
     })),
   }));
+}
+
+export interface ReceiptRecord {
+  hedgeId: string;
+  document: string; // the exact JSON whose SHA-256 is sealed
+  sha256: string;
+  createdAt: number;
+  cluster: string | null;
+  signature: string | null;
+  sealedAt: number | null;
+  error: string | null;
+}
+
+const receiptCols = `hedge_id AS hedgeId, document, sha256, created_at AS createdAt, cluster, signature, sealed_at AS sealedAt, error`;
+
+export function saveReceipt(hedgeId: string, document: string, sha256: string): void {
+  hedgesDb()
+    .prepare(`INSERT OR IGNORE INTO hedge_receipts (hedge_id, document, sha256, created_at) VALUES (?, ?, ?, ?)`)
+    .run(hedgeId, document, sha256, Date.now());
+}
+
+export function getReceipt(hedgeId: string): ReceiptRecord | null {
+  return (hedgesDb().prepare(`SELECT ${receiptCols} FROM hedge_receipts WHERE hedge_id = ?`).get(hedgeId) as ReceiptRecord | undefined) ?? null;
+}
+
+/** Receipts not yet recorded on Solana, oldest first. */
+export function unsealedReceipts(limit = 10): ReceiptRecord[] {
+  return hedgesDb()
+    .prepare(`SELECT ${receiptCols} FROM hedge_receipts WHERE signature IS NULL ORDER BY created_at LIMIT ?`)
+    .all(limit) as unknown as ReceiptRecord[];
+}
+
+export function markReceiptSealed(hedgeId: string, cluster: string, signature: string): void {
+  hedgesDb().prepare(`UPDATE hedge_receipts SET cluster = ?, signature = ?, sealed_at = ?, error = NULL WHERE hedge_id = ?`).run(cluster, signature, Date.now(), hedgeId);
+}
+
+export function markReceiptError(hedgeId: string, error: string): void {
+  hedgesDb().prepare(`UPDATE hedge_receipts SET error = ? WHERE hedge_id = ?`).run(error.slice(0, 300), hedgeId);
+}
+
+/** Seal status per hedge, for the My hedges list. */
+export function receiptStatuses(): Map<string, { sealed: boolean }> {
+  const rows = hedgesDb().prepare(`SELECT hedge_id AS id, signature FROM hedge_receipts`).all() as { id: string; signature: string | null }[];
+  return new Map(rows.map((r) => [r.id, { sealed: !!r.signature }]));
 }
