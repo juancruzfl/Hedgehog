@@ -314,6 +314,8 @@ const MARKET_COLORS = ["var(--series-2)", "var(--series-1)"];
 const monoTick = { fill: C.text3, fontSize: 10.5, fontFamily: "var(--font-geist-mono), ui-monospace, monospace" };
 // Fixed geometry so the HTML pills on the right line up with the plot.
 const MC = { height: 248, top: 14, axis: 26, pillH: 24, gap: 4 };
+/** MarketChart's height, for placeholders that stand in for it. */
+export const MARKET_CHART_HEIGHT = MC.height;
 
 /**
  * A market's levels over time, laid out like Gemini's market chart: one line per level,

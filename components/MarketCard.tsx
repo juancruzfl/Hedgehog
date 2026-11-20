@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CoinIcon } from "@/components/CoinIcon";
-import { MarketChart } from "@/components/charts";
+import { MARKET_CHART_HEIGHT, MarketChart } from "@/components/charts";
 import type { BoardLine } from "@/lib/landing/board";
 
 // The landing page's market card, shared with the product's trending markets.
@@ -62,18 +62,27 @@ export const closeLabel = (iso: string) =>
 
 
 /**
- * A stand-in history for a market Hedgehog hasn't charted yet: a gentle wander around each
- * level's current chance, shown blurred behind a note. Built only from the market's own data
- * (no clock, no randomness), so the server and the browser draw the same thing.
+ * The chart for a market Hedgehog hasn't charted yet: just the frame (gridlines and chance
+ * axis) at the real chart's height, with no lines or prices, so nothing looks like data.
  */
-function placeholderHistory(key: string, prob: number, closes: string) {
-  let seed = 0;
-  for (const ch of key) seed = (seed * 31 + ch.charCodeAt(0)) % 997;
-  const end = Date.parse(closes) || 0;
-  return Array.from({ length: 25 }, (_, i) => ({
-    ts: end - (24 - i) * 1800_000,
-    p: Math.min(0.99, Math.max(0.01, prob + 0.04 * Math.sin(i / 3 + seed) + 0.02 * Math.sin(i / 1.3 + seed / 7))),
-  }));
+function EmptyChart() {
+  return (
+    <div className="relative" style={{ height: MARKET_CHART_HEIGHT }}>
+      <div className="absolute inset-x-0 bottom-[26px] top-[14px] flex flex-col justify-between" aria-hidden>
+        {["100%", "75%", "50%", "25%", "0%"].map((t) => (
+          <div key={t} className="flex items-center gap-2">
+            <span className="w-9 text-right font-mono text-[10.5px] text-text-3/60">{t}</span>
+            <span className={`h-px flex-1 ${t === "0%" ? "bg-border" : "border-t border-dashed border-border/70"}`} />
+          </div>
+        ))}
+      </div>
+      <div className="absolute inset-0 flex items-center justify-center p-4">
+        <p className="max-w-[16rem] rounded-xl border border-border bg-surface px-4 py-3 text-center text-sm text-text-2 shadow-sm">
+          Hedgehog starts charting this market once it has a few readings.
+        </p>
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -130,19 +139,7 @@ export function MarketCard({ m, uniform = false }: { m: MarketCardData; uniform?
         {hasHistory ? (
           <MarketChart lines={m.lines.map((l) => ({ key: l.key, label: l.label, prob: l.prob, data: l.history, featured: l.featured }))} />
         ) : (
-          // Same size as a real chart: a blurred stand-in with the note on top.
-          <div className="relative">
-            <div className="pointer-events-none select-none opacity-60 blur-[3px]" aria-hidden>
-              <MarketChart
-                lines={m.lines.map((l) => ({ key: l.key, label: l.label, prob: l.prob, data: placeholderHistory(l.key, l.prob, m.closes), featured: l.featured }))}
-              />
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center p-4">
-              <p className="max-w-[16rem] rounded-xl border border-border bg-surface/90 px-4 py-3 text-center text-sm text-text-2 shadow-sm">
-                Hedgehog starts charting this market once it has a few readings.
-              </p>
-            </div>
-          </div>
+          <EmptyChart />
         )}
       </div>
 
