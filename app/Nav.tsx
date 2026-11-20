@@ -7,9 +7,10 @@ import { Logo } from "@/components/Logo";
 import { useAccount } from "@/components/useAccount";
 import { ROLE_INFO } from "@/lib/auth/roles";
 
-// Everyone: Past promos (the look-back, open to all) and the Gemini button. Signed in: the
-// parts of the app for what they hedge (Crypto, Business or both, picked on /welcome) plus
-// My hedges, and the logo goes to the product's home (trending markets).
+// Signed out: Past promos (the look-back, which makes the case for hedging) and the Gemini
+// button. Signed in: the parts of the app for what they hedge (Crypto, Business or both,
+// picked on /welcome) plus My hedges, and the logo goes to the product's home (trending
+// markets). The look-back stays open to everyone; business users reach it from /business.
 export function Nav() {
   const path = usePathname();
   const account = useAccount();
@@ -17,9 +18,9 @@ export function Nav() {
   const ready = account?.connected && roles.length > 0;
   // Shorter labels on phones so the bar never pushes the page wider than the screen.
   const links: { href: string; label: string; short?: string }[] = [
-    ...(ready ? roles.map((r) => ({ href: ROLE_INFO[r].href, label: ROLE_INFO[r].nav })) : []),
-    { href: "/lookback", label: "Past promos", short: "Past" },
-    ...(ready ? [{ href: "/positions", label: "My hedges", short: "Mine" }] : []),
+    ...(ready
+      ? [...roles.map((r) => ({ href: ROLE_INFO[r].href, label: ROLE_INFO[r].nav })), { href: "/positions", label: "My hedges", short: "Mine" }]
+      : [{ href: "/lookback", label: "Past promos", short: "Past" }]),
   ];
 
   return (

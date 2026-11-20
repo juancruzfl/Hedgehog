@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Stepper } from "@/components/HedgeControls";
@@ -324,6 +325,12 @@ export function BusinessFlow({ examples = BUSINESS_EXAMPLES }: { examples?: { la
             ))}
           </div>
           {error && <p className="mx-auto mt-4 w-full max-w-3xl rounded-xl bg-bad-soft px-4 py-3 text-sm text-bad">{error}</p>}
+          {/* Evidence while they're thinking about a promo: what hedging past ones would have done */}
+          <p className="mt-6 text-center text-sm">
+            <Link href="/lookback" className="group font-medium text-accent">
+              See what a hedge would have saved on past promos <span className="inline-block transition group-hover:translate-x-0.5">→</span>
+            </Link>
+          </p>
         </section>
       </div>
     );
