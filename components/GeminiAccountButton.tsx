@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { GEMINI_CHANGED_EVENT, setAccount, useAccount } from "./useAccount";
+import { GEMINI_CHANGED_EVENT, refreshAccount, setAccount, useAccount } from "./useAccount";
 
 // Nav button for the user's Gemini account: "Connect Gemini account" until they sign in
 // with Gemini, then "Signed in" with a small menu (which account, what they hedge, sign out).
@@ -53,11 +53,13 @@ export function GeminiAccountButton() {
   async function signOut() {
     setMenuOpen(false);
     await fetch("/api/auth/gemini/logout", { method: "POST" }).catch(() => undefined);
-    setAccount({ connected: false, available: true });
+    setAccount({ connected: false, available: true, mode: status?.mode === "sandbox-key" ? "sandbox-key" : "oauth" });
+    void refreshAccount(); // the server's view (e.g. which sign-in is available)
     router.push("/"); // the product's pages are for signed-in users
   }
 
-  const n = notice ? NOTICES[notice] : null;
+  const n = notice && !menuOpen ? NOTICES[notice] : null;
+  const noticeText = n && notice === "connected" && status?.mode === "sandbox-key" ? "Connected to Gemini's sandbox (test exchange)." : n?.text;
 
   return (
     <div ref={menuRef} className="relative ml-1 sm:ml-2">
@@ -83,16 +85,21 @@ export function GeminiAccountButton() {
           className="inline-flex items-center whitespace-nowrap rounded-lg bg-accent px-2.5 py-1.5 font-semibold text-accent-ink hover:brightness-110 sm:px-3.5"
         >
           <span className="sm:hidden">Connect</span>
-          <span className="hidden sm:inline">Connect Gemini account</span>
+          <span className="hidden sm:inline">{status.mode === "sandbox-key" ? "Connect Gemini sandbox" : "Connect Gemini account"}</span>
         </a>
       )}
 
       {menuOpen && status?.connected && (
         <div role="menu" className="absolute right-0 top-full z-30 mt-2 w-64 rounded-xl border border-border bg-surface p-1.5 text-sm shadow-lg">
           <div className="px-3 py-2">
-            <p className="text-xs text-text-3">Connected to Gemini</p>
+            <p className="text-xs text-text-3">{status.mode === "sandbox-key" ? "Connected to Gemini's sandbox" : "Connected to Gemini"}</p>
             <p className="mt-0.5 truncate font-semibold">{status.account ?? "Your Gemini account"}</p>
             {status.env === "sandbox" && <p className="mt-1 inline-block rounded-full bg-warn-bg px-2 py-0.5 text-[11px] font-medium text-warn">Test account (sandbox)</p>}
+            {status.mode === "sandbox-key" && (
+              <p className="mt-1.5 text-xs leading-snug text-text-2">
+                A shared demo account on Gemini&apos;s test exchange, while Hedgehog&apos;s Gemini sign-in awaits approval. No real money.
+              </p>
+            )}
           </div>
           <div className="my-1 border-t border-border" />
           <Link role="menuitem" href="/welcome" onClick={() => setMenuOpen(false)} className="block w-full rounded-lg px-3 py-2 text-left text-text hover:bg-surface-2">
@@ -111,7 +118,7 @@ export function GeminiAccountButton() {
             n.kind === "good" ? "border-good/30 bg-good-soft text-good" : "border-bad/30 bg-bad-soft text-bad"
           }`}
         >
-          <span className="flex-1">{n.text}</span>
+          <span className="flex-1">{noticeText}</span>
           <button onClick={() => setNotice(null)} aria-label="Dismiss" className="-mr-1 rounded px-1 opacity-70 hover:opacity-100">
             ✕
           </button>

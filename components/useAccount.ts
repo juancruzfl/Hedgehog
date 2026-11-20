@@ -14,6 +14,8 @@ export interface AccountStatus {
   env?: "sandbox" | "production";
   account?: string | null;
   roles?: Role[];
+  /** "sandbox-key": signing in uses Hedgehog's shared Gemini sandbox account (OAuth pending). */
+  mode?: "oauth" | "sandbox-key" | "off";
 }
 
 let status: AccountStatus | null = null;

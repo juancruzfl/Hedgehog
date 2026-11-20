@@ -61,7 +61,7 @@ export function RolePicker() {
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Connect your Gemini account first</h1>
         <p className="mt-2 text-text-2">Hedgehog places hedges in your own Gemini account, so it starts there.</p>
         <a href="/api/auth/gemini/login?next=%2Fwelcome" className="mt-6 inline-block rounded-lg bg-accent px-5 py-3 font-semibold text-accent-ink hover:brightness-110">
-          Connect Gemini account
+          {account.mode === "sandbox-key" ? "Connect Gemini sandbox" : "Connect Gemini account"}
         </a>
       </div>
     );

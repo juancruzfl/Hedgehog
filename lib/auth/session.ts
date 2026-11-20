@@ -5,6 +5,7 @@ import { DatabaseSync } from "node:sqlite";
 import type { NextRequest, NextResponse } from "next/server";
 import { GeminiApiError, GeminiClient } from "@/lib/venues/gemini/client";
 import { oauthConfig, refreshTokens, type GeminiEnv, type TokenSet } from "./gemini-oauth";
+import { signInMode } from "./mode";
 import { parseRoles, type Role } from "./roles";
 
 // A browser session holding one connected Gemini account.
@@ -39,6 +40,8 @@ function sessionsDb(): DatabaseSync {
   // Added after launch: what the user came to hedge (lib/auth/roles.ts), "" until they pick.
   const cols = db.prepare(`PRAGMA table_info(sessions)`).all() as { name: string }[];
   if (!cols.some((c) => c.name === "roles")) db.exec(`ALTER TABLE sessions ADD COLUMN roles TEXT NOT NULL DEFAULT ''`);
+  // "oauth": the user's own Gemini tokens. "sandbox-key": the shared sandbox account (lib/auth/mode.ts).
+  if (!cols.some((c) => c.name === "kind")) db.exec(`ALTER TABLE sessions ADD COLUMN kind TEXT NOT NULL DEFAULT 'oauth'`);
   return db;
 }
 
@@ -80,7 +83,11 @@ export interface GeminiSession {
   tokens: TokenSet;
   /** What they came to hedge; empty until they pick on /welcome. */
   roles: Role[];
+  /** "sandbox-key": signed in to Hedgehog's shared Gemini sandbox account (no tokens). */
+  kind: SessionKind;
 }
+
+export type SessionKind = "oauth" | "sandbox-key";
 
 interface Row {
   id_hash: string;
@@ -91,14 +98,20 @@ interface Row {
   expires_at: number;
   scope: string;
   roles: string;
+  kind: string;
 }
 
-export function createSession(env: GeminiEnv, tokens: TokenSet, account: string | null): string {
+export function createSession(env: GeminiEnv, tokens: TokenSet, account: string | null, kind: SessionKind = "oauth"): string {
   const id = randomBytes(32).toString("base64url");
   sessionsDb()
-    .prepare(`INSERT INTO sessions (id_hash, created_at, env, account, access_enc, refresh_enc, expires_at, scope) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
-    .run(hashId(id), Date.now(), env, account, encrypt(tokens.accessToken), encrypt(tokens.refreshToken), tokens.expiresAt, tokens.scope);
+    .prepare(`INSERT INTO sessions (id_hash, created_at, env, account, access_enc, refresh_enc, expires_at, scope, kind) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    .run(hashId(id), Date.now(), env, account, encrypt(tokens.accessToken), encrypt(tokens.refreshToken), tokens.expiresAt, tokens.scope, kind);
   return id;
+}
+
+/** A session on Hedgehog's shared Gemini sandbox account: no tokens of its own (lib/auth/mode.ts). */
+export function createSandboxSession(account: string | null): string {
+  return createSession("sandbox", { accessToken: "-", refreshToken: "-", expiresAt: Date.now() + SESSION_DAYS * 86_400_000, scope: "sandbox-key" }, account, "sandbox-key");
 }
 
 function load(idHash: string): GeminiSession | null {
@@ -111,6 +124,7 @@ function load(idHash: string): GeminiSession | null {
       account: row.account,
       tokens: { accessToken: decrypt(row.access_enc), refreshToken: decrypt(row.refresh_enc), expiresAt: row.expires_at, scope: row.scope },
       roles: parseRoles(row.roles),
+      kind: row.kind === "sandbox-key" ? "sandbox-key" : "oauth",
     };
   } catch {
     return null; // SESSION_SECRET changed: treat as signed out
@@ -136,6 +150,8 @@ export function deleteSession(idHash: string) {
 const refreshing = new Map<string, Promise<GeminiSession | null>>();
 
 async function fresh(s: GeminiSession): Promise<GeminiSession | null> {
+  // Sandbox sessions have no tokens; they last as long as sandbox sign-in stays switched on.
+  if (s.kind === "sandbox-key") return signInMode() === "sandbox-key" ? s : null;
   if (s.tokens.expiresAt - Date.now() > REFRESH_EARLY_MS) return s;
   const cfg = oauthConfig();
   if (!cfg) return null;
@@ -168,6 +184,8 @@ export async function getSession(req: NextRequest): Promise<GeminiSession | null
 export async function userGeminiClient(req: NextRequest): Promise<GeminiClient | null> {
   const s = await getSession(req);
   if (!s) return null;
+  // The shared sandbox account: the server's key, which signInMode() checked trades in the sandbox.
+  if (s.kind === "sandbox-key") return GeminiClient.fromEnv();
   return new GeminiClient({
     accessToken: s.tokens.accessToken,
     tradingEnv: s.env,
@@ -182,7 +200,7 @@ export async function userGeminiClient(req: NextRequest): Promise<GeminiClient |
 export async function geminiClientFor(req: NextRequest): Promise<GeminiClient | null> {
   const user = await userGeminiClient(req);
   if (user) return user;
-  if (oauthConfig()) return null;
+  if (signInMode() !== "off") return null; // sign-in exists, so a signed-out visitor gets no account
   const server = GeminiClient.fromEnv();
   return server.hasCredentials ? server : null;
 }
